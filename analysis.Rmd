@@ -1,0 +1,366 @@
+```{r Load Gene OE and Compound data, eval=TRUE, warning=FALSE}
+
+rm(list = ls())
+library(dplyr)
+library(stringr)
+library(plyr)
+library(reshape2)
+library(htmlTable)
+source("rep.corr.func.R")
+
+use.feat.selected.in.TA.ORF.in.common <- T
+
+base.dir <- "2016-07-20_90b7bb86"
+cmpd.name <- readRDS(sprintf("../input/Gustafsdottir/%s/cmpds.names.rds", base.dir))
+
+load("../input/TA/Initial_analysis_workspace.RData")
+Pf.ta <- Pf_org.org.collapsed
+strong.trt <- Pf.trt.strong.collapsed$data$Treatment
+data.annot <- Pf.strong %>% dplyr::filter(Treatment %in% strong.trt) %>% dplyr::select(one_of(c("Treatment", "Pathway", "Gene", "AlleleDesc"))) %>% 
+  dplyr::mutate(Pathway = str_replace(Pathway, "Canonical ", "")) %>% 
+  dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2)) %>%
+  dplyr::filter(AlleleDesc == "WT") %>% dplyr::group_by(Gene) %>% dplyr::slice(1) %>%
+  dplyr::ungroup() 
+desired.ta <- data.annot$Treatment
+Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta) 
+Pf.ta$data$Treatment <- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
+Pf.gene <- Pf.ta
+
+load("../input/Gustafsdottir/Initial_analysis.RData")
+u <- rep.cor(Pf.full.plate.norm, "Image_Metadata_BROAD_ID", Pf.full.plate.norm$feat_cols)
+thr <- non.rep.cor(Pf.full.plate.norm, "Image_Metadata_BROAD_ID", Pf.full.plate.norm$feat_cols)
+strong.cmpd <- u$Image_Metadata_BROAD_ID[which(u$cr > thr)]
+
+Pf.final <- Pf.full.plate.norm$data %>% dplyr::filter(Image_Metadata_BROAD_ID %in% strong.cmpd) %>% as.data.frame() 
+all.cols <- colnames(Pf.final)
+fact.col <- all.cols[which(str_detect(all.cols, "Metadata") | all.cols %in% c("Plate", "Well"))]
+feat.col <- setdiff(all.cols, fact.col)
+Pf.gust <- list(data = Pf.final, feat_cols = feat.col, factor_cols = fact.col)
+Pf.gust$data <- Pf.gust$data %>% dplyr::select(one_of(c("Image_Metadata_BROAD_ID", Pf.gust$feat_cols))) %>% dplyr::group_by(Image_Metadata_BROAD_ID) %>% dplyr::summarise_each(funs("mean"))
+
+Pf.gust$data <- plyr::join(Pf.gust$data, cmpd.name, by = "Image_Metadata_BROAD_ID")
+Pf.gust$factor_cols <- c(Pf.gust$factor_cols, "Image_Metadata_SOURCE_COMPOUND_NAME")
+Pf.cmpd <- Pf.gust
+
+```
+
+```{r Align the features in Compound and Gene OE data, eval=TRUE}
+
+cdp2.feat.names <- colnames(Pf.cmpd$data)
+ta.feat.names <- Pf.gene$feat_cols
+
+cdp2.feat.names <- str_replace_all(cdp2.feat.names, "Ph_golgi", "AGP")
+cdp2.feat.names <- str_replace_all(cdp2.feat.names, "Hoechst", "DNA")
+cdp2.feat.names <- str_replace_all(cdp2.feat.names, "Syto", "RNA")
+
+cdp2.feat.names <- str_replace(cdp2.feat.names, "Cells_Location_Center_X", "Cells_AreaShape_Center_X")
+cdp2.feat.names <- str_replace(cdp2.feat.names, "Cells_Location_Center_Y", "Cells_AreaShape_Center_Y")
+cdp2.feat.names <- str_replace(cdp2.feat.names, "Cytoplasm_Location_Center_X", "Cytoplasm_AreaShape_Center_X")
+cdp2.feat.names <- str_replace(cdp2.feat.names, "Cytoplasm_Location_Center_Y", "Cytoplasm_AreaShape_Center_Y")
+cdp2.feat.names <- str_replace(cdp2.feat.names, "Nuclei_Location_Center_X", "Nuclei_AreaShape_Center_X")
+cdp2.feat.names <- str_replace(cdp2.feat.names, "Nuclei_Location_Center_Y", "Nuclei_AreaShape_Center_Y")
+cdp2.feat.names <- str_replace(cdp2.feat.names, "Nuclei_Neighbors_AngleBetweenNeighbors_Adjacent", "Nuclei_Neighbors_AngleBetweenNeighbors_1")
+cdp2.feat.names <- str_replace(cdp2.feat.names, "Nuclei_Neighbors_FirstClosestObjectNumber_Adjacent", "Nuclei_Neighbors_FirstClosestObjectNumber_1")
+cdp2.feat.names <- str_replace(cdp2.feat.names, "Nuclei_Neighbors_PercentTouching_Adjacent", "Nuclei_Neighbors_PercentTouching_1")
+cdp2.feat.names <- str_replace(cdp2.feat.names, "Nuclei_Neighbors_SecondClosestObjectNumber_Adjacent", "Nuclei_Neighbors_SecondClosestObjectNumber_1")
+cdp2.feat.names <- str_replace(cdp2.feat.names, "Nuclei_Neighbors_FirstClosestDistance_Adjacent", "Nuclei_Neighbors_FirstClosestDistance_1")
+cdp2.feat.names <- str_replace(cdp2.feat.names, "Nuclei_Neighbors_SecondClosestDistance_Adjacent", "Nuclei_Neighbors_SecondClosestDistance_1")
+
+chnl <- c("DNA", "Mito", "AGP", "RNA", "ER")
+
+for (chn in chnl) {
+  cdp2.feat.names <- str_replace(cdp2.feat.names, sprintf("%s_3", chn), sprintf("%s_3_0", chn))
+  cdp2.feat.names <- str_replace(cdp2.feat.names, sprintf("%s_5", chn), sprintf("%s_5_0", chn))
+  cdp2.feat.names <- str_replace(cdp2.feat.names, sprintf("%s_7", chn), sprintf("%s_7_0", chn))
+}
+
+for (chn in chnl) {
+  cdp2.feat.names <- str_replace(cdp2.feat.names, sprintf("Gabor_%s_3_0", chn), sprintf("Gabor_%s_3", chn))
+  cdp2.feat.names <- str_replace(cdp2.feat.names, sprintf("Gabor_%s_5_0", chn), sprintf("Gabor_%s_5", chn))
+  cdp2.feat.names <- str_replace(cdp2.feat.names, sprintf("Gabor_%s_7_0", chn), sprintf("Gabor_%s_7", chn))
+}
+
+cdp2.feat.names <- str_replace(cdp2.feat.names, "_3_0of4", "_3of4")
+colnames(Pf.cmpd$data) <- cdp2.feat.names
+Pf.cmpd$factor_cols <- cdp2.feat.names[which(str_detect(cdp2.feat.names, "Metadata"))]
+Pf.cmpd$feat_cols <- setdiff(cdp2.feat.names, Pf.cmpd$factor_cols)
+
+f1 <- Pf.cmpd$feat_cols
+f2 <- Pf.gene$feat_cols
+f <- intersect(f1, f2)
+
+Pf.cmpd$feat_cols <- f
+Pf.gene$feat_cols <- f
+
+Pf.cmpd$data <- Pf.cmpd$data[,c(Pf.cmpd$factor_cols, Pf.cmpd$feat_cols)]
+Pf.gene$data <- Pf.gene$data[,c(Pf.gene$factor_cols, Pf.gene$feat_cols)]
+
+feats <- Pf_org$feat_cols
+feats <- intersect(feats, Pf.cmpd$feat_cols)
+
+if (use.feat.selected.in.TA.ORF.in.common) {
+  Pf.cmpd$feat_cols <- feats
+  Pf.cmpd$data <- Pf.cmpd$data[,c(feats, Pf.cmpd$factor_cols)]
+  Pf.gene$feat_cols <- feats
+  Pf.gene$data <- Pf.gene$data[,c(feats, Pf.gene$factor_cols)]
+}
+
+med <- apply(Pf.cmpd$data[,Pf.cmpd$feat_cols], 2, median)
+md <- apply(Pf.cmpd$data[,Pf.cmpd$feat_cols], 2, mad)
+Pf.cmpd$data[,Pf.cmpd$feat_cols] <- scale(Pf.cmpd$data[,Pf.cmpd$feat_cols], med, md)
+
+print(length(Pf.cmpd$feat_cols))
+print(NROW(Pf.cmpd$data))
+
+```
+
+```{r QC, eval=TRUE}
+
+cmpd.list <- lapply(Pf.cmpd$data$Image_Metadata_BROAD_ID, function(x) sprintf("%s-%s", str_split(x, "-")[[1]][1], str_split(x, "-")[[1]][2])) %>% unlist
+cr.cmpd <- cor(Pf.cmpd$data[,Pf.cmpd$feat_cols] %>% t)
+rownames(cr.cmpd) <- cmpd.list
+colnames(cr.cmpd) <- cmpd.list
+
+Pf.repurp <- readRDS("../input/repurp/2016_04_01_a549_48hr_batch1_normalized.rds")
+moa.list <- Pf.repurp %>% dplyr::filter(Metadata_pert_id %in% cmpd.list) %>% dplyr::select(one_of(c("Metadata_pert_id", "Metadata_moa"))) %>% unique
+v <- moa.list$Metadata_moa
+same.moa <- outer(v, v, "==")
+rownames(same.moa) <- moa.list$Metadata_pert_id
+colnames(same.moa) <- moa.list$Metadata_pert_id
+same.moa.list <- same.moa %>% melt %>% dplyr::filter(as.character(Var1) < as.character(Var2))
+cr.cmpd.res <- cr.cmpd[moa.list$Metadata_pert_id, moa.list$Metadata_pert_id]
+cr.cmpd.res <- cr.cmpd.res %>% melt %>% dplyr::filter(as.character(Var1) < as.character(Var2))
+set0 <- cr.cmpd.res$value[which(!same.moa.list$value)]
+set1 <- cr.cmpd.res$value[which(same.moa.list$value)]
+t.test(set0, set1, "less")
+
+thr <- quantile(cr.cmpd.res$value, 0.95)
+v11 <- which((cr.cmpd.res$value) > thr & same.moa.list$value) %>% length
+v12 <- which((cr.cmpd.res$value) > thr & !same.moa.list$value) %>% length
+v21 <- which((cr.cmpd.res$value) < thr & same.moa.list$value) %>% length
+v22 <- which((cr.cmpd.res$value) < thr & !same.moa.list$value) %>% length
+V <- rbind(c(v11, v12), c(v21, v22))
+print(V)
+fisher.test(V, alternative = "greater")
+
+u <- cr.cmpd.res[which((cr.cmpd.res$value) > thr & same.moa.list$value), ]
+colnames(u)[1] <- "Metadata_pert_id"
+u <- plyr::join(u, moa.list)
+
+brd.to.cid <- Pf.cmpd$data[,c("Image_Metadata_BROAD_ID", "Image_Metadata_SOURCE_COMPOUND_NAME")]
+colnames(brd.to.cid) <- c("Broad.ID", "Compound.Name")
+
+brd.to.cid <- brd.to.cid[,c("Broad.ID", "Compound.Name")]
+brd.to.cid$Broad.ID <- lapply(brd.to.cid$Broad.ID, function(x) sprintf("%s-%s", str_split(x, "-")[[1]][1], str_split(x, "-")[[1]][2])) %>% unlist
+
+colnames(u)[1] <- "Broad.ID"
+u <- plyr::join(u, brd.to.cid, by = "Broad.ID")
+colnames(u)[1] <- "Compound 1"
+colnames(u)[2] <- "Broad.ID"
+u <- plyr::join(u, brd.to.cid, by = "Broad.ID")
+colnames(u)[3] <- "Corr."
+colnames(u)[2] <- "Compound 2"
+colnames(u)[5] <- "Name 1"
+colnames(u)[6] <- "Name 2"
+u %>% dplyr::arrange(Metadata_moa) %>% dplyr::mutate(Corr. = round(Corr., 2)) %>% htmlTable::htmlTable()
+
+##############
+
+ag.ant <- function(x, y) {
+  if (is.na(x) || is.na(y)) {
+    return(F)
+  }
+  x.s <- str_split(x, " ")[[1]]
+  y.s <- str_split(y, " ")[[1]]
+  res <- F
+  if (x.s[length(x.s)] == "agonist" && y.s[length(y.s)] == "antagonist" || 
+      x.s[length(x.s)] == "antagonist" && y.s[length(y.s)] == "agonist") {
+    if (paste(x.s[1:(length(x.s)-1)], collapse = " ") == paste(y.s[1:(length(y.s)-1)], collapse = " ")) {
+      res <- T
+    }
+  }
+  return(res)
+}
+
+v <- rep(1, length(moa.list$Metadata_pert_id))
+same.moa <- outer(v, v, "*")
+rownames(same.moa) <- 1:length(moa.list$Metadata_pert_id)
+colnames(same.moa) <- 1:length(moa.list$Metadata_pert_id)
+same.moa.list <- same.moa %>% melt %>% dplyr::filter(moa.list$Metadata_pert_id[Var1] < moa.list$Metadata_pert_id[Var2]) 
+same.moa.list[,3] <- apply(same.moa.list, 1, function(x) ag.ant(moa.list$Metadata_moa[x[1]], moa.list$Metadata_moa[x[2]]))
+same.moa <- outer(v, v, "*")
+rownames(same.moa) <- moa.list$Metadata_pert_id
+colnames(same.moa) <- moa.list$Metadata_pert_id
+same.moa.list[,c(1, 2)] <- (melt(same.moa) %>% dplyr::filter(as.character(Var1) < as.character(Var2)))[,c(1, 2)]
+
+thr <- quantile(cr.cmpd.res$value, 0.05)
+v11 <- which((cr.cmpd.res$value) < thr & same.moa.list$value) %>% length
+v12 <- which((cr.cmpd.res$value) < thr & !same.moa.list$value) %>% length
+v21 <- which((cr.cmpd.res$value) > thr & same.moa.list$value) %>% length
+v22 <- which((cr.cmpd.res$value) > thr & !same.moa.list$value) %>% length
+V <- rbind(c(v11, v12), c(v21, v22))
+print(V)
+fisher.test(V, alternative = "greater")
+
+u <- cr.cmpd.res[which((cr.cmpd.res$value) < thr & same.moa.list$value), ]
+colnames(u)[1] <- "Metadata_pert_id"
+u <- plyr::join(u, moa.list)
+colnames(u)[1] <- "Metadata_pert_id 1"
+colnames(u)[2] <- "Metadata_pert_id"
+colnames(u)[4] <- "MOA 1"
+
+u <- plyr::join(u, moa.list, by = "Metadata_pert_id")
+colnames(u)[5] <- "MOA 2"
+
+brd.to.cid <- Pf.cmpd$data[,c("Image_Metadata_BROAD_ID", "Image_Metadata_SOURCE_COMPOUND_NAME")]
+colnames(brd.to.cid) <- c("Broad.ID", "Compound.Name")
+
+brd.to.cid <- brd.to.cid[,c("Broad.ID", "Compound.Name")]
+brd.to.cid$Broad.ID <- lapply(brd.to.cid$Broad.ID, function(x) sprintf("%s-%s", str_split(x, "-")[[1]][1], str_split(x, "-")[[1]][2])) %>% unlist
+
+colnames(u)[1] <- "Broad.ID"
+u <- plyr::join(u, brd.to.cid, by = "Broad.ID")
+colnames(u)[1] <- "Compound 1"
+colnames(u)[2] <- "Broad.ID"
+u <- plyr::join(u, brd.to.cid, by = "Broad.ID")
+colnames(u)[3] <- "Corr."
+colnames(u)[2] <- "Compound 2"
+colnames(u)[6] <- "Name 1"
+colnames(u)[7] <- "Name 2"
+u %>% dplyr::arrange(`MOA 1`) %>% dplyr::group_by(`Compound 1`, `Compound 2`) %>% dplyr::slice(1) %>% dplyr::ungroup() %>% dplyr::mutate(Corr. = round(Corr., 2)) %>% htmlTable::htmlTable()
+
+```
+
+```{r Find the correlation matrix, eval=T}
+
+base.dir <- "2016-07-20_90b7bb86"
+cmpd.name <- readRDS(sprintf("../input/Gustafsdottir/%s/cmpds.names.rds", base.dir))  
+Pf.cmpd$data <- plyr::join(Pf.cmpd$data[,c("Image_Metadata_BROAD_ID", Pf.cmpd$feat_cols)], cmpd.name, by = "Image_Metadata_BROAD_ID")
+
+Pf.cmpd$data <- Pf.cmpd$data %>% dplyr::mutate(Image_Metadata_SOURCE_COMPOUND_NAME = str_to_lower(Image_Metadata_SOURCE_COMPOUND_NAME)) %>% dplyr::group_by(Image_Metadata_SOURCE_COMPOUND_NAME) %>% dplyr::slice(1) %>% dplyr::ungroup()
+
+x <- Pf.cmpd$data[,Pf.cmpd$feat_cols]
+rownames(x) <- Pf.cmpd$data$Image_Metadata_BROAD_ID
+
+y <- Pf.gene$data[,Pf.gene$feat_cols]
+rownames(y) <- Pf.gene$data$Treatment
+
+x1 <- Pf.cmpd$data[,Pf.cmpd$feat_cols]
+rownames(x1) <- Pf.cmpd$data$Image_Metadata_SOURCE_COMPOUND_NAME
+
+
+cr <- cor(x %>% t, y %>% t)
+cr1 <- cor(x1 %>% t, y %>% t)
+
+```
+
+```{r Evaluate top 5 percent connections, eval=T}
+
+base.dir <- "2016-07-20_90b7bb86"
+
+all.id <- readRDS(sprintf("../input/Gustafsdottir/%s/ids.all.rds", base.dir))  
+id.to.name <- readRDS(sprintf("../input/Gustafsdottir/%s/id.to.name.rds", base.dir))  
+cmpd.name <- readRDS(sprintf("../input/Gustafsdottir/%s/cmpds.names.rds", base.dir))  
+
+gene.chem.conn <- cr * 0
+for (cmpd in rownames(cr)) {
+  i <- which(cmpd.name$Image_Metadata_BROAD_ID == cmpd)
+  gene.list <- all.id[[i]]
+  genes <- id.to.name %>% dplyr::filter(gene.id %in% gene.list & gene.type == "[Homo sapiens (human)]") %>% dplyr::select(gene.name) %>% as.matrix() %>% as.vector()
+  comm.genes <- intersect(genes, colnames(cr))
+  gene.chem.conn[cmpd, comm.genes] <- 1
+}
+
+d1 <- gene.chem.conn %>% melt 
+d2 <- cr %>% melt 
+colnames(d1)[3] <- "verified"
+colnames(d2)[3] <- "corr"
+
+d <- plyr::join(d1, d2, by = c("Var1", "Var2"))
+thr <- d$corr %>% abs %>% quantile(., 0.95) %>% as.matrix() %>% as.vector()
+v11 <- d %>% dplyr::filter(abs(corr) > thr & verified == 1) %>% NROW
+v12 <- d %>% dplyr::filter(abs(corr) > thr & verified == 0) %>% NROW
+v21 <- d %>% dplyr::filter(abs(corr) < thr & verified == 1) %>% NROW
+v22 <- d %>% dplyr::filter(abs(corr) < thr & verified == 0) %>% NROW
+V <- rbind(c(v11, v12), c(v21, v22))
+rownames(V) <- c("highly correlated", "remainder")
+colnames(V) <- c("verified", "non-verified")
+
+print(V)
+print(sprintf("correct discovery rate : %.1f%%", round(100 * v11/(v11 + v12), 1)))
+
+fisher.test(V, alternative = "greater")
+
+cmpd.name.tmp <- cmpd.name
+colnames(cmpd.name.tmp) <- c("Compound ID", "Compound Name")
+colnames(d) <- c("Compound ID", "Gene Name", "verified", "corr.")
+d.e <- plyr::join(d, cmpd.name.tmp, by = "Compound ID")
+d.e <- d.e[,c(1, 5, 2, 4, 3)]
+d.e.sel <- d.e %>% dplyr::filter(abs(corr.) > thr & verified == 1) %>% dplyr::select(one_of("Compound ID", "Compound Name", "Gene Name", "corr.")) %>% dplyr::mutate(corr. = round(corr., 2)) %>% dplyr::mutate(`Compound Name` = str_to_lower(`Compound Name`)) 
+d.e.sel %>% htmlTable::htmlTable(.)
+
+
+sprintf("Number of unique compounds : %d", (d.e.sel$`Compound Name` %>% unique %>% length)) %>% print
+
+sprintf("Number of unique genes : %d", (d.e.sel$`Gene Name` %>% unique %>% length)) %>% print
+
+sprintf("How many compounds have an annotated gene in the ground truth set : %d", sum(apply(gene.chem.conn, 1, sum) != 0)) %>% print()
+
+```
+
+```{r per-gene analysis, eval=T}
+
+find.matches <- function(x, thr) {
+  sel <- 1:5
+  ord <- order(abs(x), decreasing = T)
+  idx <- which(abs(x[ord[sel]]) > thr)
+  res <- list(ord[sel[idx]] %>% as.matrix() %>% as.vector())
+  return(res)
+}
+
+res <- apply(cr, 2, function(x) find.matches(x, 0.65))
+cmpds.names <- rownames(cr)
+cmpd.pred <- cr * 0
+
+for (nm in names(res)) {
+  cmpd.pred[(cmpds.names[res[[nm]] %>% unlist]), nm] <- 1
+}
+
+cmpd.pred.melt <- cmpd.pred %>% melt
+gene.chem.conn.melt <- gene.chem.conn %>% melt
+
+v11 <- which(cmpd.pred == 1 & gene.chem.conn == 1) %>% length
+v12 <- which(cmpd.pred == 1 & gene.chem.conn == 0) %>% length
+v21 <- which(cmpd.pred == 0 & gene.chem.conn == 1) %>% length
+v22 <- which(cmpd.pred == 0 & gene.chem.conn == 0) %>% length
+V <- rbind(c(v11, v12), c(v21, v22))
+rownames(V) <- c("highly correlated", "remainder")
+colnames(V) <- c("verified", "non-verified")
+print(V)
+print(sprintf("correct discovery rate : %.1f%%", round(100 * v11/(v11 + v12), 1)))
+fisher.test(V, alternative = "greater")
+
+idx <- which(cmpd.pred.melt[,3] == 1 & gene.chem.conn.melt[,3] == 1)
+x.i <- cmpd.pred.melt[idx, c(1, 2)]
+colnames(x.i)[1] <- "Image_Metadata_BROAD_ID"
+x.i <- plyr::join(x.i, cmpd.name, by = "Image_Metadata_BROAD_ID") 
+x.i[,3] <- x.i[,3] %>% str_to_lower()
+corr <- apply(x.i, 1, function(x) cr[x[1], x[2]])
+x.i <- cbind(x.i, data.frame(corr. = round(corr, 2)))
+
+colnames(x.i) <- c("Compound ID", "Gene", "Compound Name", "Corr.")
+x.i %>% htmlTable(.)
+
+```
+
+```{r compare correlations across the two classes, eval=T}
+
+set1 <- d %>% dplyr::filter(verified == 1) %>% dplyr::select(corr.) %>% as.matrix() %>% as.vector()
+set0 <- d %>% dplyr::filter(verified == 0) %>% dplyr::select(corr.) %>% as.matrix() %>% as.vector()
+plot(density(set0 %>% abs), xlim = c(-1, 1), ylim = c(0, 3.5), xlab = "", main = "")
+par(new = T)
+plot(density(set1 %>% abs), xlim = c(-1, 1), ylim = c(0, 3.5), xlab = "abs. corr.", main = "", col = "red")
+legend("topright", legend = c("non-verified conn.", "verified conn."), col = c("black", "red"), lwd = 3, cex = 0.7)
+t.test(abs(set1), abs(set0), "greater")
+
+```
