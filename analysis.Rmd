@@ -9,6 +9,7 @@ library(htmlTable)
 source("rep.corr.func.R")
 
 use.feat.selected.in.TA.ORF.in.common <- T
+corr.type <- "spearman"
 
 base.dir <- "2016-07-20_90b7bb86"
 cmpd.name <- readRDS(sprintf("../input/Gustafsdottir/%s/cmpds.names.rds", base.dir))
@@ -296,8 +297,8 @@ x1 <- Pf.cmpd$data[,Pf.cmpd$feat_cols]
 rownames(x1) <- Pf.cmpd$data$Image_Metadata_SOURCE_COMPOUND_NAME
 
 
-cr <- cor(x %>% t, y %>% t)
-cr1 <- cor(x1 %>% t, y %>% t)
+cr <- cor(x %>% t, y %>% t, method = corr.type)
+cr1 <- cor(x1 %>% t, y %>% t, method = corr.type)
 
 ```
 

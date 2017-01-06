@@ -12,6 +12,7 @@ seed.moa <- -8     ## ignore, if permute.moas is False
 
 base.dir <- "2016-07-20_90b7bb86"
 use.feat.selected.in.TA.ORF.in.common <- F
+corr.type <- "pearson"
 
 load("../input/TA/Initial_analysis_workspace.RData")
 Pf.ta <- Pf_org.org.collapsed
@@ -157,7 +158,7 @@ for (i in 1:6) {
   x <- d[,Pf.cmpd$feat_cols]
   y <- Pf.gene$data[,Pf.gene$feat_cols]
   
-  cri <- cor(x %>% t, y %>% t) 
+  cri <- cor(x %>% t, y %>% t, method = corr.type) 
   rownames(cri) <- d$Metadata_pert_iname
   colnames(cri) <- Pf.gene$data$Treatment
   
