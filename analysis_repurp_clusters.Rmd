@@ -193,11 +193,11 @@ moa.list.add <- moa.list.tmp %>% dplyr::group_by(Metadata_moa) %>% dplyr::summar
 colnames(moa.list.tmp)[1] <- "Var1"
 cr.melt.tmp <- plyr::join(cr.melt, moa.list.tmp, by = "Var1")
 cr.melt.tmp <- plyr::join(cr.melt.tmp, moa.list.add, by = "Metadata_moa")
-thr <- 0.0
+thr <- quantile(cr.melt.tmp$value, 0.95) %>% as.matrix() %>% as.vector()
 
 print("positive corr.")
 for (i in 1:length(cls)) {
-  print(i)
+  print(sprintf("pos. matches - cluster %d - %s", i, paste(cls[[i]], collapse = ", ")))
   cr.melt.tmp %>% dplyr::filter(Var2 == i) %>% dplyr::arrange(-value) %>% head(., 50) %>% dplyr::filter(abs(value) > thr) %>% dplyr::group_by(Metadata_moa, count.all) %>% dplyr::summarise(count = n()) %>% dplyr::mutate(count.nrm = count/count.all) %>% dplyr::filter(count.all >= 4) %>% dplyr::arrange(-count.nrm) %>% head(., 5) %>% print()
   cat("\n")
   cat("\n")
@@ -206,7 +206,7 @@ for (i in 1:length(cls)) {
 
 print("negative corr.")
 for (i in 1:length(cls)) {
-  print(i)
+  print(sprintf("neg. matches - cluster %d - %s", i, paste(cls[[i]], collapse = ", ")))
   cr.melt.tmp %>% dplyr::filter(Var2 == i) %>% dplyr::arrange(value) %>% head(., 50) %>% dplyr::filter(abs(value) > thr) %>% dplyr::group_by(Metadata_moa, count.all) %>% dplyr::summarise(count = n()) %>% dplyr::mutate(count.nrm = count/count.all) %>% dplyr::filter(count.all >= 4) %>% dplyr::arrange(-count.nrm) %>% head(., 5) %>% print()
   cat("\n")
   cat("\n")
