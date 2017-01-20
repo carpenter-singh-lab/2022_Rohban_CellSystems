@@ -304,21 +304,24 @@ cr1 <- cor(x1 %>% t, y %>% t, method = corr.type)
 
 ```{r Evaluate top 5 percent connections, eval=T}
 
-base.dir <- "2016-07-20_90b7bb86"
+annot <- readRDS("../input/repurp/CTD_chem_gene_ixns.rds")
+cmpds <- unique(Pf.cmpd$data$Image_Metadata_SOURCE_COMPOUND_NAME) %>% lapply(., function(x) str_to_lower(x)) %>% unlist
 
-all.id <- readRDS(sprintf("../input/Gustafsdottir/%s/ids.all.rds", base.dir))  
-id.to.name <- readRDS(sprintf("../input/Gustafsdottir/%s/id.to.name.rds", base.dir))  
-cmpd.name <- readRDS(sprintf("../input/Gustafsdottir/%s/cmpds.names.rds", base.dir))  
+genes <- Pf.gene$data$Treatment %>% lapply(., function(x) str_split(x, "_")[[1]][1]) %>% unlist %>% unique
 
+annot.res <- annot %>% dplyr::filter(Organism == "Homo sapiens" & str_to_lower(ChemicalName) %in% cmpds & GeneSymbol %in% genes)
+intr.brief <- annot.res$InteractionActions %>% lapply(., function(x) paste(str_split(str_replace_all(x, "\\|", "\\^"), "\\^")[[1]][1:2], collapse = "_")) %>% unlist
+annot.res <- cbind(annot.res, data.frame(InteractionBrief = intr.brief))
+annot.res <- annot.res %>% dplyr::filter(InteractionBrief %in% c("increases_expression", "decreases_expression", "increases_activity", "decreases_activity", "increases_phosphorylation", "decreases_phosphorylation") & !str_detect(InteractionActions, "reaction") & ! str_detect(InteractionActions, "response to substance"))
 gene.chem.conn <- cr * 0
-for (cmpd in rownames(cr)) {
-  i <- which(cmpd.name$Image_Metadata_BROAD_ID == cmpd)
-  gene.list <- all.id[[i]]
-  genes <- id.to.name %>% dplyr::filter(gene.id %in% gene.list & gene.type == "[Homo sapiens (human)]") %>% dplyr::select(gene.name) %>% as.matrix() %>% as.vector()
-  comm.genes <- intersect(genes, colnames(cr))
-  gene.chem.conn[cmpd, comm.genes] <- 1
+for (i in 1:NROW(annot.res)) {
+  j <- which(str_to_lower(Pf.cmpd$data$Image_Metadata_SOURCE_COMPOUND_NAME) == str_to_lower(annot.res$ChemicalName[i]))
+  
+  cm <- as.character(Pf.cmpd$data$Image_Metadata_BROAD_ID[j[1]])
+  gn <- annot.res$GeneSymbol[i] %>% as.character()
+  gene.chem.conn[cm, gn] <- 1
 }
-
+  
 d1 <- gene.chem.conn %>% melt 
 d2 <- cr %>% melt 
 colnames(d1)[3] <- "verified"
@@ -340,11 +343,11 @@ print(sprintf("correct discovery rate : %.1f%%", round(100 * v11/(v11 + v12), 1)
 fisher.test(V, alternative = "greater")
 
 cmpd.name.tmp <- cmpd.name
-colnames(cmpd.name.tmp) <- c("Compound ID", "Compound Name")
-colnames(d) <- c("Compound ID", "Gene Name", "verified", "corr.")
-d.e <- plyr::join(d, cmpd.name.tmp, by = "Compound ID")
+colnames(cmpd.name.tmp) <- c("Compound", "Compound Name")
+colnames(d) <- c("Compound", "Gene", "verified", "corr.")
+d.e <- plyr::join(d, cmpd.name.tmp, by = "Compound")
 d.e <- d.e[,c(1, 5, 2, 4, 3)]
-d.e.sel <- d.e %>% dplyr::filter(abs(corr.) > thr & verified == 1) %>% dplyr::select(one_of("Compound ID", "Compound Name", "Gene Name", "corr.")) %>% dplyr::mutate(corr. = round(corr., 2)) %>% dplyr::mutate(`Compound Name` = str_to_lower(`Compound Name`)) 
+d.e.sel <- d.e %>% dplyr::filter(abs(corr.) > thr & verified == 1) %>% dplyr::select(one_of("Compound", "Compound Name", "Gene", "corr.")) %>% dplyr::mutate(corr. = round(corr., 2)) %>% dplyr::mutate(`Compound Name` = str_to_lower(`Compound Name`)) 
 d.e.sel %>% htmlTable::htmlTable(.)
 
 
@@ -354,19 +357,72 @@ sprintf("Number of unique genes : %d", (d.e.sel$`Gene Name` %>% unique %>% lengt
 
 sprintf("How many compounds have an annotated gene in the ground truth set : %d", sum(apply(gene.chem.conn, 1, sum) != 0)) %>% print()
 
+######
+
+n.cmpd.with.annot <- NROW(gene.chem.conn)
+n.gene.with.annot <- NCOL(gene.chem.conn) 
+cmpd.spec <- 1 - (apply(gene.chem.conn, 1, sum)/n.gene.with.annot)
+gene.spec <- 1 - (apply(gene.chem.conn, 2, sum)/n.cmpd.with.annot)
+
+cmpd.spec.df <- data.frame(Compound = names(cmpd.spec), Compound.Specificity = as.vector(round(cmpd.spec, 2)))
+gene.spec.df <- data.frame(Gene = names(gene.spec), Gene.Specificity = as.vector(round(gene.spec, 2)))
+v2 <- d.e.sel
+v2 <- plyr::join(plyr::join(v2, cmpd.spec.df), gene.spec.df)
+v2 %>% dplyr::mutate(corr. = round(corr., 2)) %>% dplyr::arrange(-Compound.Specificity-Gene.Specificity) %>% htmlTable::htmlTable()
+
+print("now removing non-specific genes and compounds") 
+
+d.app <- d
+colnames(d.app)[1:2] <- c("Compound", "Gene")
+d.app <- plyr::join(plyr::join(d.app, cmpd.spec.df), gene.spec.df)
+d.app <- d.app %>% dplyr::filter(Compound.Specificity > 0.90)
+
+thr <- d.app$corr. %>% abs %>% quantile(., 0.95) %>% as.matrix() %>% as.vector()
+v11 <- d.app %>% dplyr::filter(abs(corr.) > thr & verified == 1) %>% NROW
+v12 <- d.app %>% dplyr::filter(abs(corr.) > thr & verified == 0) %>% NROW
+v21 <- d.app %>% dplyr::filter(abs(corr.) < thr & verified == 1) %>% NROW
+v22 <- d.app %>% dplyr::filter(abs(corr.) < thr & verified == 0) %>% NROW
+V <- rbind(c(v11, v12), c(v21, v22))
+rownames(V) <- c("highly correlated", "remainder")
+colnames(V) <- c("verified", "non-verified")
+
+print(V)
+print(sprintf("correct discovery rate : %.1f%%", round(100 * v11/(v11 + v12), 1)))
+
+fisher.test(V, alternative = "greater")
+
+v1 <- d.app %>% dplyr::filter(abs(corr.) > thr & verified == 1) 
+colnames(v1)[1] <- "Image_Metadata_BROAD_ID"
+v2 <- plyr::join(v1, Pf.cmpd$data[,c("Image_Metadata_BROAD_ID", "Image_Metadata_SOURCE_COMPOUND_NAME")] %>% unique)
+v2 <- v2[,c(1, 2, 4, 7, 5, 6)]
+colnames(v2) <- c("Compound", "Gene", "Corr.", "Compound Name", "Compound.Specificity", "Gene.Specificity")
+
+annot.res.t <- annot.res
+colnames(annot.res.t)[1] <- "Compound"
+annot.res.t$Compound <- str_to_lower(annot.res.t$Compound)
+colnames(annot.res.t)[4] <- "Gene"
+annot.res.t <- annot.res.t[,c("Compound", "Gene", "Interaction", "PubMedIDs")]
+colnames(annot.res.t)[1] <- "Compound Name"
+v3 <- plyr::join(v2, annot.res.t, by = c("Compound Name", "Gene"))
+v4 <- gene.chem.conn[v3$Compound, ]
+genes.reg <- apply(v4, 1, function(x) return(paste(names(which(x == 1)), collapse = " ")))
+v5 <- cbind(v3, data.frame(Genes.Connected.to = genes.reg %>% as.matrix() %>% as.vector()))
+
+v5 %>% dplyr::mutate(Corr. = round(Corr., 2)) %>% htmlTable::htmlTable()
+
 ```
 
 ```{r per-gene analysis, eval=T}
 
 find.matches <- function(x, thr) {
-  sel <- 1:5
+  sel <- 1:10
   ord <- order(abs(x), decreasing = T)
   idx <- which(abs(x[ord[sel]]) > thr)
   res <- list(ord[sel[idx]] %>% as.matrix() %>% as.vector())
   return(res)
 }
 
-res <- apply(cr, 2, function(x) find.matches(x, 0.65))
+res <- apply(cr, 2, function(x) find.matches(x, 0.50))
 cmpds.names <- rownames(cr)
 cmpd.pred <- cr * 0
 
