@@ -227,6 +227,9 @@ if (use.repurp.annots) {
     gene.chem.conn[cm, gn] <- 1
   }
   
+  pro.compd <- which((1 - apply(gene.chem.conn, 1, sum)/NCOL(gene.chem.conn)) <= 0.90) %>% names
+gene.chem.conn[pro.compd, ] <- 0
+
   d1 <- gene.chem.conn %>% melt 
 }
 
@@ -235,19 +238,7 @@ colnames(d1)[3] <- "verified"
 colnames(d2)[3] <- "corr"
 
 d <- plyr::join(d1, d2, by = c("Var1", "Var2"))
-thr <- d$corr %>% abs %>% quantile(., 0.95) %>% as.matrix() %>% as.vector()
-v11 <- d %>% dplyr::filter(abs(corr) > thr & verified == 1) %>% NROW
-v12 <- d %>% dplyr::filter(abs(corr) > thr & verified == 0) %>% NROW
-v21 <- d %>% dplyr::filter(abs(corr) < thr & verified == 1) %>% NROW
-v22 <- d %>% dplyr::filter(abs(corr) < thr & verified == 0) %>% NROW
-V <- rbind(c(v11, v12), c(v21, v22))
-rownames(V) <- c("highly correlated", "remainder")
-colnames(V) <- c("verified", "non-verified")
 
-print(V)
-print(sprintf("correct discovery rate : %.1f%%", round(100 * v11/(v11 + v12), 1)))
-
-fisher.test(V, alternative = "greater")
 v1 <- d %>% dplyr::filter(abs(corr) > thr & verified == 1) 
 colnames(v1)[1] <- "Metadata_pert_iname"
 v2 <- plyr::join(v1, Pf.cmpd$data[,c("Metadata_pert_iname", "Metadata_moa")] %>% unique)
@@ -261,9 +252,7 @@ gene.spec <- 1 - (apply(gene.chem.conn, 2, sum)/n.cmpd.with.annot)
 cmpd.spec.df <- data.frame(Compound = names(cmpd.spec), Compound.Specificity = as.vector(round(cmpd.spec, 2)))
 gene.spec.df <- data.frame(Gene = names(gene.spec), Gene.Specificity = as.vector(round(gene.spec, 2)))
 v2 <- plyr::join(plyr::join(v2, cmpd.spec.df), gene.spec.df)
-v2 %>% dplyr::mutate(Corr. = round(Corr., 2)) %>% dplyr::arrange(-Compound.Specificity-Gene.Specificity) %>% htmlTable::htmlTable()
-
-print("now removing non-specific genes and compounds") 
+#v2 %>% dplyr::mutate(Corr. = round(Corr., 2)) %>% dplyr::arrange(-Compound.Specificity-Gene.Specificity) %>% htmlTable::htmlTable()
 
 d.app <- d
 colnames(d.app)[1:2] <- c("Compound", "Gene")
@@ -300,14 +289,18 @@ v4 <- gene.chem.conn[v3$Compound, ]
 genes.reg <- apply(v4, 1, function(x) return(paste(names(which(x == 1)), collapse = " ")))
 v5 <- cbind(v3, data.frame(Genes.Connected.to = genes.reg %>% as.matrix() %>% as.vector()))
 
-v5 %>% dplyr::mutate(Corr. = round(Corr., 2)) %>% htmlTable::htmlTable()
+#v5 %>% dplyr::mutate(Corr. = round(Corr., 2)) %>% htmlTable::htmlTable()
+
+v5 %>% dplyr::mutate(Corr. = round(Corr., 2)) %>% dplyr::select(one_of(c("Compound", "Gene", "Corr.", "MOA", "Compound.Specificity", "Gene.Specificity", "Genes.Connected.to"))) %>% unique %>% htmlTable::htmlTable(.,rnames = 1:NROW(v5))
+
+v5 %>% dplyr::mutate(Corr. = round(Corr., 2)) %>% dplyr::select(one_of(c("Compound", "Gene", "MOA", "Interaction",  "PubMedIDs", "Genes.Connected.to"))) %>% unique %>% htmlTable::htmlTable(.,rnames = 1:NROW(v5))
 
 ```
 
 ```{r Evaluate top match to each gene, eval=TRUE}
 
-num.top.conn <- 10
-corr.thr <- 0.4
+num.top.conn <- 5
+corr.thr <- 0.35
 
 top.pos.conn <- d %>% dplyr::arrange(-corr) %>% dplyr::group_by(Var2) %>% dplyr::slice(1:num.top.conn)
 top.neg.conn <- d %>% dplyr::arrange(corr) %>% dplyr::group_by(Var2) %>% dplyr::slice(1:num.top.conn)
