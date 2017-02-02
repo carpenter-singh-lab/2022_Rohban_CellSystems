@@ -84,10 +84,9 @@ Pf.gene$feat_cols <- f
 Pf.cmpd$data <- Pf.cmpd$data[,c(Pf.cmpd$factor_cols, Pf.cmpd$feat_cols)]
 Pf.gene$data <- Pf.gene$data[,c(Pf.gene$factor_cols, Pf.gene$feat_cols)]
 
-med <- apply(Pf.cmpd$data[,Pf.cmpd$feat_cols], 2, median)
-md <- apply(Pf.cmpd$data[,Pf.cmpd$feat_cols], 2, mad)
-Pf.cmpd$data[,Pf.cmpd$feat_cols] <- scale(Pf.cmpd$data[,Pf.cmpd$feat_cols], med, md)
-
+#med <- apply(Pf.cmpd$data[,Pf.cmpd$feat_cols], 2, median)
+#md <- apply(Pf.cmpd$data[,Pf.cmpd$feat_cols], 2, mad)
+#Pf.cmpd$data[,Pf.cmpd$feat_cols] <- scale(Pf.cmpd$data[,Pf.cmpd$feat_cols], med, md)
 
 Pf.cmpd.all$feat_cols <- f
 Pf.gene.all$feat_cols <- f
@@ -109,9 +108,9 @@ if (use.feat.selected.in.TA.ORF.in.common) {
   Pf.gene.all$data <- Pf.gene.all$data[,c(feats, Pf.gene.all$factor_cols)]
 }
 
-med <- apply(Pf.cmpd.all$data[,Pf.cmpd.all$feat_cols], 2, median)
-md <- apply(Pf.cmpd.all$data[,Pf.cmpd.all$feat_cols], 2, mad)
-Pf.cmpd.all$data[,Pf.cmpd.all$feat_cols] <- scale(Pf.cmpd.all$data[,Pf.cmpd.all$feat_cols], med, md)
+#med <- apply(Pf.cmpd.all$data[,Pf.cmpd.all$feat_cols], 2, median)
+#md <- apply(Pf.cmpd.all$data[,Pf.cmpd.all$feat_cols], 2, mad)
+#Pf.cmpd.all$data[,Pf.cmpd.all$feat_cols] <- scale(Pf.cmpd.all$data[,Pf.cmpd.all$feat_cols], med, md)
 
 print(length(Pf.cmpd$feat_cols))
 print(NROW(Pf.cmpd$data))
