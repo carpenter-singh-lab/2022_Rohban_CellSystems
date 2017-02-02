@@ -1,0 +1,213 @@
+```{r Load Gene OE and Compound data, eval=TRUE, warning=FALSE}
+
+rm(list = ls())
+library(dplyr)
+library(stringr)
+library(plyr)
+library(reshape2)
+library(htmlTable)
+source("rep.corr.func.R")
+use.repurp.annots <- F
+permute.moas <- F
+seed.moa <- -8     ## ignore, if permute.moas is False
+
+base.dir <- "2016-07-20_90b7bb86"
+use.feat.selected.in.TA.ORF.in.common <- F
+corr.type <- "pearson"
+genes.to.match <- c("HRAS_G12V", "KRAS_G12V")
+#genes.to.match <- c("KRAS_WT.1", "RAF1_WT.1")
+
+load("../input/TA/Initial_analysis_workspace.RData")
+Pf.ta <- Pf_org.org.collapsed
+Pf.ta.all <- Pf_org.org
+strong.trt <- Pf.trt.strong.collapsed$data$Treatment
+data.annot <- Pf.strong %>% dplyr::filter(Treatment %in% strong.trt) %>% dplyr::select(one_of(c("Treatment", "Pathway", "Gene", "AlleleDesc"))) %>% 
+  dplyr::mutate(Pathway = str_replace(Pathway, "Canonical ", "")) %>% 
+  dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2)) 
+desired.ta <- data.annot$Treatment
+Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(Treatment %in% c(as.character(desired.ta), "EMPTY_")) 
+Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta) 
+
+Pf.gene <- Pf.ta
+Pf.gene.all <- Pf.ta.all
+
+############
+
+source("rep.corr.func.R")
+
+x <- readRDS("../input/repurp/2016_04_01_a549_48hr_batch1_normalized.rds")
+moa.list <- x[,c("Metadata_pert_iname", "Metadata_moa", "Metadata_pert_id")]
+m.list <- moa.list$Metadata_moa %>% unique %>% as.matrix() %>% as.vector() %>% as.vector()
+m.list <- setdiff(m.list, NA)
+set.seed(seed.moa)
+pr <- permute::shuffle(length(m.list))
+m.list <- data.frame(moa = m.list)
+rownames(m.list) <- m.list$moa[pr]
+m.list.p <- lapply(x$Metadata_moa, function(x) m.list[(x %>% as.character()), "moa"]) %>% unlist
+if (permute.moas) {
+  x$Metadata_moa <- m.list.p  
+}
+
+x <- cbind(x, data.frame(Metadata_Treatment = paste(x$Metadata_pert_id, x$Metadata_mg_per_ml, sep = "@")))
+feats <- colnames(x)
+feats <- feats[which(!str_detect(feats, "Metadata"))]
+metadata <- colnames(x)
+metadata <- metadata[which(str_detect(metadata, "Metadata"))]
+thr <- non.rep.cor(list(data = x, feat_col = feats, factor_col = metadata), "Metadata_Treatment", feats)
+u <- rep.cor(list(data = x, feat_col = feats, factor_col = metadata), "Metadata_Treatment", feats)
+strong.trt <- u$Metadata_Treatment[which(u$cr > thr)]
+sprintf("Hit ratio (compound-concentrations) : %f%%", round(length(strong.trt)/NROW(u) * 100))
+strong.cmpd <- lapply(strong.trt, function(x) str_split(x, "@")[[1]][1]) %>% unlist %>% unique
+all.cmpd <- lapply(u$Metadata_Treatment, function(x) str_split(x, "@")[[1]][1]) %>% unlist %>% unique
+sprintf("Hit ratio (compounds) : %f%%", round(length(strong.cmpd)/length(all.cmpd) * 100))
+x.all <- x
+x <- x %>% dplyr::filter(Metadata_Treatment %in% strong.trt)
+x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa, Metadata_pert_id) %>% 
+  dplyr::select(one_of(c(feats, "Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa", "Metadata_pert_id"))) %>% dplyr::summarise_each(funs("mean")) %>% dplyr::ungroup() %>% dplyr::filter(!is.na(Metadata_pert_iname))
+
+Pf.cmpd <- list(data = x.collapsed, feat_cols = feats, factor_cols = c("Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa", "Metadata_pert_id"))
+Pf.cmpd.all <- list(data = x.all, feat_cols = feats, factor_cols = c("Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa", "Metadata_pert_id"))
+
+```
+
+```{r Align the features in Compound and Gene OE data, eval=TRUE}
+
+f1 <- Pf.cmpd$feat_cols
+f2 <- Pf.gene$feat_cols
+f <- intersect(f1, f2)
+
+Pf.cmpd$feat_cols <- f
+Pf.gene$feat_cols <- f
+
+Pf.cmpd$data <- Pf.cmpd$data[,c(Pf.cmpd$factor_cols, Pf.cmpd$feat_cols)]
+Pf.gene$data <- Pf.gene$data[,c(Pf.gene$factor_cols, Pf.gene$feat_cols)]
+
+#med <- apply(Pf.cmpd$data[,Pf.cmpd$feat_cols], 2, median)
+#md <- apply(Pf.cmpd$data[,Pf.cmpd$feat_cols], 2, mad)
+#Pf.cmpd$data[,Pf.cmpd$feat_cols] <- scale(Pf.cmpd$data[,Pf.cmpd$feat_cols], med, md)
+
+
+Pf.cmpd.all$feat_cols <- f
+Pf.gene.all$feat_cols <- f
+
+Pf.cmpd.all$data <- Pf.cmpd.all$data[,c(Pf.cmpd.all$factor_cols, Pf.cmpd.all$feat_cols)]
+Pf.gene.all$data <- Pf.gene.all$data[,c(Pf.gene.all$factor_cols, Pf.gene.all$feat_cols)]
+
+if (use.feat.selected.in.TA.ORF.in.common) {
+  feats <- Pf_org$feat_cols
+  feats <- intersect(feats, Pf.cmpd$feat_cols)
+  Pf.cmpd$feat_cols <- feats
+  Pf.cmpd$data <- Pf.cmpd$data[,c(feats, Pf.cmpd$factor_cols)]
+  Pf.gene$feat_cols <- feats
+  Pf.gene$data <- Pf.gene$data[,c(feats, Pf.gene$factor_cols)]
+
+  Pf.cmpd.all$feat_cols <- feats
+  Pf.cmpd.all$data <- Pf.cmpd.all$data[,c(feats, Pf.cmpd.all$factor_cols)]
+  Pf.gene.all$feat_cols <- feats
+  Pf.gene.all$data <- Pf.gene.all$data[,c(feats, Pf.gene.all$factor_cols)]
+}
+
+#med <- apply(Pf.cmpd.all$data[,Pf.cmpd.all$feat_cols], 2, median)
+#md <- apply(Pf.cmpd.all$data[,Pf.cmpd.all$feat_cols], 2, mad)
+#Pf.cmpd.all$data[,Pf.cmpd.all$feat_cols] <- scale(Pf.cmpd.all$data[,Pf.cmpd.all$feat_cols], med, md)
+
+print(length(Pf.cmpd$feat_cols))
+print(NROW(Pf.cmpd$data))
+
+print(length(Pf.gene$feat_cols))
+print(NROW(Pf.gene$data))
+
+print(length(Pf.cmpd.all$feat_cols))
+print(NROW(Pf.cmpd.all$data))
+
+print(length(Pf.gene.all$feat_cols))
+print(NROW(Pf.gene.all$data))
+
+```
+
+```{r Find the correlation matrix, eval=T}
+
+cr.melt.all <- c()
+cmpd.all <- Pf.cmpd$data$Metadata_pert_iname %>% unique()
+cr <- outer(rep(0, length(cmpd.all)), rep(0, NROW(Pf.gene$data)), "*")
+rownames(cr) <- cmpd.all
+colnames(cr) <- Pf.gene$data$Treatment
+
+for (i in 1:6) {
+  d <- Pf.cmpd$data %>% dplyr::group_by(Metadata_pert_iname) %>% dplyr::slice(i) %>% dplyr::ungroup()
+  
+  x <- d[,Pf.cmpd$feat_cols]
+  y <- Pf.gene$data[,Pf.gene$feat_cols]
+  
+  cri <- cor(x %>% t, y %>% t, method = corr.type) 
+  rownames(cri) <- d$Metadata_pert_iname
+  colnames(cri) <- Pf.gene$data$Treatment
+  
+  crj <- cr * NA
+  crj[rownames(cri), colnames(cri)] <- cri 
+  
+  if (is.null(cr.melt.all)) {
+    cr.melt.all <- crj %>% melt
+  } else {
+    cr.melt <- crj %>% melt
+    cr.melt.all <- cbind(cr.melt.all, cr.melt[,3])
+  }
+}
+
+v1 <- apply(cr.melt.all, 1, function(x) (quantile(x[3:NCOL(cr.melt.all)] %>% as.numeric(), 0.75, na.rm = T) %>% as.matrix() %>% as.vector))
+v2 <- apply(cr.melt.all, 1, function(x) (quantile(x[3:NCOL(cr.melt.all)] %>% as.numeric(), 0.25, na.rm = T) %>% as.matrix() %>% as.vector))
+v3 <- apply(cbind(abs(v1), abs(v2)), 1, function(x) max(x, na.rm = T) * c(1, -1)[which.max(x)])
+cr.melt <- melt(cr)
+cr.melt[,3] <- v3
+
+```
+
+```{r}
+
+v <- c()
+u <- cr.melt %>% reshape2::dcast(., Var1 ~ Var2)
+cr1 <- data.frame(u[,2:NCOL(u)])
+rownames(cr1) <- (u[,1] %>% as.matrix() %>% as.vector() %>% as.character())
+cr1.melt <- cr.melt
+
+genes <- genes.to.match
+for (gn in genes) {
+  print (sprintf("Gene : %s", gn))
+for (conn.type in c("pos", "neg")) {
+  sgn.conn <- ifelse(conn.type == "pos", -1, 1)
+  
+  entr <- function(x) {
+    x <- abs(x)
+    x[which(x < 0.2)] <- 0
+    x <- x/sum(x)
+    return(sum(-x[which(x != 0)] * log(x[which(x != 0)])))
+  }
+  
+  ent <- apply(cr1, 1, function(x) entr(x))
+  ent <- data.frame(Compound = names(ent), Specificity = ent)
+  ent$Specificity <- lapply(ent$Specificity, function(x) (1 - ecdf(ent$Specificity)(x))) %>% unlist
+  rownames(ent) <- NULL
+  
+  # %in% cls[[1]]
+  #cr[rownames(cr), colnames(cr)] <- cr1[rownames(cr), colnames(cr)]
+  u <- cr1.melt %>% dplyr::filter(Var2 == gn) %>% dplyr::group_by(Var1) %>% dplyr::summarise(value = mean(value)) %>% dplyr::arrange(sgn.conn * value) %>% head(., 50) %>%  dplyr::mutate(Compound = Var1, Corr = value) %>% dplyr::select(one_of("Compound", "Corr")) %>% dplyr::mutate(Corr = round(Corr, 2)) 
+  u <- plyr::join(u, ent, "Compound") %>% dplyr::mutate(Specificity = round(Specificity, 2)) %>% dplyr::filter(Specificity >= 0.4)
+  
+  name.to.brd <- Pf.cmpd$data[,c("Metadata_pert_id", "Metadata_pert_iname", "Metadata_moa")] %>% unique()
+  colnames(name.to.brd) <- c("Broad.ID", "Compound", "MOA")
+  u <- plyr::join(u, name.to.brd, by = "Compound")
+  v <- c(v, list(u %>% htmlTable::htmlTable()))
+  
+  u$Compound %>% as.character() %>% cat(., sep = "\n")
+}
+}
+
+print(genes[1])
+v[[1]]
+v[[2]]
+
+print(genes[2])
+v[[3]]
+v[[4]]
+
+```
