@@ -10,7 +10,7 @@ source("rep.corr.func.R")
 
 use.feat.selected.in.TA.ORF.in.common <- T
 corr.type <- "pearson"
-genes.to.match <- c("KRAS_WT.1", "RAF1_WT.1")
+genes.to.match <- c("HRAS_G12V", "KRAS_G12V")
 Specificity.thr <- 0.50
 
 base.dir <- "2016-07-20_90b7bb86"
