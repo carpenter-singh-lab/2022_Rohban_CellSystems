@@ -10,7 +10,7 @@ source("rep.corr.func.R")
 
 use.feat.selected.in.TA.ORF.in.common <- T
 corr.type <- "pearson"
-genes.to.match <- c("PPARGC1A_WT.2", "RHOA_Q63L")
+genes.to.match <- c("XBP1_WT.1", "MAPK14_WT.1")
 Specificity.thr <- 0.50
 
 base.dir <- "2016-07-20_90b7bb86"
@@ -330,7 +330,11 @@ for (conn.type in c("pos", "neg")) {
   name.to.brd <- Pf.cmpd$data[,c("Image_Metadata_BROAD_ID", "Image_Metadata_SOURCE_COMPOUND_NAME")] %>% unique()
   colnames(name.to.brd) <- c("Broad.ID", "Compound")
   u <- plyr::join(u, name.to.brd, by = "Compound")
-  v <- c(v, list(u %>% htmlTable::htmlTable()))
+  if (NROW(u) > 0) {
+    v <- c(v, list(u %>% htmlTable::htmlTable()))  
+  } else {
+    v <- c(v, list(NULL))  
+  }
   
   u$Compound %>% as.character() %>% cat(., sep = "\n")
 }
