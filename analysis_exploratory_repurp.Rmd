@@ -14,7 +14,7 @@ seed.moa <- -8     ## ignore, if permute.moas is False
 base.dir <- "2016-07-20_90b7bb86"
 use.feat.selected.in.TA.ORF.in.common <- F
 corr.type <- "pearson"
-genes.to.match <- c("YAP1_WT.1", "WWTR1_WT")
+genes.to.match <- c("PPARGC1A_WT.2", "RHOA_Q63L")
 
 load("../input/TA/Initial_analysis_workspace.RData")
 Pf.ta <- Pf_org.org.collapsed
