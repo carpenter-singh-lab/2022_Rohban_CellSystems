@@ -330,8 +330,30 @@ for (conn.type in c("pos", "neg")) {
   name.to.brd <- Pf.cmpd$data[,c("Image_Metadata_BROAD_ID", "Image_Metadata_SOURCE_COMPOUND_NAME")] %>% unique()
   colnames(name.to.brd) <- c("Broad.ID", "Compound")
   u <- plyr::join(u, name.to.brd, by = "Compound")
+  p2 <- Pf.gene$data[which(Pf.gene$data$Treatment == gn), Pf.gene$feat_cols]
+  if (conn.type == "neg") {
+    p2 <- p2 * -1
+  }
+  feats.contib <- c()
+  for (cmpd in u$Compound) {
+    p1 <- Pf.cmpd$data[which(str_to_lower(Pf.cmpd$data$Image_Metadata_SOURCE_COMPOUND_NAME) == cmpd), Pf.cmpd$feat_cols]
+    v0 <- sort(p1 * p2, decreasing = T)[1:5]
+    ft <- names(v0[which(v0 > 0.5)])
+    if (!is.null(ft)) {
+      st <- sign(p1[ft])
+      st <- lapply(st, function(x) ifelse(x == 1, "+", "-")) %>% unlist
+      ft <- paste(ft, st, " ")
+      if (length(ft) >= 2) {
+        ft <- paste(ft, collapse =  "\n")
+      }
+      feats.contib <- c(feats.contib, ft)
+    } else {
+      feats.contib <- c(feats.contib, "")
+    }
+  }
+  u <- cbind(u, data.frame(feats.contribution = feats.contib))
   if (NROW(u) > 0) {
-    v <- c(v, list(u %>% htmlTable::htmlTable()))  
+    v <- c(v, list(u %>% htmlTable::htmlTable(., col.rgroup = c("none", "#E7E7E7"))))  
   } else {
     v <- c(v, list(NULL))  
   }
