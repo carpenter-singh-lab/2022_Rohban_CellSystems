@@ -8,12 +8,13 @@ library(stringi)
 library(foreach)
 library(doMC)
 
-doMC::registerDoMC(cores = 2)
+doMC::registerDoMC(cores = 3)
+set.seed(42)
 
 source("rep.corr.func.R")
 use.repurp.annots <- F
 permute.moas <- F
-profile.thresholding <- T
+profile.thresholding <- F
 profile.thr <- 3
 seed.moa <- -8     ## ignore, if permute.moas is False
 
@@ -71,8 +72,8 @@ distinct.moas <- lapply(Pf.cmpd$data$Metadata_moa, function(x) (str_split(x, "\\
 agg.fn <- function(x) return(ifelse(max(x) > -min(x), max(x), min(x)))
 #agg.fn <- mean
 
-MOA.consistency <- data.frame(MOA = c(), consistent = c(), sig.strn = c(), thresh = c(), n.members = c())
-n.sample <- 20
+cons <- data.frame(MOA = c(), consistent = c(), sig.strn = c(), thresh = c(), n.members = c())
+n.sample <- 100
 
 cons <- foreach(moa = distinct.moas) %dopar% {
   Px <- Pf.cmpd$data %>% dplyr::filter(stri_detect_fixed(Metadata_moa, moa)) 
@@ -86,9 +87,15 @@ cons <- foreach(moa = distinct.moas) %dopar% {
   
   smp <- c()
   
-  for (i in 1:n.sample) {
+  i <- 1
+  while (i <= n.sample) {
     cmpd.sm <- sample(Pf.cmpd$data$Metadata_pert_iname %>% unique, NROW(cr1))
     Px <- Pf.cmpd$data %>% dplyr::filter(Metadata_pert_iname %in% cmpd.sm) 
+    if (length(unique(setdiff(Px$Metadata_moa, NA))) < length((setdiff(Px$Metadata_moa, NA)))) {
+      next
+    }
+    i <- i + 1
+    
     cr <- cor(Px[,Pf.cmpd$feat_cols] %>% t, method = corr.type)
     cr1.tmp <- cr %>% reshape2::melt() %>% 
       dplyr::group_by(Var1, Var2) %>% dplyr::summarise(agg.value = agg.fn(value)) %>%
@@ -96,7 +103,7 @@ cons <- foreach(moa = distinct.moas) %dopar% {
     smp <- c(smp, cr1.tmp %>% as.dist() %>% median(., na.rm = T))
   }
   thr <- quantile(smp, 0.95, na.rm = T)
-  
+
   v <- cr1 %>% as.dist() %>% as.vector() %>% median
   data.frame(MOA = moa, consistent = (v >= thr), sig.strn = round(v, 2),
              thresh = round(thr, 2), n.members = NROW(cr1))
