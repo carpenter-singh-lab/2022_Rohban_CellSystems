@@ -153,8 +153,8 @@ for (i in 1:6) {
   }
 }
 
-v1 <- apply(cr.melt.all, 1, function(x) (quantile(x[3:NCOL(cr.melt.all)] %>% as.numeric(), 0.75, na.rm = T) %>% as.matrix() %>% as.vector))
-v2 <- apply(cr.melt.all, 1, function(x) (quantile(x[3:NCOL(cr.melt.all)] %>% as.numeric(), 0.25, na.rm = T) %>% as.matrix() %>% as.vector))
+v1 <- apply(cr.melt.all, 1, function(x) (max(x[3:NCOL(cr.melt.all)] %>% as.numeric(), na.rm = T) %>% as.matrix() %>% as.vector))
+v2 <- apply(cr.melt.all, 1, function(x) (min(x[3:NCOL(cr.melt.all)] %>% as.numeric(), na.rm = T) %>% as.matrix() %>% as.vector))
 v3 <- apply(cbind(abs(v1), abs(v2)), 1, function(x) max(x, na.rm = T) * c(1, -1)[which.max(x)])
 cr.melt <- melt(cr)
 cr.melt[,3] <- v3
