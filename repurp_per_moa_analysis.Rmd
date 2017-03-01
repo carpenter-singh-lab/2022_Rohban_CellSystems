@@ -249,6 +249,8 @@ for (moa in moas.to.consider) {
   v22 <- length(rest) - v21
   Vi <- rbind(c(v11, v12), c(v21, v22))
   V <- V + Vi
+  print(Vi)
+  print("-------------------------------------------------------")
 }
 
 ```
