@@ -69,8 +69,9 @@ Pf.cmpd$data <- Pf.cmpd$data %>% dplyr::filter(Metadata_pert_iname %in% (strong.
 distinct.moas <- lapply(Pf.cmpd$data$Metadata_moa, function(x) (str_split(x, "\\|")[[1]])) %>% unlist %>% 
   unique %>% setdiff(., NA)
 
+agg.fn <- function(x) return(ifelse(max(x) > -min(x), max(x), min(x)))
 #agg.fn <- function(x) return(ifelse(quantile(x, 0.7) > -quantile(x, 0.3), quantile(x, 0.7), quantile(x, 0.30)))
-agg.fn <- mean
+#agg.fn <- mean
 
 cons <- data.frame(MOA = c(), consistent = c(), sig.strn = c(), thresh = c(), n.members = c())
 n.sample <- 100
@@ -112,4 +113,5 @@ cons <- foreach(moa = distinct.moas) %dopar% {
 MOA.consistency <- do.call(rbind, cons)
 MOA.consistency %>% dplyr::arrange(-(sig.strn - thresh)) %>% htmlTable()
 sum(MOA.consistency$consistent, na.rm = T)/(length(which(MOA.consistency$n.members > 1)))
+saveRDS(MOA.consistency, "MOA_consistency.rds")
 
