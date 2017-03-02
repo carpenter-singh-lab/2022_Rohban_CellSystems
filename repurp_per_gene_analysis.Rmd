@@ -17,7 +17,7 @@ seed.moa <- -8     ## ignore, if permute.moas is False
 
 base.dir <- "2016-07-20_90b7bb86"
 use.feat.selected.in.TA.ORF.in.common <- F
-corr.type <- "pearson"
+corr.type <- "spearman"
 
 load("../input/TA/Initial_analysis_workspace.RData")
 Pf.ta <- Pf_org.org.collapsed
@@ -188,7 +188,7 @@ cr.melt[,3] <- v3
 
 ```
 
-```{r, warning=F}
+```{r}
 
 cls.gene <- lapply(cls, function(x) unique(unlist(lapply(x, function(y) str_split(y, "_")[[1]][1]))))
 
@@ -247,7 +247,7 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
   all.targ <- lapply(moas$Target[moas$Name %in% (Pf.cmpd$data$Metadata_pert_iname %>% unique)], function(x) str_split(x, ", ")[[1]]) %>% do.call(c, .) %>% unique
   path <- sprintf("../results/manual/ppis")
   if (!dir.exists(path)) {
-    system("mkdir -p %s", path)
+    system(sprintf("mkdir -p %s", path))
   }
   if (file.exists(sprintf("%s/all.rds", path))) {
     ppi.all <- readRDS(sprintf("%s/all.rds", path))
@@ -263,9 +263,10 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
       dplyr::arrange(-value) %>%
       dplyr::mutate(value = round(value, 2)) %>% dplyr::filter(abs(value) > cor.thr) 
     
-    up.reg <- u.res %>% head(., how.many) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
-    down.reg <- u.res %>% tail(., how.many) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
+    up.reg <- u.res %>% head(., how.many) %>% dplyr::filter(value > 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
+    down.reg <- u.res %>% tail(., how.many) %>% dplyr::filter(value < 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
     reg <- c(up.reg, down.reg) %>% unique
+    u.res.lim <- u.res %>% dplyr::filter(Var1 %in% reg) %>% dplyr::mutate(Name = Var1) %>% dplyr::mutate(Corr. = value) %>% dplyr::select(one_of(c("Name", "Corr.")))
     rest <- setdiff(Pf.cmpd$data$Metadata_pert_iname %>% unique, reg)
     v <- lapply(moas$Target[moas$Name %in% reg], function(x) str_split(x, ", ")[[1]]) %>% do.call(c, .) 
     if (length(v) == 0) {
@@ -285,15 +286,20 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
     V <- V + Vi
     
     fsh <- fisher.test(Vi, alternative = "greater")
-    if (fsh$p.value < 0.05/73) {
+    if (fsh$p.value < 0.05/NROW(Pf.gene$data$Treatment)) {
       gn.list <- c(gn.list, gene)
       if (verbose) {
-        print(gene)
-        print(reg)
-        print(main.targ)
-        print(moas %>% dplyr::filter(Name %in% reg) %>% dplyr::select(one_of(c("Name", "MOA", "Target"))))
-        print(ppi %>% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %>% unique %>% head(., 20))
-        print("---------------------------------------------")
+        cat(gene)
+        cat("<br>")
+        colnames(Vi) <- c("gene in relevant ppi", "otherwise")
+        rownames(Vi) <- c("compound matches", "rest of compounds")
+        Vi %>% htmlTable::htmlTable() %>% cat
+        cat("<br>")
+        fsh %>% print
+        cat("<br>")
+        (moas %>% dplyr::filter(Name %in% reg) %>% dplyr::select(one_of(c("Name", "MOA", "Target")))) %>% plyr::join(., u.res.lim, by = "Name") %>% htmlTable::htmlTable() %>% cat
+        (ppi %>% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %>% unique %>% head(., 20)) %>% htmlTable::htmlTable() %>% cat
+        cat("<br> <hr>")
       }
     }
   }
@@ -303,7 +309,7 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
 
 ```
 
-```{r}
+```{r, eval=F}
 
 odds <- c()
 p.val <- c()
@@ -319,3 +325,18 @@ n.genes <- foreach(i = 1:50) %dopar% {
 print(1 - ecdf(n.genes %>% unlist)(res$genes %>% length))
 
 ```
+
+```{r, results='asis'}
+
+res <- sample.tot(random.shuffle = F, verbose = T, cor.thr = 0.4, how.many = 10)
+f <- fisher.test(res$V, alternative = "greater")
+
+```
+
+```{r}
+
+print(f)
+print(res)
+
+```
+
