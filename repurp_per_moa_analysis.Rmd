@@ -184,25 +184,13 @@ cr.melt[,3] <- v3
 
 ```
 
-```{r, warning=F}
+```{r, results='asis'}
 
 MOA.consistency <- readRDS("../results/master/2017-03-01_66f41a62/MOA_consistency.rds")
 moas.to.consider <- MOA.consistency %>% 
   dplyr::arrange(-sig.strn + thresh) %>%
   dplyr::filter(consistent) %>% 
   dplyr::select(MOA) %>% as.matrix() %>% as.vector() %>% as.character()
-
-# moas.to.consider <- c("glucocorticoid receptor agonist", "PLK inhibitor", "MEK inhibitor", "HDAC inhibitor", 
-#                       "HSP inhibitor", "mTOR inhibitor", "CDK inhibitor", "ribonucleoside reductase inhibitor", 
-#                       "MDM inhibitor", "EGFR inhibitor", "PI3K inhibitor", "VEGFR inhibitor", "p38 MAPK inhibitor", 
-#                       "PKC activator", "DNA synthesis inhibitor", "JAK inhibitor", "AKT inhibitor", "DNA inhibitor",
-#                       "dopamine receptor antagonist", "cholesterol inhibitor", "selective estrogen receptor modulator",
-#                       "tricyclic antidepressant", "angiotensin converting enzyme inhibitor", "src inhibitor", 
-#                       "retinoid receptor agonist", "serotonin reuptake inhibitor", "JNK inhibitor", "FLT3 inhibitor",
-#                       "PPAR receptor agonist", "HCV inhibitor", "RAF inhibitor", "rho associated kinase inhibitor",
-#                       "growth factor receptor inhibitor", "Abl kinase inhibitor", "PDGFR tyrosine kinase receptor inhibitor", 
-#                       "protein kinase inhibitor", "NFkB pathway inhibitor", "XIAP inhibitor", "PKC inhibitor", "FGFR inhibitor", 
-#                       "PARP inhibitor", "TRPV agonist")
 
 moas <- read.csv("../input/moas.txt", sep = "\t")
 
@@ -227,7 +215,8 @@ rownames(V) <- c("filtered top/bottom pairs", "remainder of pairs")
 colnames(V) <- c("validated (have interaction with the MOA target)", "non-validated")
   
 for (moa in moas.to.consider) {
-  print(sprintf("MOA : %s", moa))
+  cat(sprintf("MOA : %s", moa))
+  cat("<br>")
   u.res <- cr.melt %>% 
     dplyr::filter(Var1 %in% (Pf.cmpd$data$Metadata_pert_iname[which(str_detect(Pf.cmpd$data$Metadata_moa, moa))] %>% unique())) %>%
     dplyr::mutate(Gene.Overexpression=Var2) %>% dplyr::select(one_of(c("Gene.Overexpression", "Var1", "value"))) %>%
@@ -251,7 +240,15 @@ for (moa in moas.to.consider) {
     next
   }
   i <- which(reg %in% (c(ppi$Protein.1 %>% as.character(), ppi$Protein.2 %>% as.character()) %>% unique))
-  print(sprintf("Following genes are relevant : %s", paste(reg[i], " ", collapse = " ")))
+  cat(sprintf("Selected target of the MOA : %s", main.targ))
+  cat("<br>")
+  u.res.s <- rbind(u.res %>% head(., 5), u.res %>% tail(., 5)) 
+  if (NROW(u.res.s) > 0) {
+    u.res.s %>% htmlTable::htmlTable() %>% cat()
+  }
+  cat("<br>")
+  cat(sprintf("Following genes are relevant : %s", paste(reg[i], " ", collapse = " ")))
+  cat("<br>")
   v11 <- length(i)
   v12 <- length(reg) - v11
   v21 <- which(rest %in% (c(ppi$Protein.1 %>% as.character(), ppi$Protein.2 %>% as.character()) %>% unique)) %>% length
@@ -260,13 +257,19 @@ for (moa in moas.to.consider) {
   rownames(Vi) <- c("filtered top/bottom pairs", "remainder of pairs")
   colnames(Vi) <- c("validated", "non-validated")
   V <- V + Vi
-  print(Vi)
-  print("-------------------------------------------------------")
+  Vi %>% htmlTable::htmlTable() %>% cat
+  cat("<br>")
+  ppi.s <- ppi %>% dplyr::filter(Protein.1 %in% reg | Protein.2 %in% reg) 
+  if (NROW(ppi.s) > 0) {
+    ppi.s %>% head(., 20) %>% htmlTable::htmlTable() %>% cat
+  } 
+  cat("<hr>")
 }
 
 ```
 
 ```{r}
+
 print(V)
 fisher.test(V, alternative = "greater") %>% print
 
