@@ -17,9 +17,9 @@ seed.moa <- -8     ## ignore, if permute.moas is False
 
 base.dir <- "2016-07-20_90b7bb86"
 use.feat.selected.in.TA.ORF.in.common <- F
-corr.type <- "spearman"
+corr.type <- "pearson"
 
-load("../input/TA/Initial_analysis_workspace.RData")
+load("../input/TA/Initial_analysis_workspace_old.RData")
 Pf.ta <- Pf_org.org.collapsed
 Pf.ta.all <- Pf_org.org
 strong.trt <- Pf.trt.strong.collapsed$data$Treatment

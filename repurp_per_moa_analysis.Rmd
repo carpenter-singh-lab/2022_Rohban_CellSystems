@@ -215,8 +215,6 @@ rownames(V) <- c("filtered top/bottom pairs", "remainder of pairs")
 colnames(V) <- c("validated (have interaction with the MOA target)", "non-validated")
   
 for (moa in moas.to.consider) {
-  cat(sprintf("MOA : %s", moa))
-  cat("<br>")
   u.res <- cr.melt %>% 
     dplyr::filter(Var1 %in% (Pf.cmpd$data$Metadata_pert_iname[which(str_detect(Pf.cmpd$data$Metadata_moa, moa))] %>% unique())) %>%
     dplyr::mutate(Gene.Overexpression=Var2) %>% dplyr::select(one_of(c("Gene.Overexpression", "Var1", "value"))) %>%
@@ -240,15 +238,19 @@ for (moa in moas.to.consider) {
     next
   }
   i <- which(reg %in% (c(ppi$Protein.1 %>% as.character(), ppi$Protein.2 %>% as.character()) %>% unique))
-  cat(sprintf("Selected target of the MOA : %s", main.targ))
-  cat("<br>")
-  u.res.s <- rbind(u.res %>% head(., 5), u.res %>% tail(., 5)) 
-  if (NROW(u.res.s) > 0) {
-    u.res.s %>% htmlTable::htmlTable() %>% cat()
+  if (length(i) > 0) {
+    cat(sprintf("MOA : %s", moa))
+    cat("<br>")
+    cat(sprintf("Selected target of the MOA : %s", main.targ))
+    cat("<br>")
+    u.res.s <- rbind(u.res %>% head(., 5), u.res %>% tail(., 5)) 
+    if (NROW(u.res.s) > 0) {
+      u.res.s %>% htmlTable::htmlTable() %>% cat()
+    }
+    cat("<br>")
+    cat(sprintf("Following genes are relevant : %s", paste(reg[i], " ", collapse = " ")))
+    cat("<br>")
   }
-  cat("<br>")
-  cat(sprintf("Following genes are relevant : %s", paste(reg[i], " ", collapse = " ")))
-  cat("<br>")
   v11 <- length(i)
   v12 <- length(reg) - v11
   v21 <- which(rest %in% (c(ppi$Protein.1 %>% as.character(), ppi$Protein.2 %>% as.character()) %>% unique)) %>% length
@@ -257,13 +259,15 @@ for (moa in moas.to.consider) {
   rownames(Vi) <- c("filtered top/bottom pairs", "remainder of pairs")
   colnames(Vi) <- c("validated", "non-validated")
   V <- V + Vi
-  Vi %>% htmlTable::htmlTable() %>% cat
-  cat("<br>")
-  ppi.s <- ppi %>% dplyr::filter(Protein.1 %in% reg | Protein.2 %in% reg) 
-  if (NROW(ppi.s) > 0) {
-    ppi.s %>% head(., 20) %>% htmlTable::htmlTable() %>% cat
-  } 
-  cat("<hr>")
+  if (length(i) > 0) {
+    Vi %>% htmlTable::htmlTable() %>% cat
+    cat("<br>")
+    ppi.s <- ppi %>% dplyr::filter(Protein.1 %in% reg | Protein.2 %in% reg) 
+    if (NROW(ppi.s) > 0) {
+      ppi.s %>% head(., 20) %>% htmlTable::htmlTable() %>% cat
+    } 
+    cat("<hr>")
+  }
 }
 
 ```
