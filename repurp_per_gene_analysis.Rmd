@@ -14,7 +14,7 @@ source("rep.corr.func.R")
 use.repurp.annots <- F
 permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
-LUAD <- F
+LUAD <- T
 
 base.dir <- "2016-07-20_90b7bb86"
 use.feat.selected.in.TA.ORF.in.common <- F
