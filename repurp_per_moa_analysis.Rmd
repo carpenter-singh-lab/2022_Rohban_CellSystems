@@ -10,7 +10,7 @@ source("rep.corr.func.R")
 use.repurp.annots <- F
 permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
-LUAD <- T
+LUAD <- F
 
 base.dir <- "2016-07-20_90b7bb86"
 use.feat.selected.in.TA.ORF.in.common <- F
@@ -29,7 +29,7 @@ if (LUAD) {
   Pf.ta.all$data$Treatment <- lapply(Pf.ta.all$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
   Pf.ta$data <- Pf.ta$data %>% dplyr::group_by(Treatment) %>% slice(1) %>% dplyr::ungroup()
 } else {
-  load("../input/TA/Initial_analysis_workspace_old.RData")
+  load("../input/TA/Initial_analysis_workspace.RData")
   Pf.ta <- Pf_org.org.collapsed
   Pf.ta.all <- Pf_org.org
   strong.trt <- Pf.trt.strong.collapsed$data$Treatment
