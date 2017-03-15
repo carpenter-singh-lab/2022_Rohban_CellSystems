@@ -15,6 +15,7 @@ use.repurp.annots <- F
 permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
 LUAD <- F
+LUAD.mut <- F
 
 base.dir <- "2016-07-20_90b7bb86"
 use.feat.selected.in.TA.ORF.in.common <- F
@@ -32,8 +33,29 @@ if (LUAD) {
   Pf.ta$data$Treatment <- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
   Pf.ta.all$data$Treatment <- lapply(Pf.ta.all$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
   Pf.ta$data <- Pf.ta$data %>% dplyr::group_by(Treatment) %>% slice(1) %>% dplyr::ungroup()
+} else if (LUAD.mut) {
+  load("../input/LUAD/LUAD.RData")
+  Pf.ta <- list(data = Px, factor_cols = "Metadata_x_mutation_status", feat_cols = setdiff(colnames(Px), "Metadata_x_mutation_status"))
+  Pf.ta.all <- Pf
+  a <- read.csv("../input/LUAD/allele_classification.csv")
+  GOF <- a$Allele[which(a$Benchmark.activity == "GOF" | a$eVIP_prediction %in% c("GOF", "Neutral"))]
+  s <- Pf.ta$data$Metadata_x_mutation_status %>% unique
+  s <- s[which(str_detect(s, "_WT"))]
+  GOF <- c(as.character(GOF), as.character(s))
+  
+  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Metadata_x_mutation_status %in% GOF) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta$factor_cols <- c(Pf.ta$factor_cols, "Treatment")
+  Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(str_detect(Metadata_x_mutation_status, "WT")) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta.all$factor_cols <- c(Pf.ta.all$factor_cols, "Treatment")
+
+  Pf.ta$data$Treatment <- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
+  Pf.ta.all$data$Treatment <- lapply(Pf.ta.all$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
+  Pf.ta$data <- dplyr::left_join(Pf.ta$data, uu, by = "Metadata_x_mutation_status")
+  Pf.ta$factor_cols <- c(Pf.ta$factor_cols, "strn")
+  Pf.ta$data <- Pf.ta$data %>% dplyr::group_by(Treatment) %>% arrange(-strn) %>% slice(1) %>% dplyr::ungroup()
+  Pf.ta$data %>% dplyr::select(Treatment, Metadata_x_mutation_status, strn) %>% unique %>% knitr::kable()
 } else {
-  load("../input/TA/Initial_analysis_workspace.RData")
+  load("../input/TA/Initial_analysis_workspace_new.RData")
   Pf.ta <- Pf_org.org.collapsed
   Pf.ta.all <- Pf_org.org
   strong.trt <- Pf.trt.strong.collapsed$data$Treatment
@@ -201,6 +223,7 @@ v2 <- apply(cr.melt.all, 1, function(x) (min(x[3:NCOL(cr.melt.all)] %>% as.numer
 v3 <- apply(cbind(abs(v1), abs(v2)), 1, function(x) max(x, na.rm = T) * c(1, -1)[which.max(x)])
 cr.melt <- melt(cr)
 cr.melt[,3] <- v3
+cr.melt %>% dplyr::group_by(Var1, Var2) %>% dplyr::summarise(value = mean(value)) %>% head
 
 ```
 
