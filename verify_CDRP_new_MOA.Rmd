@@ -7,6 +7,7 @@ library(stringr)
 library(readr)
 library(magrittr)
 library(reshape2)
+library(htmlTable)
 
 Pf <- readRDS("../results/master/2017-03-26_6e6d689d/Pf_new.rds")
 feat <- Pf %>% 
@@ -93,6 +94,19 @@ V <- rbind(c(v11, v12), c(v21, v22))
 fisher.test(V, alternative = "greater") %>% print
 
 cr.melt.val %>% dplyr::filter(abs(value) > thr & valid) %>% 
-  group_by(MOA.x) %>% knitr::kable()
+  arrange(MOA.x) %>% htmlTable::htmlTable()
+
+tot <- cr.melt.val %>% group_by(MOA.x) %>% tally %>% dplyr::select(MOA.x, n)
+colnames(tot)[2] <- "total.n"
+
+cr.melt.val %>% dplyr::filter(abs(value) > thr & valid) %>% 
+  group_by(MOA.x) %>% tally %>% arrange(-n) %>% 
+  dplyr::left_join(., tot, by = "MOA.x") %>% htmlTable::htmlTable()
+
+rownames(V) <- c("top 5 percent", "remainder")
+colnames(V) <- c("validated", "non-validated")
+
+V %>% htmlTable::htmlTable()
+
 
 ```
