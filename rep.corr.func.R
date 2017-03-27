@@ -8,6 +8,17 @@ rep.cor <- function(Pf, grp.var, feat.var) {
   return(x)
 }
 
+non.rep.cor.rob <- function(Pf, grp.var, feat.var) {
+  us <- c()
+  for (i in 1:10) {
+    pr <- permute::shuffle(NROW(Pf$data))
+    Pf$data[,grp.var] <- Pf$data[pr,grp.var]
+    u <- rep.cor(Pf, grp.var, feat.var)
+    us <- rbind(us, u)
+  }
+  return(quantile(us$cr, 0.95, na.rm = T))
+}
+
 non.rep.cor <- function(Pf, grp.var, feat.var) {
   pr <- permute::shuffle(NROW(Pf$data))
   Pf$data[,grp.var] <- Pf$data[pr,grp.var]
