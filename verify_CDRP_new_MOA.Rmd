@@ -60,7 +60,9 @@ MOA %<>% dplyr::mutate(Name = str_to_lower(Name)) %>%
   dplyr::mutate(Name_san = str_replace_all(Name_san, "\\)", "")) 
 
 Pf %<>% dplyr::left_join(., MOA, by = c("CPD_NAME_san" = "Name_san"))
-  
+meta.col <- setdiff(colnames(Pf), feat)
+saveRDS(list(data = Pf, feat_cols = feat, factor_cols = meta.col), "Pf_annotated.rds")
+
 ```
 
 ```{r}
