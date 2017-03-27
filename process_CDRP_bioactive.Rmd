@@ -102,8 +102,13 @@ Pf$data %<>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "treated")
 u <- rep.cor(Pf, "Metadata_broad_sample", Pf$feat_cols)
 v <- non.rep.cor.rob(Pf, "Metadata_broad_sample", Pf$feat_cols)
 
-hit.rate <- (u %>% dplyr::filter(cr > v) %>% NROW)/(u %>% NROW)
+u.strong <- u %>% dplyr::filter(cr > v)
+hit.rate <- (u.strong %>% NROW)/(u %>% NROW)
 print(hit.rate)
+
+Pf$data %>% 
+  dplyr::filter(Metadata_broad_sample %in% u.strong$Metadata_broad_sample) %>%
+  saveRDS(., "Pf_new.rds")
 
 ```
 
