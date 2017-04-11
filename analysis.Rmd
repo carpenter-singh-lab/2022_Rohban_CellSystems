@@ -8,7 +8,7 @@ library(reshape2)
 library(htmlTable)
 source("rep.corr.func.R")
 
-use.feat.selected.in.TA.ORF.in.common <- T
+use.feat.selected.in.TA.ORF.in.common <- F
 corr.type <- "pearson"
 
 base.dir <- "2016-07-20_90b7bb86"
@@ -451,3 +451,12 @@ legend("topright", legend = c("non-verified conn.", "verified conn."), col = c("
 t.test(abs(set1), abs(set0), "greater")
 
 ```
+
+```{r}
+  moas <- read.csv("../input/moas.txt", sep = "\t")
+  moas <- moas %>% dplyr::mutate(Name = str_to_lower(Name))
+  colnames(moas)[1] <- "Image_Metadata_SOURCE_COMPOUND_NAME"
+  dt <- plyr::join(Pf.cmpd$data, moas, by = "Image_Metadata_SOURCE_COMPOUND_NAME")
+  
+```
+
