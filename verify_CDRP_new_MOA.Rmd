@@ -9,7 +9,7 @@ library(magrittr)
 library(reshape2)
 library(htmlTable)
 
-Pf <- readRDS("../results/master/2017-03-26_6e6d689d/Pf_new.rds")
+Pf <- readRDS("../results/master/2017-04-18_c69b4f5e/Pf_new.rds")
 feat <- Pf %>% 
           dplyr::select(-dplyr::contains("Metadata_")) %>% 
           colnames()
@@ -28,10 +28,10 @@ metadata.ext %<>%
   dplyr::inner_join(., brd.mapping, by = "BROAD_CPD_ID") %>%
   dplyr::select(-BROAD_CPD_ID)
 
-metadata.ext2 <- read_csv("../input/Gustafsdottir/manual/metadata.csv")
-metadata.ext2 %<>% 
-  dplyr::select(Image_Metadata_BROAD_ID, Image_Metadata_SOURCE_COMPOUND_NAME) %>% 
-  dplyr::filter(Image_Metadata_BROAD_ID %in% Pf$Metadata_broad_sample) %>% unique()
+#metadata.ext2 <- read_csv("../input/Gustafsdottir/manual/metadata.csv")
+#metadata.ext2 %<>% 
+#  dplyr::select(Image_Metadata_BROAD_ID, Image_Metadata_SOURCE_COMPOUND_NAME) %>% 
+#  dplyr::filter(Image_Metadata_BROAD_ID %in% Pf$Metadata_broad_sample) %>% unique()
 
 metadata <- data.frame(Metadata_broad_sample = unique(Pf$Metadata_broad_sample))
 metadata %<>% 
