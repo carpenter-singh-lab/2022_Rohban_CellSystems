@@ -60,7 +60,7 @@ process.plate <- function(plate.data) {
 
 ```{r, echo=FALSE}
 
-lst <- list.dirs("../input/CDP2/CDRP")
+lst <- list.dirs("../input/CDP2/backend/CDRP")
 profiles <- foreach (i = lst[2:length(lst)]) %dopar% {
   pl <- str_split(i, "/")[[1]]
   pl <- pl[length(pl)]
