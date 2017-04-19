@@ -62,10 +62,16 @@ process.plate <- function(plate.data) {
 
 lst <- list.dirs("../input/CDP2/backend/CDRP")
 profiles <- foreach (i = lst[2:length(lst)]) %dopar% {
+#profiles <- foreach (i = lst[2:25]) %dopar% {
   pl <- str_split(i, "/")[[1]]
   pl <- pl[length(pl)]
-  c <- readr::read_csv(sprintf("%s/%s_augmented.csv", i, pl))  
-  process.plate(c)
+  fl <- sprintf("%s/%s_augmented.csv", i, pl)
+  if (file.exists(fl)) {
+    c <- readr::read_csv(fl)  
+    process.plate(c)
+  } else {
+    return(NULL)
+  }
 }
 
 feat.comm <- lapply(profiles, function(x) colnames(x)) %>% 
@@ -73,7 +79,7 @@ feat.comm <- lapply(profiles, function(x) colnames(x)) %>%
   data.frame(feature = .) %>% 
   group_by(feature) %>% 
   tally %>%
-  filter(n == length(profiles)) %>%
+  filter(n == max(n)) %>%
   select(feature) %>% 
   as.matrix() %>%
   as.vector()
@@ -95,7 +101,7 @@ Pf$feat_cols <- feats
 Pf$data <- Pf$data[,c(Pf$feat_cols, Pf$factor_cols)]
 
 u.cntrl <- Pf$data %>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "mock") %>% dplyr::group_by(Metadata_Plate_Map_Name, Metadata_pert_well) %>% do(data.frame(cr = median(as.dist(cor(t(.[,Pf$feat_cols]))), na.rm = T))) 
-u.cntrl$cr %>% quantile() %>% print
+u.cntrl$cr %>% quantile(., na.rm = T) %>% print
 
 Pf$data %<>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "treated")
 
