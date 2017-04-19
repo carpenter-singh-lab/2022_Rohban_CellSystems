@@ -11,7 +11,7 @@ library(doMC)
 library(ggplot2)
 source("rep.corr.func.R")
 
-doMC::registerDoMC(2)
+doMC::registerDoMC(3)
 
 process.plate <- function(plate.data) {
   c <- plate.data
@@ -58,11 +58,10 @@ process.plate <- function(plate.data) {
 
 ```
 
-```{r, echo=FALSE}
+```{r}
 
 lst <- list.dirs("../input/CDP2/backend/CDRP")
 profiles <- foreach (i = lst[2:length(lst)]) %dopar% {
-#profiles <- foreach (i = lst[2:25]) %dopar% {
   pl <- str_split(i, "/")[[1]]
   pl <- pl[length(pl)]
   fl <- sprintf("%s/%s_augmented.csv", i, pl)
@@ -106,7 +105,7 @@ u.cntrl$cr %>% quantile(., na.rm = T) %>% print
 Pf$data %<>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "treated")
 
 u <- rep.cor(Pf, "Metadata_broad_sample", Pf$feat_cols)
-v <- non.rep.cor.rob(Pf, "Metadata_broad_sample", Pf$feat_cols)
+v <- non.rep.cor(Pf, "Metadata_broad_sample", Pf$feat_cols)
 
 u.strong <- u %>% dplyr::filter(cr > v)
 hit.rate <- (u.strong %>% NROW)/(u %>% NROW)
@@ -136,7 +135,7 @@ Pf.old$feat_cols <- feats
 Pf.old$data <- Pf.old$data[,c(Pf.old$feat_cols, Pf.old$factor_cols)]
 
 u1 <- rep.cor(Pf.old, "Image_Metadata_BroadID", Pf.old$feat_cols)
-v1 <- non.rep.cor.rob(Pf.old, "Image_Metadata_BroadID", Pf.old$feat_cols)
+v1 <- non.rep.cor(Pf.old, "Image_Metadata_BroadID", Pf.old$feat_cols)
 
 hit.rate1 <- (u1 %>% dplyr::filter(cr > v1) %>% NROW)/(u1 %>% NROW) 
 print(hit.rate1)
