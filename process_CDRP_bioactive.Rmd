@@ -166,3 +166,24 @@ ggplot2::ggplot(D, aes(x = old.cor, y = new.cor)) +
 
 ```
 
+```{r}
+
+rep.cr <- Pf$data %>% 
+  select(Metadata_broad_sample, Metadata_Plate_Map_Name) %>%
+  mutate(is.bioactive = str_detect(Metadata_Plate_Map_Name, "BIO")) %>%
+  unique %>%
+  left_join(., u, by = "Metadata_broad_sample")
+
+ggplot2::ggplot(rep.cr, aes(y = cr, x = is.bioactive)) + ggplot2::geom_boxplot()
+
+Pf$data$Metadata_Plate %>% unique %>% length %>% print
+Pf$data$Metadata_broad_sample %>% unique %>% length %>% print
+Pf$data$Metadata_Plate_Map_Name %>% unique %>% length %>% print
+profiles.mat %>% group_by(Metadata_ASSAY_WELL_ROLE) %>% summarise(cnt = n()) %>% print
+profiles.mat %>% group_by(Metadata_Plate) %>% summarise(cnt = n()) %>% htmlTable::htmlTable()
+
+Pf.old <- readRDS("../input/CDP2/Pf.rds")
+Pf.old$data %>% group_by(Image_Metadata_Plate) %>% summarise(cnt = n()) %>% htmlTable::htmlTable()
+Pf$feat_cols %>% length %>% print
+```
+
