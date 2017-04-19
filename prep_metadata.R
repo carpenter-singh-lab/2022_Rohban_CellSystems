@@ -21,6 +21,6 @@ meta1 <- meta1 %>% dplyr::select(-Plate, -Well) %>% unique
 v <- meta1$CPD_Plate_Map_Name %>% unique
 
 for (pl in v) {
-    meta1 %>% dplyr::filter(CPD_Plate_Map_Name == pl) %>% dplyr::select(-CPD_Plate_Map_Name) %>%
+    meta1 %>% dplyr::filter(CPD_Plate_Map_Name == pl) %>% dplyr::select(-CPD_Plate_Map_Name) %>% unique %>%
     write.table(., sprintf("%s.txt", pl), sep = "\t", quote = T, row.names = F)
 }
