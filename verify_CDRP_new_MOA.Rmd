@@ -9,7 +9,10 @@ library(magrittr)
 library(reshape2)
 library(htmlTable)
 
-Pf <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
+Pf.1 <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
+Pf.2 <- readRDS("../results/master/2017-04-20_425d653/Pf_DOS_new.rds")
+Pf <- rbind(Pf.1, Pf.2)
+
 feat <- Pf %>% 
           dplyr::select(-dplyr::contains("Metadata_")) %>% 
           colnames()
@@ -39,7 +42,7 @@ metadata %<>%
 
 Pf %<>% dplyr::left_join(., metadata, by = "Metadata_broad_sample")
 
-Pf %<>% dplyr::filter(CPD_NAME != "")
+#Pf %<>% dplyr::filter(CPD_NAME != "")
 
 Pf %<>% dplyr::select(one_of(c(feat, "Metadata_broad_sample", "CPD_NAME"))) %>%
   dplyr::group_by(Metadata_broad_sample, CPD_NAME) %>%
@@ -67,7 +70,7 @@ saveRDS(list(data = Pf, feat_cols = feat, factor_cols = meta.col), "Pf_annotated
 
 ```{r}
 
-Pf %<>% dplyr::filter(!is.na(MOA))
+#Pf %<>% dplyr::filter(!is.na(MOA))
 moas <- Pf[, c("CPD_NAME", "MOA")]
 
 cr <- Pf[,feat] %>% t %>% cor
@@ -80,8 +83,8 @@ cr.melt <- cr %>% melt %>%
 cr.melt %<>% dplyr::left_join(., moas, by = c("Var1" = "CPD_NAME")) %>%
   dplyr::left_join(., moas, by = c("Var2" = "CPD_NAME"))
 
-valid <- apply(cr.melt, 1, function(x) (any(str_split(x["MOA.x"], ", ")[[1]] %in% str_split(x["MOA.y"], ", ")[[1]]) |
-        any(str_split(x["MOA.y"], ", ")[[1]] %in% str_split(x["MOA.x"], ", ")[[1]])))
+valid <- apply(cr.melt, 1, function(x) (any(setdiff(str_split(x["MOA.x"], ", ")[[1]], NA) %in% setdiff(str_split(x["MOA.y"], ", ")[[1]], NA)) |
+        any(setdiff(str_split(x["MOA.y"], ", ")[[1]], NA) %in% setdiff(str_split(x["MOA.x"], ", ")[[1]], NA))))
         
 cr.melt.val <- cr.melt %>% dplyr::mutate(valid = valid)
 
