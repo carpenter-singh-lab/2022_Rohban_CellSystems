@@ -9,7 +9,7 @@ library(magrittr)
 library(reshape2)
 library(htmlTable)
 
-Pf <- readRDS("../results/master/2017-04-18_c69b4f5e/Pf_new.rds")
+Pf <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
 feat <- Pf %>% 
           dplyr::select(-dplyr::contains("Metadata_")) %>% 
           colnames()
