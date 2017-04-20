@@ -1,3 +1,7 @@
+---
+title: "CDRP"
+output: html_notebook
+---
 
 ```{r}
 
@@ -11,7 +15,7 @@ library(doMC)
 library(ggplot2)
 source("rep.corr.func.R")
 
-doMC::registerDoMC(3)
+doMC::registerDoMC(4)
 
 process.plate <- function(plate.data) {
   c <- plate.data
@@ -60,7 +64,7 @@ process.plate <- function(plate.data) {
 
 ```{r}
 
-lst <- list.dirs("../input/CDP2/backend/CDRP")
+lst <- list.dirs("../../backend/CDRP")
 profiles <- foreach (i = lst[2:length(lst)]) %dopar% {
   pl <- str_split(i, "/")[[1]]
   pl <- pl[length(pl)]
@@ -104,20 +108,37 @@ u.cntrl$cr %>% quantile(., na.rm = T) %>% print
 
 Pf$data %<>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "treated")
 
-u <- rep.cor(Pf, "Metadata_broad_sample", Pf$feat_cols)
-v <- non.rep.cor(Pf, "Metadata_broad_sample", Pf$feat_cols)
+Pf.bio <- Pf
+Pf.nonbio <- Pf
 
-u.strong <- u %>% dplyr::filter(cr > v)
-hit.rate <- (u.strong %>% NROW)/(u %>% NROW)
+Pf.bio$data <- Pf.bio$data %>% dplyr::filter(str_detect(Metadata_Plate_Map_Name, "BIO"))
+Pf.nonbio$data <- Pf.nonbio$data %>% dplyr::filter(!str_detect(Metadata_Plate_Map_Name, "BIO"))
+
+u.bio <- rep.cor(Pf.bio, "Metadata_broad_sample", Pf.bio$feat_cols)
+v.bio <- non.rep.cor.rob(Pf.bio, "Metadata_broad_sample", Pf.bio$feat_cols)
+
+u.strong <- u.bio %>% dplyr::filter(cr > v.bio)
+hit.rate <- (u.strong %>% NROW)/(u.bio %>% NROW)
 print(hit.rate)
 
-Pf$data %>% 
+Pf.bio$data %>% 
   dplyr::filter(Metadata_broad_sample %in% u.strong$Metadata_broad_sample) %>%
-  saveRDS(., "Pf_new.rds")
+  saveRDS(., "Pf_bio_new.rds")
+
+u.nbio <- rep.cor(Pf.nonbio, "Metadata_broad_sample", Pf.nonbio$feat_cols)
+v.nbio <- non.rep.cor.rob(Pf.nonbio, "Metadata_broad_sample", Pf.nonbio$feat_cols)
+
+u.strong <- u.nbio %>% dplyr::filter(cr > v.nbio)
+hit.rate <- (u.strong %>% NROW)/(u.nbio %>% NROW)
+print(hit.rate)
+
+Pf.nonbio$data %>%
+  dplyr::filter(Metadata_broad_sample %in% u.strong$Metadata_broad_sample) %>%
+  saveRDS(., "Pf_DOS_new.rds")
 
 ```
 
-```{r}
+```{r, eval=FALSE}
 
 Pf.old <- readRDS("../input/CDP2/Pf.rds")
 Pf.old$feat_cols <- setdiff(Pf.old$feat_cols, "Cells_CellCount")
@@ -168,22 +189,14 @@ ggplot2::ggplot(D, aes(x = old.cor, y = new.cor)) +
 
 ```{r}
 
-rep.cr <- Pf$data %>% 
-  select(Metadata_broad_sample, Metadata_Plate_Map_Name) %>%
-  mutate(is.bioactive = str_detect(Metadata_Plate_Map_Name, "BIO")) %>%
-  unique %>%
-  left_join(., u, by = "Metadata_broad_sample")
-
-ggplot2::ggplot(rep.cr, aes(y = cr, x = is.bioactive)) + ggplot2::geom_boxplot()
-
 Pf$data$Metadata_Plate %>% unique %>% length %>% print
 Pf$data$Metadata_broad_sample %>% unique %>% length %>% print
 Pf$data$Metadata_Plate_Map_Name %>% unique %>% length %>% print
 profiles.mat %>% group_by(Metadata_ASSAY_WELL_ROLE) %>% summarise(cnt = n()) %>% print
-profiles.mat %>% group_by(Metadata_Plate) %>% summarise(cnt = n()) %>% htmlTable::htmlTable()
+profiles.mat %>% group_by(Metadata_Plate) %>% summarise(cnt = n()) %>% print
 
-Pf.old <- readRDS("../input/CDP2/Pf.rds")
-Pf.old$data %>% group_by(Image_Metadata_Plate) %>% summarise(cnt = n()) %>% htmlTable::htmlTable()
 Pf$feat_cols %>% length %>% print
+feat.comm %>% length %>% print
+
 ```
 
