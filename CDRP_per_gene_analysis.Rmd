@@ -78,7 +78,8 @@ Pf.gene.all <- Pf.ta.all
 
 ############
 
-Pf.cmpd <- readRDS("../results/master/2017-04-20_3f29403c/Pf_annotated.rds")
+Pf.cmpd <- readRDS("../results/master/2017-04-20_64917c8b/Pf_annotated.rds")
+Pf.cmpd$data %<>% mutate(CPD_NAME = ifelse(CPD_NAME != "", CPD_NAME, Metadata_broad_sample))
 
 ```
 
@@ -185,7 +186,9 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
     saveRDS(ppi.all, sprintf("%s/all.rds", path))
   }
   
+  pb <- progress::progress_bar$new(total = length(Pf.gene$data$Treatment))
   for (gene in Pf.gene$data$Treatment) {
+    pb$tick()
     gn <- gn.map[gene] %>% as.matrix() %>% as.vector()
     u.res <- cr.melt %>% 
       dplyr::filter(Var2 == gn) %>%
@@ -195,6 +198,7 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
     up.reg <- u.res %>% head(., how.many) %>% dplyr::filter(value > 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
     down.reg <- u.res %>% tail(., how.many) %>% dplyr::filter(value < 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
     reg <- c(up.reg, down.reg) %>% unique
+    reg <- setdiff(reg, "")
     u.res.lim <- u.res %>% dplyr::filter(Var1 %in% reg) %>% dplyr::mutate(CPD_NAME = Var1) %>% dplyr::mutate(Corr. = value) %>% dplyr::select(one_of(c("CPD_NAME", "Corr.")))
     
     rest <- setdiff(Pf.cmpd$data$CPD_NAME %>% unique, reg)
@@ -228,11 +232,16 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
         fsh %>% print
         cat("<br>")
         #(Pf.cmpd$data %>% dplyr::filter(Name %in% reg) %>% dplyr::select(one_of(c("Name", "MOA", "Target")))) %>% plyr::join(., u.res.lim, by = "Name") %>% dplyr::arrange(Corr.) %>% htmlTable::htmlTable() %>% cat
-        Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% htmlTable::htmlTable() %>% cat
+        Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% arrange(Corr.) %>% htmlTable::htmlTable() %>% cat
         (ppi %>% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %>% unique %>% head(., 20)) %>% htmlTable::htmlTable() %>% cat
         cat("<br> <hr>")
       }
-    }
+    } 
+    
+    cat(gene, file = "predictions.html", append = T)
+    cat("<br>", file = "predictions.html", append = T)
+    Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% arrange(Corr.) %>% htmlTable::htmlTable() %>% cat(., file = "predictions.html", append = T)
+    cat("<br> <hr>", file = "predictions.html", append = T)
   }
   
   return(list(genes = gn.list, V = V))
@@ -242,7 +251,7 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
 
 ```{r, results='asis'}
 
-res <- sample.tot(random.shuffle = F, verbose = T, cor.thr = 0.35, how.many = 10)
+res <- sample.tot(random.shuffle = F, verbose = T, cor.thr = 0.40, how.many = 20)
 f <- fisher.test(res$V, alternative = "greater")
 
 ```
