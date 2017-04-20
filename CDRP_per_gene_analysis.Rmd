@@ -78,7 +78,7 @@ Pf.gene.all <- Pf.ta.all
 
 ############
 
-Pf.cmpd <- readRDS("../results/master/2017-03-27_9e1af95b/Pf_annotated.rds")
+Pf.cmpd <- readRDS("../results/master/2017-04-20_3f29403c/Pf_annotated.rds")
 
 ```
 
