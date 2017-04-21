@@ -9,6 +9,7 @@ library(htmlTable)
 library(foreach)
 library(doMC)
 library(magrittr)
+library(readr)
 registerDoMC(cores = 3)
 
 source("rep.corr.func.R")
@@ -80,6 +81,27 @@ Pf.gene.all <- Pf.ta.all
 
 Pf.cmpd <- readRDS("../results/master/2017-04-20_64917c8b/Pf_annotated.rds")
 Pf.cmpd$data %<>% mutate(CPD_NAME = ifelse(CPD_NAME != "", CPD_NAME, Metadata_broad_sample))
+
+source("rep.corr.func.R")
+Pf.1 <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
+Pf.2 <- readRDS("../results/master/2017-04-20_425d653/Pf_DOS_new.rds")
+Pf <- rbind(Pf.1, Pf.2)
+u <- rep.cor(list(data = Pf, feat_cols = Pf.cmpd$feat_cols, factor_cols = Pf.cmpd$factor_cols), grp.var = "Metadata_broad_sample", feat.var = Pf.cmpd$feat_cols)
+up <- readr::read_csv("../results/master/2017-04-21_425d6537/Cell_counts.csv")
+
+x <- Pf %>% 
+  left_join(., u, by = "Metadata_broad_sample") %>%
+  left_join(., up, by = c("Metadata_Plate" = "Image_Metadata_Plate", "Metadata_Well" = "Image_Metadata_Well")) %>%
+  select(Metadata_broad_sample, cr, Image_Count_Cells) %>%
+  group_by(Metadata_broad_sample) %>%
+  summarise_each(funs(mean))
+  
+Pf.cmpd$data %<>% 
+  left_join(., x, by = "Metadata_broad_sample") %>%
+  mutate(rep.corr = round(cr, 2), Mean_Cells_Count = round(Image_Count_Cells, 2)) %>%
+  select(-cr, -Image_Count_Cells) 
+
+Pf.cmpd$factor_cols <- c(Pf.cmpd$factor_cols, "rep.corr", "Mean_Cells_Count")
 
 ```
 
@@ -232,7 +254,7 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
         fsh %>% print
         cat("<br>")
         #(Pf.cmpd$data %>% dplyr::filter(Name %in% reg) %>% dplyr::select(one_of(c("Name", "MOA", "Target")))) %>% plyr::join(., u.res.lim, by = "Name") %>% dplyr::arrange(Corr.) %>% htmlTable::htmlTable() %>% cat
-        Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% arrange(Corr.) %>% htmlTable::htmlTable() %>% cat
+        Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target", "rep.corr", "Mean_Cells_Count"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% arrange(Corr.) %>% htmlTable::htmlTable() %>% cat
         (ppi %>% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %>% unique %>% head(., 20)) %>% htmlTable::htmlTable() %>% cat
         cat("<br> <hr>")
       }
@@ -240,7 +262,7 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
     
     cat(gene, file = "predictions.html", append = T)
     cat("<br>", file = "predictions.html", append = T)
-    Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% arrange(Corr.) %>% htmlTable::htmlTable() %>% cat(., file = "predictions.html", append = T)
+    Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target", "rep.corr", "Mean_Cells_Count"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% arrange(Corr.) %>% htmlTable::htmlTable() %>% cat(., file = "predictions.html", append = T)
     cat("<br> <hr>", file = "predictions.html", append = T)
   }
   
