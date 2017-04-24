@@ -102,6 +102,7 @@ Pf.cmpd$data %<>%
   select(-cr, -Image_Count_Cells) 
 
 Pf.cmpd$factor_cols <- c(Pf.cmpd$factor_cols, "rep.corr", "Mean_Cells_Count")
+Pf.cmpd$data$Mean_Cells_Count <- round(scale(Pf.cmpd$data$Mean_Cells_Count), 2)
 
 ```
 
@@ -282,5 +283,13 @@ f <- fisher.test(res$V, alternative = "greater")
 
 print(f)
 print(res)
+
+```
+
+```{r}
+
+library(ggplot2)
+Pf.cmpd$data %>% ggplot2::ggplot(., aes(x = Mean_Cells_Count, rep.corr)) + ggplot2::geom_point()
+cor(Pf.cmpd$data[,c("Mean_Cells_Count", "rep.corr")])
 
 ```
