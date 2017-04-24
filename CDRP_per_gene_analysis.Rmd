@@ -84,8 +84,9 @@ Pf.cmpd$data %<>% mutate(CPD_NAME = ifelse(CPD_NAME != "", CPD_NAME, Metadata_br
 
 source("rep.corr.func.R")
 Pf.1 <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
-Pf.2 <- readRDS("../results/master/2017-04-20_425d653/Pf_DOS_new.rds")
-Pf <- rbind(Pf.1, Pf.2)
+#Pf.2 <- readRDS("../results/master/2017-04-20_425d653/Pf_DOS_new.rds")
+#Pf <- rbind(Pf.1, Pf.2)
+Pf <- Pf.1
 u <- rep.cor(list(data = Pf, feat_cols = Pf.cmpd$feat_cols, factor_cols = Pf.cmpd$factor_cols), grp.var = "Metadata_broad_sample", feat.var = Pf.cmpd$feat_cols)
 up <- readr::read_csv("../results/master/2017-04-21_425d6537/Cell_counts.csv")
 
@@ -97,7 +98,7 @@ x <- Pf %>%
   summarise_each(funs(mean))
   
 Pf.cmpd$data %<>% 
-  left_join(., x, by = "Metadata_broad_sample") %>%
+  right_join(., x, by = "Metadata_broad_sample") %>%
   mutate(rep.corr = round(cr, 2), Mean_Cells_Count = round(Image_Count_Cells, 2)) %>%
   select(-cr, -Image_Count_Cells) 
 
@@ -211,7 +212,9 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
   
   pb <- progress::progress_bar$new(total = length(Pf.gene$data$Treatment))
   for (gene in Pf.gene$data$Treatment) {
-    pb$tick()
+    if (verbose) {
+      pb$tick()  
+    }
     gn <- gn.map[gene] %>% as.matrix() %>% as.vector()
     u.res <- cr.melt %>% 
       dplyr::filter(Var2 == gn) %>%
@@ -261,10 +264,12 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
       }
     } 
     
-    cat(gene, file = "predictions.html", append = T)
-    cat("<br>", file = "predictions.html", append = T)
-    Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target", "rep.corr", "Mean_Cells_Count"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% arrange(Corr.) %>% htmlTable::htmlTable() %>% cat(., file = "predictions.html", append = T)
-    cat("<br> <hr>", file = "predictions.html", append = T)
+    if (verbose) {
+      cat(gene, file = "predictions.html", append = T)
+      cat("<br>", file = "predictions.html", append = T)
+      Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target", "rep.corr", "Mean_Cells_Count"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% arrange(Corr.) %>% htmlTable::htmlTable() %>% cat(., file = "predictions.html", append = T)
+      cat("<br> <hr>", file = "predictions.html", append = T)
+    }
   }
   
   return(list(genes = gn.list, V = V))
@@ -274,7 +279,7 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
 
 ```{r, results='asis'}
 
-res <- sample.tot(random.shuffle = F, verbose = T, cor.thr = 0.40, how.many = 20)
+res <- sample.tot(random.shuffle = F, verbose = T, cor.thr = 0.35, how.many = 15)
 f <- fisher.test(res$V, alternative = "greater")
 
 ```
@@ -293,3 +298,23 @@ Pf.cmpd$data %>% ggplot2::ggplot(., aes(x = Mean_Cells_Count, rep.corr)) + ggplo
 cor(Pf.cmpd$data[,c("Mean_Cells_Count", "rep.corr")])
 
 ```
+
+```{r}
+
+N <- 200
+nl <- c()
+pb <- progress::progress_bar$new(total = N)
+cls.gene <- cls
+  
+for (i in 1:N) {
+  res <- sample.tot(random.shuffle = T, verbose = F, cor.thr = 0.35, how.many = 15)  
+  nl <- c(nl, length(res$genes))
+  pb$tick()
+}
+
+print(mean(nl))
+print(quantile(nl, 0.95))
+max(nl)
+
+```
+
