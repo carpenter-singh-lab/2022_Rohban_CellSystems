@@ -21,6 +21,9 @@ LUAD.mut <- F
 just.bioactives <- T
 no.top.matches <- 15
 cor.thr <- 0.50
+p.val.thr <- 0.005
+N <- 1000                     ## number of Monte-carlo simulations to estimate expected random matches
+genes.to.remove <- c()        ## remove these genes before making matches
 
 base.dir <- "2016-07-20_90b7bb86"
 use.feat.selected.in.TA.ORF.in.common <- F
@@ -79,6 +82,8 @@ if (LUAD) {
 
 Pf.gene <- Pf.ta
 Pf.gene.all <- Pf.ta.all
+Pf.gene$data <- Pf.gene$data %>% dplyr::filter(! Treatment %in% genes.to.remove)
+
 
 ############
 
@@ -267,7 +272,7 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
     V <- V + Vi
     
     fsh <- fisher.test(Vi, alternative = "greater")
-    if (fsh$p.value < 0.01/length(Pf.gene$data$Treatment)) {
+    if (fsh$p.value < p.val.thr/length(Pf.gene$data$Treatment)) {
       gn.list <- c(gn.list, gene)
       if (verbose) {
         cat(gene)
@@ -323,7 +328,6 @@ cor(Pf.cmpd$data[,c("Mean_Cells_Count", "rep.corr")])
 
 ```{r, eval=TRUE}
 
-N <- 1000
 nl <- c()
 pb <- progress::progress_bar$new(total = N)
 if (exists("cls")) {
@@ -334,7 +338,7 @@ if (exists("cls")) {
 
 library(foreach)
 library(doMC)
-doMC::registerDoMC(cores = 3)
+doMC::registerDoMC(cores = 64)
 
 nl <- foreach (i = 1:N) %dopar% {
   res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, random.shuffle.genes = T, random.shuffle.cmpds = F, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)
