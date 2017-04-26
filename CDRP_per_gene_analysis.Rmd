@@ -347,7 +347,7 @@ nl <- foreach (i = 1:N) %dopar% {
 
 nl <- unlist(nl)
 
-print(mean(nl))
+print(median(nl))
 print(quantile(nl, 0.95))
 max(nl)
 
