@@ -184,7 +184,7 @@ get.all.interacting.proteins <- function(protein.name) {
 
  V <- matrix(0, 2, 2)
 
-sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle.genes = F, random.shuffle.cmpds = F, verbose = F, cor.thr = 0.5, how.many = 5) {
+sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.genes = F, random.shuffle.cmpds = F, verbose = F, cor.thr = 0.5, how.many = 5) {
   gn.list <- c()
   gn.map <- Pf.gene$data$Treatment %>% as.matrix() %>% as.vector()
   if (random.shuffle.genes) {
@@ -227,13 +227,23 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle.genes = F, random.shuffl
       pb$tick()  
     }
     gn <- gn.map[gene] %>% as.matrix() %>% as.vector()
-    u.res <- cr.melt %>% 
-      dplyr::filter(Var2 == gn) %>%
-      dplyr::arrange(-value) %>%
-      dplyr::mutate(value = round(value, 2)) %>% dplyr::filter(abs(value) > cor.thr) 
+    if (!random.shuffle) {
+      u.res <- cr.melt %>% 
+        dplyr::filter(Var2 == gn) %>%
+        dplyr::arrange(-value) %>%
+        dplyr::mutate(value = round(value, 2)) %>% dplyr::filter(abs(value) > cor.thr) 
+        up.reg <- u.res %>% head(., how.many) %>% dplyr::filter(value > 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
+        down.reg <- u.res %>% tail(., how.many) %>% dplyr::filter(value < 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
+
+    } else {
+      u.res <- cr.melt %>% 
+        dplyr::filter(Var2 == gn) %>%
+        sample_n(NROW(.)) %>%
+        dplyr::mutate(value = round(value, 2))
+      up.reg <- u.res %>% head(., how.many) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
+      down.reg <- u.res %>% tail(., how.many) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
+    }
     
-    up.reg <- u.res %>% head(., how.many) %>% dplyr::filter(value > 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
-    down.reg <- u.res %>% tail(., how.many) %>% dplyr::filter(value < 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
     reg <- c(up.reg, down.reg) %>% unique
     reg <- setdiff(reg, "")
     u.res.lim <- u.res %>% dplyr::filter(Var1 %in% reg) %>% dplyr::mutate(CPD_NAME = Var1) %>% dplyr::mutate(Corr. = value) %>% dplyr::select(one_of(c("CPD_NAME", "Corr.")))
@@ -257,7 +267,7 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle.genes = F, random.shuffl
     V <- V + Vi
     
     fsh <- fisher.test(Vi, alternative = "greater")
-    if (fsh$p.value < 0.05/length(Pf.gene$data$Treatment)) {
+    if (fsh$p.value < 0.01/length(Pf.gene$data$Treatment)) {
       gn.list <- c(gn.list, gene)
       if (verbose) {
         cat(gene)
@@ -291,7 +301,7 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle.genes = F, random.shuffl
 ```{r, results='asis'}
 
 system("rm predictions.html")
-res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle.genes = F, random.shuffle.cmpds = F, verbose = T, cor.thr = cor.thr, how.many = no.top.matches)
+res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, random.shuffle.genes = F, random.shuffle.cmpds = F, verbose = T, cor.thr = cor.thr, how.many = no.top.matches)
 f <- fisher.test(res$V, alternative = "greater")
 
 ```
@@ -313,7 +323,7 @@ cor(Pf.cmpd$data[,c("Mean_Cells_Count", "rep.corr")])
 
 ```{r, eval=TRUE}
 
-N <- 2000
+N <- 1000
 nl <- c()
 pb <- progress::progress_bar$new(total = N)
 if (exists("cls")) {
@@ -324,10 +334,10 @@ if (exists("cls")) {
 
 library(foreach)
 library(doMC)
-doMC::registerDoMC(cores = 4)
+doMC::registerDoMC(cores = 3)
 
 nl <- foreach (i = 1:N) %dopar% {
-  res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle.genes = T, random.shuffle.cmpds = F, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)
+  res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, random.shuffle.genes = T, random.shuffle.cmpds = F, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)
   length(res$genes)
 }
 
