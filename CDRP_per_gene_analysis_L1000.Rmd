@@ -1,0 +1,416 @@
+```{r Load Gene OE and Compound data, eval=TRUE, warning=FALSE}
+
+rm(list = ls())
+library(dplyr)
+library(stringr)
+library(plyr)
+library(reshape2)
+library(htmlTable)
+library(foreach)
+library(doMC)
+library(magrittr)
+library(readr)
+registerDoMC(cores = 3)
+
+source("rep.corr.func.R")
+use.repurp.annots <- F
+permute.moas <- F
+seed.moa <- -8     ## ignore, if permute.moas is False
+LUAD <- F
+LUAD.mut <- F
+just.bioactives <- T
+no.top.matches <- 15
+cor.thr <- 0.50
+p.val.thr <- 0.005
+N <- 20                     ## number of Monte-carlo simulations to estimate expected random matches
+genes.to.remove <- c()        ## remove these genes before making matches
+
+base.dir <- "2016-07-20_90b7bb86"
+use.feat.selected.in.TA.ORF.in.common <- F
+corr.type <- "pearson"
+
+if (LUAD) {
+  load("../input/LUAD/LUAD.RData")
+  Pf.ta <- list(data = Px, factor_cols = "Metadata_x_mutation_status", feat_cols = setdiff(colnames(Px), "Metadata_x_mutation_status"))
+  Pf.ta.all <- Pf
+  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(str_detect(Metadata_x_mutation_status, "WT")) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta$factor_cols <- c(Pf.ta$factor_cols, "Treatment")
+  Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(str_detect(Metadata_x_mutation_status, "WT")) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta.all$factor_cols <- c(Pf.ta.all$factor_cols, "Treatment")
+
+  Pf.ta$data$Treatment <- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
+  Pf.ta.all$data$Treatment <- lapply(Pf.ta.all$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
+  Pf.ta$data <- Pf.ta$data %>% dplyr::group_by(Treatment) %>% slice(1) %>% dplyr::ungroup()
+} else if (LUAD.mut) {
+  load("../input/LUAD/LUAD.RData")
+  Pf.ta <- list(data = Px, factor_cols = "Metadata_x_mutation_status", feat_cols = setdiff(colnames(Px), "Metadata_x_mutation_status"))
+  Pf.ta.all <- Pf
+  a <- read.csv("../input/LUAD/allele_classification.csv")
+  GOF <- a$Allele[which(a$Benchmark.activity == "GOF" | a$eVIP_prediction %in% c("GOF", "Neutral"))]
+  s <- Pf.ta$data$Metadata_x_mutation_status %>% unique
+  s <- s[which(str_detect(s, "_WT"))]
+  GOF <- c(as.character(GOF), as.character(s))
+  
+  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Metadata_x_mutation_status %in% GOF) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta$factor_cols <- c(Pf.ta$factor_cols, "Treatment")
+  Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(str_detect(Metadata_x_mutation_status, "WT")) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta.all$factor_cols <- c(Pf.ta.all$factor_cols, "Treatment")
+
+  Pf.ta$data$Treatment <- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
+  Pf.ta.all$data$Treatment <- lapply(Pf.ta.all$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
+  Pf.ta$data <- dplyr::left_join(Pf.ta$data, uu, by = "Metadata_x_mutation_status")
+  Pf.ta$factor_cols <- c(Pf.ta$factor_cols, "strn")
+  Pf.ta$data <- Pf.ta$data %>% dplyr::group_by(Treatment) %>% arrange(-strn) %>% slice(1) %>% dplyr::ungroup()
+  Pf.ta$data %>% dplyr::select(Treatment, Metadata_x_mutation_status, strn) %>% unique %>% knitr::kable()
+} else {
+  load("../input/TA/Initial_analysis_workspace_new.RData")
+  Pf.ta <- Pf_org.org.collapsed
+  Pf.ta.all <- Pf_org.org
+  strong.trt <- Pf.trt.strong.collapsed$data$Treatment
+  data.annot <- Pf.strong %>% dplyr::filter(Treatment %in% strong.trt) %>% dplyr::select(one_of(c("Treatment", "Pathway", "Gene", "AlleleDesc"))) %>% 
+    dplyr::mutate(Pathway = str_replace(Pathway, "Canonical ", "")) %>% 
+    dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2)) %>%
+    dplyr::filter(AlleleDesc == "WT") %>% dplyr::group_by(Gene) %>% dplyr::slice(1) %>%
+    dplyr::ungroup() 
+  desired.ta <- data.annot$Treatment
+  Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(Treatment %in% c(as.character(desired.ta), "EMPTY_")) 
+  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta) 
+  
+  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta) 
+  Pf.ta$data$Treatment <- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist 
+}
+
+Pf.gene <- Pf.ta
+Pf.gene.all <- Pf.ta.all
+Pf.gene$data <- Pf.gene$data %>% dplyr::filter(! Treatment %in% genes.to.remove)
+
+
+############
+
+Pf.cmpd <- readRDS("../results/master/2017-04-20_64917c8b/Pf_annotated.rds")
+Pf.cmpd$data %<>% mutate(CPD_NAME = ifelse(CPD_NAME != "", CPD_NAME, Metadata_broad_sample))
+
+source("rep.corr.func.R")
+Pf.1 <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
+if (!just.bioactives) {
+  Pf.2 <- readRDS("../results/master/2017-04-20_425d653/Pf_DOS_new.rds")
+  Pf <- rbind(Pf.1, Pf.2)
+} else {
+  Pf <- Pf.1 
+}
+
+u <- rep.cor(list(data = Pf, feat_cols = Pf.cmpd$feat_cols, factor_cols = Pf.cmpd$factor_cols), grp.var = "Metadata_broad_sample", feat.var = Pf.cmpd$feat_cols)
+up <- readr::read_csv("../results/master/2017-04-21_425d6537/Cell_counts.csv")
+
+x <- Pf %>% 
+  left_join(., u, by = "Metadata_broad_sample") %>%
+  left_join(., up, by = c("Metadata_Plate" = "Image_Metadata_Plate", "Metadata_Well" = "Image_Metadata_Well")) %>%
+  select(Metadata_broad_sample, cr, Image_Count_Cells) %>%
+  group_by(Metadata_broad_sample) %>%
+  summarise_each(funs(mean))
+  
+Pf.cmpd$data %<>% 
+  right_join(., x, by = "Metadata_broad_sample") %>%
+  mutate(rep.corr = round(cr, 2), Mean_Cells_Count = round(Image_Count_Cells, 2)) %>%
+  select(-cr, -Image_Count_Cells) 
+
+Pf.cmpd$factor_cols <- c(Pf.cmpd$factor_cols, "rep.corr", "Mean_Cells_Count")
+Pf.cmpd$data$Mean_Cells_Count <- round(scale(Pf.cmpd$data$Mean_Cells_Count), 2)
+
+```
+
+```{r Align the features in Compound and Gene OE data, eval=TRUE}
+
+f1 <- Pf.cmpd$feat_cols
+f2 <- Pf.gene$feat_cols
+f <- intersect(f1, f2)
+
+Pf.cmpd$feat_cols <- f
+Pf.gene$feat_cols <- f
+
+Pf.cmpd$data <- Pf.cmpd$data[,c(Pf.cmpd$factor_cols, Pf.cmpd$feat_cols)]
+Pf.gene$data <- Pf.gene$data[,c(Pf.gene$factor_cols, Pf.gene$feat_cols)]
+
+if (use.feat.selected.in.TA.ORF.in.common) {
+  feats <- Pf_org$feat_cols
+  feats <- intersect(feats, Pf.cmpd$feat_cols)
+  Pf.cmpd$feat_cols <- feats
+  Pf.cmpd$data <- Pf.cmpd$data[,c(feats, Pf.cmpd$factor_cols)]
+  Pf.gene$feat_cols <- feats
+  Pf.gene$data <- Pf.gene$data[,c(feats, Pf.gene$factor_cols)]
+}
+
+print(length(Pf.cmpd$feat_cols))
+print(NROW(Pf.cmpd$data))
+
+print(length(Pf.gene$feat_cols))
+print(NROW(Pf.gene$data))
+
+```
+
+```{r Find the correlation matrix, eval=T}
+
+cr <- cor(Pf.cmpd$data[,Pf.cmpd$feat_cols] %>% t, Pf.gene$data[,Pf.gene$feat_cols] %>% t)
+rownames(cr) <- Pf.cmpd$data$CPD_NAME
+colnames(cr) <- Pf.gene$data$Treatment
+cr.melt <- melt(cr)
+
+```
+
+```{r}
+
+source("../l1ktools/R/cmap/io.R")
+ds <- parse.gctx("../results/manual/cmap.compound.score/result_WTCS.LM.COMBINED_n328x22962.gctx", set_annot_rownames = F)
+cmpd.gene.score.cmap <- attr(ds, "mat")
+rn <- rownames(cmpd.gene.score.cmap)
+rn <- sapply(str_split(rn, ":"), "[[", 2)
+rownames(cmpd.gene.score.cmap) <- rn
+rn.cmap <- rn
+
+cn <- colnames(cmpd.gene.score.cmap)
+cn <- sapply(str_split(cn, ":"), "[[", 2)
+colnames(cmpd.gene.score.cmap) <- cn
+
+
+meta.ta.cmap <- read.csv("../input/TA-OE-L1000-B1/TA.OE005_U2OS_72H_COMPZ.MODZ_SCORE_LM_n323x978.gctx.gct.csv") %>% t
+colnames(meta.ta.cmap) <- meta.ta.cmap[1,]
+meta.ta.cmap <- meta.ta.cmap[-1,]
+meta.ta.cmap <- meta.ta.cmap %>% as.data.frame()
+genes.ta.cmap <- meta.ta.cmap$x_genesymbol_mutation
+ids.ta.cmap <- meta.ta.cmap$pert_id
+meta.ta.cmap[, "det_well"] <- tolower(meta.ta.cmap$det_well)
+treatment.meta <- Pf_org$data %>% 
+  dplyr::filter(Type == "Treated") %>%
+  dplyr::select(Well, Treatment) %>%
+  unique %>% 
+  dplyr::left_join(., meta.ta.cmap, by = c("Well" = "det_well"))
+
+treatment.meta <- treatment.meta %>% dplyr::filter(!Treatment %in% c("CYLD_WT", "ERG_truncated"))
+
+treatment.to.id <- data.frame(treatment.meta$pert_id)
+rownames(treatment.to.id) <- treatment.meta$Treatment
+id.to.treatment <- data.frame(treatment.meta$Treatment)
+ix <- which(is.na(treatment.meta$pert_id))
+treatment.meta$pert_id <- treatment.meta$pert_id %>% as.character()
+treatment.meta$pert_id[ix] <- 1:length(ix)
+rownames(id.to.treatment) <- treatment.meta$pert_id
+
+colnames(cmpd.gene.score.cmap) <- id.to.treatment[cn, ]
+cmpd.gene.score.cmap <- cmpd.gene.score.cmap[,intersect(desired.ta, colnames(cmpd.gene.score.cmap))]
+colnames(cmpd.gene.score.cmap) <- lapply(colnames(cmpd.gene.score.cmap), function(x) str_split(x, "_")[[1]][1]) %>% unlist
+u <- apply(cmpd.gene.score.cmap, 2, function(x) ecdf(x)(x))
+cr.l1000 <- u
+rownames(cr.l1000) <- rownames(cmpd.gene.score.cmap)
+
+cr.melt.l1000 <- cr.l1000 %>% 
+  reshape2::melt(.) %>%
+  dplyr::mutate(value = (value - 0.5)*2)
+
+cr.melt.l1000.ext <- cr.melt.l1000 %>% 
+  dplyr::left_join(., Pf.cmpd$data[,c("Metadata_broad_sample","CPD_NAME")], 
+                   by = c("Var1" = "Metadata_broad_sample")) %>%
+  dplyr::select(-Var1) %>%
+  dplyr::rename(Var1 = CPD_NAME) %>%
+  dplyr::filter(Var1 %in% rownames(cr))
+
+cr.melt <- cr.melt.l1000.ext
+
+```
+
+```{r}
+
+moas <- read.csv("../input/moas.txt", sep = "\t")
+
+get.interacting.proteins <- function(protein.name) {
+  dr <- "../results/manual/ppis"
+  if (!dir.exists(dr)) {
+    system(sprintf("mkdir -p %s", dr))
+  }
+  f.name <- sprintf("%s/%s.rds", dr, protein.name)
+  if (file.exists(f.name)) {
+    return(readRDS(f.name))
+  }
+  
+  tbl <- read.table(sprintf("http://webservice.thebiogrid.org/interactions/?searchNames=true&geneList=%s&taxId=9606&includeHeader=true&accesskey=ca950b072394ce1897811022f7757222", protein.name), sep="\t", header = FALSE, fill = T)
+  tbl <- tbl[, c(8, 9, 12, 13, 14)] 
+  colnames(tbl) <- c("Protein.1", "Protein.2", "Method", "Type", "Evidence")
+  saveRDS(tbl, f.name)
+  return(tbl)
+}
+
+get.all.interacting.proteins <- function(protein.name) {
+  res <- c()
+  for (p in protein.name) {
+    ppi <- tryCatch(get.interacting.proteins(p), error = function(e) {})
+    res <- rbind(res, ppi)
+  }
+  return(res)
+}
+
+ V <- matrix(0, 2, 2)
+
+sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.genes = F, random.shuffle.cmpds = F, verbose = F, cor.thr = 0.5, how.many = 5) {
+  gn.list <- c()
+  gn.map <- Pf.gene$data$Treatment %>% as.matrix() %>% as.vector()
+  if (random.shuffle.genes) {
+    while(T) {
+      names(gn.map) <- gn.map[permute::shuffle(length(gn.map))]
+      flag <- T
+      for (i in 1:length(cls.gene)) {
+        if (any(gn.map[cls.gene[[i]]] %in% cls.gene[[i]])) {
+          flag <- F
+          break
+        }
+      }
+      if (flag) {
+        break
+      }
+    }
+  } else {
+    names(gn.map) <- gn.map
+  }
+  
+  if (random.shuffle.cmpds) {
+    Pf.cmpd$data[,"CPD_NAME"] <- Pf.cmpd$data[permute::shuffle(NROW(Pf.cmpd$data)), "CPD_NAME"]
+  }
+  
+  all.targ <- lapply(Pf.cmpd$data$Target %>% unique, function(x) str_split(x, ", ")[[1]]) %>% do.call(c, .) %>% unique
+  path <- sprintf("../results/manual/ppis")
+  if (!dir.exists(path)) {
+    system(sprintf("mkdir -p %s", path))
+  }
+  if (file.exists(sprintf("%s/all.rds", path))) {
+    ppi.all <- readRDS(sprintf("%s/all.rds", path))
+  } else {
+    ppi.all <- tryCatch(get.all.interacting.proteins(all.targ), error = function(e) {})
+    saveRDS(ppi.all, sprintf("%s/all.rds", path))
+  }
+  
+  pb <- progress::progress_bar$new(total = length(Pf.gene$data$Treatment))
+  for (gene in Pf.gene$data$Treatment) {
+    if (verbose) {
+      pb$tick()  
+    }
+    gn <- gn.map[gene] %>% as.matrix() %>% as.vector()
+    if (!random.shuffle) {
+      u.res <- cr.melt %>% 
+        dplyr::filter(Var2 == gn) %>%
+        dplyr::arrange(-value) %>%
+        dplyr::mutate(value = round(value, 2)) %>% dplyr::filter(value > cor.thr) 
+        up.reg <- u.res %>% head(., how.many) %>% dplyr::filter(value > 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
+        down.reg <- u.res %>% tail(., how.many) %>% dplyr::filter(value < 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
+
+    } else {
+      u.res <- cr.melt %>% 
+        dplyr::filter(Var2 == gn) %>%
+        sample_n(NROW(.)) %>%
+        dplyr::mutate(value = round(value, 2))
+      up.reg <- u.res %>% head(., how.many) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
+      down.reg <- u.res %>% tail(., how.many) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
+    }
+    
+    reg <- c(up.reg, down.reg) %>% unique
+    reg <- setdiff(reg, "")
+    u.res.lim <- u.res %>% dplyr::filter(Var1 %in% reg) %>% dplyr::mutate(CPD_NAME = Var1) %>% dplyr::mutate(Corr. = value) %>% dplyr::select(one_of(c("CPD_NAME", "Corr.")))
+    
+    rest <- setdiff(Pf.cmpd$data$CPD_NAME %>% unique, reg)
+    v <- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% reg], function(x) str_split(x, ", ")[[1]]) %>% do.call(c, .) 
+    if (length(v) == 0) {
+      next
+    }
+    u <- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% rest], function(x) str_split(x, ", ")[[1]]) %>% do.call(c, .) 
+    
+    main.targ <- data.frame(gene = v) %>% dplyr::group_by(gene) %>% tally() %>% dplyr::filter(gene != "") %>% dplyr::arrange(-n) %>% dplyr::select(gene) %>% as.matrix() %>% as.vector()
+    rest.targ <- data.frame(gene = u) %>% dplyr::group_by(gene) %>% tally() %>% dplyr::filter(gene != "") %>% dplyr::arrange(-n) %>% dplyr::select(gene) %>% as.matrix() %>% as.vector()
+    
+    ppi <- ppi.all %>% dplyr::filter(Protein.1 %in% main.targ | Protein.2 %in% main.targ)
+    ppi2 <- ppi.all %>% dplyr::filter(Protein.1 %in% rest.targ | Protein.2 %in% rest.targ)
+    
+    id <- ppi %>% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %>% unique %>% NROW
+    id0 <- ppi2 %>% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %>% unique %>% NROW
+    Vi <- rbind(c(id, NROW(ppi %>% unique) - id), c(id0, NROW(ppi2 %>% unique) - id0))
+    V <- V + Vi
+    
+    fsh <- fisher.test(Vi, alternative = "greater")
+    if (fsh$p.value < p.val.thr/length(Pf.gene$data$Treatment)) {
+      gn.list <- c(gn.list, gene)
+      if (verbose) {
+        cat(gene)
+        cat("<br>")
+        colnames(Vi) <- c("gene in relevant ppi", "otherwise")
+        rownames(Vi) <- c("compound matches", "rest of compounds")
+        Vi %>% htmlTable::htmlTable() %>% cat
+        cat("<br>")
+        fsh %>% print
+        cat("<br>")
+        #(Pf.cmpd$data %>% dplyr::filter(Name %in% reg) %>% dplyr::select(one_of(c("Name", "MOA", "Target")))) %>% plyr::join(., u.res.lim, by = "Name") %>% dplyr::arrange(Corr.) %>% htmlTable::htmlTable() %>% cat
+        Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target", "rep.corr", "Mean_Cells_Count"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% arrange(Corr.) %>% htmlTable::htmlTable() %>% cat
+        (ppi %>% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %>% unique %>% head(., 20)) %>% htmlTable::htmlTable() %>% cat
+        cat("<br> <hr>")
+      }
+    } 
+    
+    if (verbose) {
+      cr.l1000.melt <- cr.l1000 %>% reshape2::melt(.) %>% dplyr::filter(Var2 == gene)
+      cat(gene, file = "predictions.html", append = T)
+      cat("<br>", file = "predictions.html", append = T)
+      Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target", "rep.corr", "Mean_Cells_Count"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% arrange(Corr.) %>% htmlTable::htmlTable() %>% cat(., file = "predictions.html", append = T)
+      cat("<br> <hr>", file = "predictions.html", append = T)
+    }
+  }
+  
+  return(list(genes = gn.list, V = V))
+}
+
+```
+
+```{r, results='asis'}
+
+system("rm predictions.html")
+res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, random.shuffle.genes = F, random.shuffle.cmpds = F, verbose = T, cor.thr = cor.thr, how.many = no.top.matches)
+f <- fisher.test(res$V, alternative = "greater")
+
+```
+
+```{r}
+
+print(f)
+print(res)
+
+```
+
+```{r}
+
+library(ggplot2)
+Pf.cmpd$data %>% ggplot2::ggplot(., aes(x = Mean_Cells_Count, rep.corr)) + ggplot2::geom_point()
+cor(Pf.cmpd$data[,c("Mean_Cells_Count", "rep.corr")])
+
+```
+
+```{r, eval=F}
+
+nl <- c()
+pb <- progress::progress_bar$new(total = N)
+if (exists("cls")) {
+  cls.gene <- cls  
+} else {
+  cls.gene <- Pf.gene$data$Treatment %>% as.list()
+}
+
+library(foreach)
+library(doMC)
+doMC::registerDoMC(cores = 64)
+
+nl <- foreach (i = 1:N) %dopar% {
+  res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, random.shuffle.genes = T, random.shuffle.cmpds = F, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)
+  length(res$genes)
+}
+
+nl <- unlist(nl)
+
+print(median(nl))
+print(quantile(nl, 0.95))
+max(nl)
+
+```
+
