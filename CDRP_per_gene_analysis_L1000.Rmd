@@ -19,10 +19,10 @@ seed.moa <- -8     ## ignore, if permute.moas is False
 LUAD <- F
 LUAD.mut <- F
 just.bioactives <- T
-no.top.matches <- 15
-cor.thr <- 0.50
+no.top.matches <- 30
+cor.thr <- 0.25
 p.val.thr <- 0.005
-N <- 20                     ## number of Monte-carlo simulations to estimate expected random matches
+N <- 200                     ## number of Monte-carlo simulations to estimate expected random matches
 genes.to.remove <- c()        ## remove these genes before making matches
 
 base.dir <- "2016-07-20_90b7bb86"
@@ -198,13 +198,12 @@ rownames(id.to.treatment) <- treatment.meta$pert_id
 colnames(cmpd.gene.score.cmap) <- id.to.treatment[cn, ]
 cmpd.gene.score.cmap <- cmpd.gene.score.cmap[,intersect(desired.ta, colnames(cmpd.gene.score.cmap))]
 colnames(cmpd.gene.score.cmap) <- lapply(colnames(cmpd.gene.score.cmap), function(x) str_split(x, "_")[[1]][1]) %>% unlist
-u <- apply(cmpd.gene.score.cmap, 2, function(x) ecdf(x)(x))
+u <- cmpd.gene.score.cmap
 cr.l1000 <- u
 rownames(cr.l1000) <- rownames(cmpd.gene.score.cmap)
 
 cr.melt.l1000 <- cr.l1000 %>% 
-  reshape2::melt(.) %>%
-  dplyr::mutate(value = (value - 0.5)*2)
+  reshape2::melt(.)
 
 cr.melt.l1000.ext <- cr.melt.l1000 %>% 
   dplyr::left_join(., Pf.cmpd$data[,c("Metadata_broad_sample","CPD_NAME")], 
@@ -387,7 +386,7 @@ cor(Pf.cmpd$data[,c("Mean_Cells_Count", "rep.corr")])
 
 ```
 
-```{r, eval=F}
+```{r, eval=T}
 
 nl <- c()
 pb <- progress::progress_bar$new(total = N)
@@ -408,7 +407,7 @@ nl <- foreach (i = 1:N) %dopar% {
 
 nl <- unlist(nl)
 
-print(median(nl))
+print(mean(nl))
 print(quantile(nl, 0.95))
 max(nl)
 
