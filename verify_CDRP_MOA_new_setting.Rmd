@@ -72,7 +72,7 @@ cr.melt <- cr %>% melt %>% dplyr::filter(Var1 != Var2)
 cr.melt %<>% dplyr::left_join(., moas, by = c("Var1" = "CPD_NAME")) %>%
   dplyr::left_join(., moas, by = c("Var2" = "CPD_NAME"))
 
-k <- 10
+k <- 5
 
 is.matching <- function(x) {
 any(setdiff(str_split(x[,"MOA.x"], ", ") %>% unlist, NA) %in% setdiff(str_split(x[,"MOA.y"], ", ") %>% unlist, NA)) |
@@ -92,5 +92,21 @@ res %>%
 
 print(sprintf("ratio of compounds with a same MOA compound being in their %d-NN : %f", k, NROW(res)/NROW(cr)))
 
+acc <- c()
+for (i in 1:100) {
+  res <- cr.melt %>% 
+    arrange(-value) %>%
+    group_by(Var1, MOA.x) %>%
+    do(data.frame(has.a.match = is.matching(.[sample(1:NROW(cr), k),]))) %>%
+    dplyr::filter(has.a.match) %>% 
+    dplyr::select(-has.a.match) %>% 
+    dplyr::arrange(MOA.x) 
+  
+  acc <- c(acc, NROW(res)/NROW(cr))
+}
+
+print(mean(acc))
+print(quantile(acc, 0.95))
+print(quantile(acc, 0.99))
 
 ```
