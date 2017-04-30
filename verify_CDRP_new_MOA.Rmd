@@ -9,9 +9,10 @@ library(magrittr)
 library(reshape2)
 library(htmlTable)
 
-Pf.1 <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
-Pf.2 <- readRDS("../results/master/2017-04-20_425d653/Pf_DOS_new.rds")
-Pf <- rbind(Pf.1, Pf.2)
+Pf.1 <- readRDS("../results/master/2017-04-30_f9e15843/Pf_bio_new_all.rds")
+#Pf.2 <- readRDS("../results/master/2017-04-30_f9e15843/Pf_DOS_new_all.rds")
+#Pf <- rbind(Pf.1, Pf.2)
+Pf <- Pf.1
 
 feat <- Pf %>% 
           dplyr::select(-dplyr::contains("Metadata_")) %>% 
