@@ -10,7 +10,7 @@ library(foreach)
 library(doMC)
 library(magrittr)
 library(readr)
-registerDoMC(cores = 3)
+registerDoMC(cores = 4)
 
 source("rep.corr.func.R")
 use.repurp.annots <- F
@@ -160,7 +160,7 @@ cr.melt <- melt(cr)
 ```{r}
 
 source("../l1ktools/R/cmap/io.R")
-ds <- parse.gctx("../results/manual/cmap.compound.score/result_WTCS.LM.COMBINED_n328x22962.gctx")
+ds <- parse.gctx("../results/manual/cmap.compound.score/result_WTCS.LM.COMBINED_n328x22962.gctx", set_annot_rownames = F)
 cmpd.gene.score.cmap <- attr(ds, "mat")
 rn <- rownames(cmpd.gene.score.cmap)
 rn <- sapply(str_split(rn, ":"), "[[", 2)
@@ -252,7 +252,9 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
   gn.list <- c()
   gn.map <- Pf.gene$data$Treatment %>% as.matrix() %>% as.vector()
   if (random.shuffle.genes) {
-    while(T) {
+    names(gn.map) <- gn.map[permute::shuffle(length(gn.map))]
+
+    while(F) {
       names(gn.map) <- gn.map[permute::shuffle(length(gn.map))]
       flag <- T
       for (i in 1:length(cls.gene)) {
