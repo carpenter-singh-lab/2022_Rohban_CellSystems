@@ -154,6 +154,7 @@ cr <- cor(Pf.cmpd$data[,Pf.cmpd$feat_cols] %>% t, Pf.gene$data[,Pf.gene$feat_col
 rownames(cr) <- Pf.cmpd$data$CPD_NAME
 colnames(cr) <- Pf.gene$data$Treatment
 cr.melt <- melt(cr)
+saveRDS(cr.melt, "cr_melt_cp.rds")
 
 ```
 
