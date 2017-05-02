@@ -213,6 +213,7 @@ cr.melt.l1000.ext <- cr.melt.l1000 %>%
   dplyr::filter(Var1 %in% rownames(cr))
 
 cr.melt <- cr.melt.l1000.ext
+saveRDS(cr.melt, "cr_melt_l1000.rds")
 
 ```
 
@@ -386,7 +387,7 @@ cor(Pf.cmpd$data[,c("Mean_Cells_Count", "rep.corr")])
 
 ```
 
-```{r, eval=T}
+```{r, eval=F}
 
 nl <- c()
 pb <- progress::progress_bar$new(total = N)
