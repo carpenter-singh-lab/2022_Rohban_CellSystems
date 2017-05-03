@@ -253,8 +253,9 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
   gn.list <- c()
   gn.map <- Pf.gene$data$Treatment %>% as.matrix() %>% as.vector()
   if (random.shuffle.genes) {
+    names(gn.map) <- gn.map[permute::shuffle(length(gn.map))]
     while(T) {
-      names(gn.map) <- gn.map[permute::shuffle(length(gn.map))]
+      #names(gn.map) <- gn.map[permute::shuffle(length(gn.map))]
       flag <- T
       for (i in 1:length(cls.gene)) {
         if (any(gn.map[cls.gene[[i]]] %in% cls.gene[[i]])) {
@@ -306,7 +307,7 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
         sample_n(NROW(.)) %>%
         dplyr::mutate(value = round(value, 2))
       up.reg <- u.res %>% head(., how.many) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
-      down.reg <- u.res %>% tail(., how.many) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
+      down.reg <- c() 
     }
     
     reg <- c(up.reg, down.reg) %>% unique
@@ -387,7 +388,7 @@ cor(Pf.cmpd$data[,c("Mean_Cells_Count", "rep.corr")])
 
 ```
 
-```{r, eval=F}
+```{r, eval=T}
 
 nl <- c()
 pb <- progress::progress_bar$new(total = N)
@@ -399,10 +400,10 @@ if (exists("cls")) {
 
 library(foreach)
 library(doMC)
-doMC::registerDoMC(cores = 64)
+doMC::registerDoMC(cores = 3)
 
 nl <- foreach (i = 1:N) %dopar% {
-  res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, random.shuffle.genes = T, random.shuffle.cmpds = F, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)
+  res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, random.shuffle.genes = T, random.shuffle.cmpds = T, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)
   length(res$genes)
 }
 
