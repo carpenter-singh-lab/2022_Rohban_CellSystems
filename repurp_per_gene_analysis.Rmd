@@ -9,7 +9,11 @@ library(htmlTable)
 library(foreach)
 library(doMC)
 registerDoMC(cores = 3)
-
+cor.thr <- 0.45
+no.top.matches <- 15
+N <- 200
+p.val.cutoff <- 0.005
+  
 source("rep.corr.func.R")
 use.repurp.annots <- F
 permute.moas <- F
@@ -261,27 +265,11 @@ get.all.interacting.proteins <- function(protein.name) {
 
  V <- matrix(0, 2, 2)
 
-sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many = 5) {
+sample.tot <- function(Pf.gene, Pf.cmpd, cr.melt, verbose = F, cor.thr = 0.5, how.many = 5) {
   gn.list <- c()
   all.moas <- moas %>% dplyr::filter(str_to_lower(Name) %in% str_to_lower(Pf.cmpd$data$Metadata_pert_iname %>% unique)) %>% dplyr::select(MOA) %>% as.matrix() %>% as.vector() %>% as.character %>% unique
   gn.map <- Pf.gene$data$Treatment %>% as.matrix() %>% as.vector()
-  if (random.shuffle) {
-    while(T) {
-      names(gn.map) <- gn.map[permute::shuffle(length(gn.map))]
-      flag <- T
-      for (i in 1:length(cls.gene)) {
-        if (any(gn.map[cls.gene[[i]]] %in% cls.gene[[i]])) {
-          flag <- F
-          break
-        }
-      }
-      if (flag) {
-        break
-      }
-    }
-  } else {
-    names(gn.map) <- gn.map
-  }
+  names(gn.map) <- gn.map
   
   all.targ <- lapply(moas$Target[moas$Name %in% (Pf.cmpd$data$Metadata_pert_iname %>% unique)], function(x) str_split(x, ", ")[[1]]) %>% do.call(c, .) %>% unique
   path <- sprintf("../results/manual/ppis")
@@ -325,7 +313,7 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
     V <- V + Vi
     
     fsh <- fisher.test(Vi, alternative = "greater")
-    if (fsh$p.value < 0.05/NROW(Pf.gene$data$Treatment)) {
+    if (fsh$p.value < p.val.cutoff/NROW(Pf.gene$data$Treatment)) {
       gn.list <- c(gn.list, gene)
       if (verbose) {
         cat(gene)
@@ -348,26 +336,9 @@ sample.tot <- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.many 
 
 ```
 
-```{r, eval=F}
-
-odds <- c()
-p.val <- c()
-res <- sample.tot(random.shuffle = F, verbose = T, cor.thr = 0.4, how.many = 10)
-f <- fisher.test(res$V, alternative = "greater")
-
-n.genes <- foreach(i = 1:50) %dopar% {
-  res <- sample.tot(random.shuffle = T, verbose = F, cor.thr = 0.4, how.many = 10)
-  (res$genes %>% length)
-}
-
-
-print(1 - ecdf(n.genes %>% unlist)(res$genes %>% length))
-
-```
-
 ```{r, results='asis'}
 
-res <- sample.tot(random.shuffle = F, verbose = T, cor.thr = 0.4, how.many = 10)
+res <- sample.tot(Pf.gene = Pf.gene, Pf.cmpd = Pf.cmpd, cr.melt = cr.melt, cor.thr = cor.thr, how.many = no.top.matches)
 f <- fisher.test(res$V, alternative = "greater")
 
 ```
@@ -379,3 +350,35 @@ print(res)
 
 ```
 
+```{r, eval=T}
+
+nl <- c()
+pb <- progress::progress_bar$new(total = N)
+
+library(foreach)
+library(doMC)
+doMC::registerDoMC(cores = 3)
+
+nl <- foreach (i = 1:N) %dopar% {
+  cr.tmp <- cr.melt %>% 
+    tidyr::spread(Var2, value) %>% 
+    tibble::remove_rownames(.) %>% 
+    tibble::column_to_rownames(var = "Var1") 
+  rn <- rownames(cr.tmp)
+  cl <- colnames(cr.tmp)
+  rownames(cr.tmp) <- rn[permute::shuffle(length(rn))]
+  colnames(cr.tmp) <- cl[permute::shuffle(length(cl))]
+  cr.melt.shfl <- cr.tmp %>% 
+    tibble::rownames_to_column(var = "Var1") %>%
+    tidyr::gather(Var2, value, -Var1)
+  res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, cr.melt.shfl, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)
+  length(res$genes)
+}
+
+nl <- unlist(nl)
+
+print(mean(nl))
+print(quantile(nl, 0.95))
+max(nl)
+
+```
