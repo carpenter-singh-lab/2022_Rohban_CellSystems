@@ -1,8 +1,3 @@
----
-title: "CDRP"
-output: html_notebook
----
-
 ```{r}
 
 library(dplyr)
@@ -14,8 +9,9 @@ library(foreach)
 library(doMC)
 library(ggplot2)
 source("rep.corr.func.R")
+just.strongs <- F
 
-doMC::registerDoMC(4)
+doMC::registerDoMC(64)
 
 process.plate <- function(plate.data) {
   c <- plate.data
@@ -64,7 +60,7 @@ process.plate <- function(plate.data) {
 
 ```{r}
 
-lst <- list.dirs("../../backend/CDRP")
+lst <- list.dirs("../../../backend/CDRP")
 profiles <- foreach (i = lst[2:length(lst)]) %dopar% {
   pl <- str_split(i, "/")[[1]]
   pl <- pl[length(pl)]
@@ -103,8 +99,10 @@ feats <- setdiff(Pf$feat_cols, Pf$feat_cols[feats.to.remove])
 Pf$feat_cols <- feats
 Pf$data <- Pf$data[,c(Pf$feat_cols, Pf$factor_cols)]
 
+if (just.strongs) {
 u.cntrl <- Pf$data %>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "mock") %>% dplyr::group_by(Metadata_Plate_Map_Name, Metadata_pert_well) %>% do(data.frame(cr = median(as.dist(cor(t(.[,Pf$feat_cols]))), na.rm = T))) 
 u.cntrl$cr %>% quantile(., na.rm = T) %>% print
+}
 
 Pf$data %<>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "treated")
 
@@ -114,27 +112,41 @@ Pf.nonbio <- Pf
 Pf.bio$data <- Pf.bio$data %>% dplyr::filter(str_detect(Metadata_Plate_Map_Name, "BIO"))
 Pf.nonbio$data <- Pf.nonbio$data %>% dplyr::filter(!str_detect(Metadata_Plate_Map_Name, "BIO"))
 
+if (just.strongs) {
 u.bio <- rep.cor(Pf.bio, "Metadata_broad_sample", Pf.bio$feat_cols)
-v.bio <- non.rep.cor.rob(Pf.bio, "Metadata_broad_sample", Pf.bio$feat_cols)
+v.bio <- non.rep.cor(Pf.bio, "Metadata_broad_sample", Pf.bio$feat_cols)
 
 u.strong <- u.bio %>% dplyr::filter(cr > v.bio)
 hit.rate <- (u.strong %>% NROW)/(u.bio %>% NROW)
 print(hit.rate)
+}
 
+if (just.strongs) {
 Pf.bio$data %>% 
   dplyr::filter(Metadata_broad_sample %in% u.strong$Metadata_broad_sample) %>%
   saveRDS(., "Pf_bio_new.rds")
+} else {
+Pf.bio$data %>%
+  saveRDS(., "Pf_bio_new_all.rds")
+}
 
+if (just.strongs) {
 u.nbio <- rep.cor(Pf.nonbio, "Metadata_broad_sample", Pf.nonbio$feat_cols)
-v.nbio <- non.rep.cor.rob(Pf.nonbio, "Metadata_broad_sample", Pf.nonbio$feat_cols)
+v.nbio <- non.rep.cor(Pf.nonbio, "Metadata_broad_sample", Pf.nonbio$feat_cols)
 
 u.strong <- u.nbio %>% dplyr::filter(cr > v.nbio)
 hit.rate <- (u.strong %>% NROW)/(u.nbio %>% NROW)
 print(hit.rate)
+}
 
+if(just.strongs) {
 Pf.nonbio$data %>%
   dplyr::filter(Metadata_broad_sample %in% u.strong$Metadata_broad_sample) %>%
   saveRDS(., "Pf_DOS_new.rds")
+} else {
+Pf.nonbio$data %>%
+  saveRDS(., "Pf_DOS_new_all.rds")
+}
 
 ```
 
