@@ -116,6 +116,7 @@ Pf.cmpd$data %<>%
 
 Pf.cmpd$factor_cols <- c(Pf.cmpd$factor_cols, "rep.corr", "Mean_Cells_Count")
 Pf.cmpd$data$Mean_Cells_Count <- round(scale(Pf.cmpd$data$Mean_Cells_Count), 2)
+Pf.cmpd$data <- Pf.cmpd$data %>% dplyr::group_by(CPD_NAME) %>% slice(1) %>% ungroup
 
 ```
 
@@ -237,31 +238,14 @@ get.all.interacting.proteins <- function(protein.name) {
 
  V <- matrix(0, 2, 2)
 
-sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.genes = F, random.shuffle.cmpds = F, verbose = F, cor.thr = 0.5, how.many = 5) {
+shuffle.cr.melt <- function(cr.melt, var) {
+  #reshape2::  
+}
+
+sample.tot <- function(Pf.cmpd, Pf.gene, cr.melt, verbose = F, cor.thr = 0.5, how.many = 5) {
   gn.list <- c()
   gn.map <- Pf.gene$data$Treatment %>% as.matrix() %>% as.vector()
-  if (random.shuffle.genes) {
-    names(gn.map) <- gn.map[permute::shuffle(length(gn.map))]
-    while(F) {
-      names(gn.map) <- gn.map[permute::shuffle(length(gn.map))]
-      flag <- T
-      for (i in 1:length(cls.gene)) {
-        if (any(gn.map[cls.gene[[i]]] %in% cls.gene[[i]])) {
-          flag <- F
-          break
-        }
-      }
-      if (flag) {
-        break
-      }
-    }
-  } else {
-    names(gn.map) <- gn.map
-  }
-  
-  if (random.shuffle.cmpds) {
-    Pf.cmpd$data[,"CPD_NAME"] <- Pf.cmpd$data[permute::shuffle(NROW(Pf.cmpd$data)), "CPD_NAME"]
-  }
+  names(gn.map) <- gn.map
   
   all.targ <- lapply(Pf.cmpd$data$Target %>% unique, function(x) str_split(x, ", ")[[1]]) %>% do.call(c, .) %>% unique
   path <- sprintf("../results/manual/ppis")
@@ -281,23 +265,14 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
       pb$tick()  
     }
     gn <- gn.map[gene] %>% as.matrix() %>% as.vector()
-    if (!random.shuffle) {
-      u.res <- cr.melt %>% 
-        dplyr::filter(Var2 == gn) %>%
-        dplyr::arrange(-value) %>%
-        dplyr::mutate(value = round(value, 2)) %>% dplyr::filter(abs(value) > cor.thr) 
-        up.reg <- u.res %>% head(., how.many) %>% dplyr::filter(value > 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
-        down.reg <- u.res %>% tail(., how.many) %>% dplyr::filter(value < 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
 
-    } else {
-      u.res <- cr.melt %>% 
-        dplyr::filter(Var2 == gn) %>%
-        sample_n(NROW(.)) %>%
-        dplyr::mutate(value = round(value, 2))
-      up.reg <- u.res %>% head(., how.many) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
-      down.reg <- u.res %>% tail(., how.many) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
-    }
-    
+    u.res <- cr.melt %>% 
+      dplyr::filter(Var2 == gn) %>%
+      dplyr::arrange(-value) %>%
+      dplyr::mutate(value = round(value, 2)) %>% dplyr::filter(abs(value) > cor.thr) 
+      up.reg <- u.res %>% head(., how.many) %>% dplyr::filter(value > 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
+      down.reg <- u.res %>% tail(., how.many) %>% dplyr::filter(value < 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
+
     reg <- c(up.reg, down.reg) %>% unique
     reg <- setdiff(reg, "")
     u.res.lim <- u.res %>% dplyr::filter(Var1 %in% reg) %>% dplyr::mutate(CPD_NAME = Var1) %>% dplyr::mutate(Corr. = value) %>% dplyr::select(one_of(c("CPD_NAME", "Corr.")))
@@ -332,7 +307,6 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
         cat("<br>")
         fsh %>% print
         cat("<br>")
-        #(Pf.cmpd$data %>% dplyr::filter(Name %in% reg) %>% dplyr::select(one_of(c("Name", "MOA", "Target")))) %>% plyr::join(., u.res.lim, by = "Name") %>% dplyr::arrange(Corr.) %>% htmlTable::htmlTable() %>% cat
         Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target", "rep.corr", "Mean_Cells_Count"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% arrange(Corr.) %>% htmlTable::htmlTable() %>% cat
         (ppi %>% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %>% unique %>% head(., 20)) %>% htmlTable::htmlTable() %>% cat
         cat("<br> <hr>")
@@ -343,7 +317,7 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
       cr.l1000.melt <- cr.l1000 %>% reshape2::melt(.) %>% dplyr::filter(Var2 == gene)
       cat(gene, file = "predictions.html", append = T)
       cat("<br>", file = "predictions.html", append = T)
-      Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target", "rep.corr", "Mean_Cells_Count"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% dplyr::left_join(., cr.l1000.melt, by = c("Metadata_broad_sample" = "Var1")) %>% arrange(Corr.) %>% dplyr::mutate(value = round(value, 3)) %>% dplyr::rename(l1000.score = value) %>% dplyr::select(-Var2) %>% htmlTable::htmlTable() %>% cat(., file = "predictions.html", append = T)
+      Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("Metadata_broad_sample", "CPD_NAME", "MOA", "Target", "rep.corr", "Mean_Cells_Count"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% dplyr::left_join(., cr.l1000.melt, by = c("Metadata_broad_sample" = "Var1")) %>% arrange(Corr.) %>% dplyr::mutate(value = round(value, 3)) %>% dplyr::rename(l1000.score = value) %>% dplyr::select(-Var2) %>% htmlTable::htmlTable() %>% cat(., file = "predictions.html", append = T)
       cat("<br> <hr>", file = "predictions.html", append = T)
     }
   }
@@ -356,7 +330,7 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
 ```{r, results='asis'}
 
 system("rm predictions.html")
-res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, random.shuffle.genes = F, random.shuffle.cmpds = F, verbose = T, cor.thr = cor.thr, how.many = no.top.matches)
+res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, cr.melt = cr.melt, verbose = T, cor.thr = cor.thr, how.many = no.top.matches)
 f <- fisher.test(res$V, alternative = "greater")
 
 ```
@@ -380,18 +354,24 @@ cor(Pf.cmpd$data[,c("Mean_Cells_Count", "rep.corr")])
 
 nl <- c()
 pb <- progress::progress_bar$new(total = N)
-if (exists("cls")) {
-  cls.gene <- cls  
-} else {
-  cls.gene <- Pf.gene$data$Treatment %>% as.list()
-}
 
 library(foreach)
 library(doMC)
 doMC::registerDoMC(cores = 3)
 
 nl <- foreach (i = 1:N) %dopar% {
-  res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, random.shuffle.genes = T, random.shuffle.cmpds = T, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)
+  cr.tmp <- cr.melt %>% 
+    tidyr::spread(Var2, value) %>% 
+    tibble::remove_rownames(.) %>% 
+    tibble::column_to_rownames(var = "Var1") 
+  rn <- rownames(cr.tmp)
+  cl <- colnames(cr.tmp)
+  rownames(cr.tmp) <- rn[permute::shuffle(length(rn))]
+  colnames(cr.tmp) <- cl[permute::shuffle(length(cl))]
+  cr.melt.shfl <- cr.tmp %>% 
+    tibble::rownames_to_column(var = "Var1") %>%
+    tidyr::gather(Var2, value, -Var1)
+  res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, cr.melt.shfl, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)
   length(res$genes)
 }
 
