@@ -8,6 +8,10 @@ library(magrittr)
 library(reshape2)
 library(htmlTable)
 library(ggplot2)
+library(foreach)
+library(doParallel)
+
+doParallel::registerDoParallel(cores = 3)
 
 Pf <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
 
@@ -114,6 +118,9 @@ print(quantile(acc, 0.99))
 
 ```{r, eval=T}
 
+N <- 10
+ks <- 1:40
+
 Pf %<>% dplyr::filter(!is.na(MOA) & CPD_NAME != "")
 moas <- Pf[, c("CPD_NAME", "MOA")]
 
@@ -126,26 +133,38 @@ cr.melt <- cr %>% melt %>% dplyr::filter(Var1 != Var2)
 cr.melt %<>% dplyr::left_join(., moas, by = c("Var1" = "CPD_NAME")) %>%
   dplyr::left_join(., moas, by = c("Var2" = "CPD_NAME"))
 
-ks <- 1:40
 is.matching <- function(x) {
 any(setdiff(str_split(x[,"MOA.x"], ", ") %>% unlist, NA) %in% setdiff(str_split(x[,"MOA.y"], ", ") %>% unlist, NA)) |
         any(setdiff(str_split(x[,"MOA.y"], ", ") %>% unlist, NA) %in% setdiff(str_split(x[,"MOA.x"], ", ") %>% unlist, NA))
 }
-D <- data.frame(k = 0, meas = 0)
+D <- data.frame(k = c(0, 0), meas = c(0, 0), type = c("data", "null"), ci = c(0, 0))
 
+cr.arr.grp <- cr.melt %>% 
+      arrange(-value) %>%
+      group_by(Var1, MOA.x)
+ 
 for (k in ks) {
-  res <- cr.melt %>% 
-    arrange(-value) %>%
-    group_by(Var1, MOA.x) %>%
+  res <- cr.arr.grp %>%
     do(data.frame(has.a.match = is.matching(.[1:k,]))) %>%
-    dplyr::filter(has.a.match) %>% 
-    dplyr::select(-has.a.match) %>% 
-    dplyr::arrange(MOA.x) 
-  D <- rbind(D, data.frame(k = k, meas = NROW(res)/NROW(cr)))  
-  #print(sprintf("ratio of compounds with a same MOA compound being in their %d-NN : %f", k, NROW(res)/NROW(cr)))
+    dplyr::filter(has.a.match)
+  
+  D <- rbind(D, data.frame(k = k, meas = NROW(res)/NROW(cr), type = "data", ci = 0))
+  
+  baseline <- foreach (i = 1:N) %dopar% {
+    res <- cr.arr.grp %>%
+      do(data.frame(has.a.match = is.matching(.[sample(1:NROW(cr), k),]))) %>%
+      dplyr::filter(has.a.match) 
+    
+    NROW(res)/NROW(cr)
+  }
+  baseline <- unlist(baseline)
+  D <- rbind(D, data.frame(k = k, meas = mean(baseline), type = "null", ci = sd(baseline)/(N^0.5)))  
 }
 
-g <- ggplot(D, aes(x = k, y = meas)) + ggplot2::geom_line() + ggplot2::ylab("ratio of same MOA compound pairs")
+g <- ggplot(D, aes(x = k, y = meas, color = type)) + 
+  ggplot2::geom_line() + 
+  ggplot2::geom_errorbar(aes(ymin = meas - ci, ymax = meas + ci), width = 0.1) +
+  ggplot2::ylab("ratio of same MOA compound pairs")
 
 g
 
