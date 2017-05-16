@@ -7,6 +7,7 @@ library(readr)
 library(magrittr)
 library(reshape2)
 library(htmlTable)
+library(ggplot2)
 
 Pf <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
 
@@ -58,7 +59,7 @@ saveRDS(list(data = Pf, feat_cols = feat, factor_cols = meta.col), "Pf_annotated
 
 ```
 
-```{r}
+```{r, eval=F}
 
 Pf %<>% dplyr::filter(!is.na(MOA) & CPD_NAME != "")
 moas <- Pf[, c("CPD_NAME", "MOA")]
@@ -108,5 +109,46 @@ for (i in 1:100) {
 print(mean(acc))
 print(quantile(acc, 0.95))
 print(quantile(acc, 0.99))
+
+```
+
+```{r, eval=T}
+
+Pf %<>% dplyr::filter(!is.na(MOA) & CPD_NAME != "")
+moas <- Pf[, c("CPD_NAME", "MOA")]
+
+cr <- Pf[,feat] %>% t %>% cor
+rownames(cr) <- Pf$CPD_NAME
+colnames(cr) <- Pf$CPD_NAME
+
+cr.melt <- cr %>% melt %>% dplyr::filter(Var1 != Var2)
+
+cr.melt %<>% dplyr::left_join(., moas, by = c("Var1" = "CPD_NAME")) %>%
+  dplyr::left_join(., moas, by = c("Var2" = "CPD_NAME"))
+
+ks <- 1:40
+is.matching <- function(x) {
+any(setdiff(str_split(x[,"MOA.x"], ", ") %>% unlist, NA) %in% setdiff(str_split(x[,"MOA.y"], ", ") %>% unlist, NA)) |
+        any(setdiff(str_split(x[,"MOA.y"], ", ") %>% unlist, NA) %in% setdiff(str_split(x[,"MOA.x"], ", ") %>% unlist, NA))
+}
+D <- data.frame(k = 0, meas = 0)
+
+for (k in ks) {
+  res <- cr.melt %>% 
+    arrange(-value) %>%
+    group_by(Var1, MOA.x) %>%
+    do(data.frame(has.a.match = is.matching(.[1:k,]))) %>%
+    dplyr::filter(has.a.match) %>% 
+    dplyr::select(-has.a.match) %>% 
+    dplyr::arrange(MOA.x) 
+  D <- rbind(D, data.frame(k = k, meas = NROW(res)/NROW(cr)))  
+  #print(sprintf("ratio of compounds with a same MOA compound being in their %d-NN : %f", k, NROW(res)/NROW(cr)))
+}
+
+g <- ggplot(D, aes(x = k, y = meas)) + ggplot2::geom_line() + ggplot2::ylab("ratio of same MOA compound pairs")
+
+g
+
+ggsave("CDRP_eval_MOA.pdf", g, width = 6, height = 4)
 
 ```
