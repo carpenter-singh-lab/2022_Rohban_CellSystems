@@ -18,7 +18,7 @@ permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
 LUAD <- F
 LUAD.mut <- F
-just.bioactives <- F
+just.bioactives <- T
 no.top.matches <- 15
 cor.thr <- 0.35
 p.val.thr <- 0.05
