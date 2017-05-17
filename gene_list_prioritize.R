@@ -70,4 +70,4 @@ res.sm <- res %>%
 
 res.sm %>% dplyr::mutate(avg.cell.count = round(avg.cell.count, 2)) %>% htmlTable::htmlTable()
 
-res %>% write.csv(., "all_cons.csv", row.names = F, quote = F)
+res %>% write.csv(., "all_cons.csv", row.names = F)
