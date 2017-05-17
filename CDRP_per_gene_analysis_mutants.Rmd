@@ -284,6 +284,8 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
   }
   
   pb <- progress::progress_bar$new(total = length(Pf.gene$data$Treatment))
+  res.all <- data.frame()
+  
   for (gene in Pf.gene$data$Treatment) {
     if (verbose) {
       pb$tick()  
@@ -354,12 +356,16 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
       cr.l1000.melt <- cr.l1000 %>% reshape2::melt(.) %>% dplyr::filter(Var2 == gene)
       cat(gene, file = "predictions.html", append = T)
       cat("<br>", file = "predictions.html", append = T)
-      Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target", "rep.corr", "Mean_Cells_Count"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% dplyr::left_join(., cr.l1000.melt, by = c("Metadata_broad_sample" = "Var1")) %>% arrange(Corr.) %>% dplyr::mutate(value = round(value, 3)) %>% dplyr::rename(l1000.score = value) %>% dplyr::select(-Var2) %>% htmlTable::htmlTable() %>% cat(., file = "predictions.html", append = T)
+      res.out <- Pf.cmpd$data %>% dplyr::filter(CPD_NAME %in% reg) %>% dplyr::select(one_of(c("CPD_NAME", "MOA", "Target", "rep.corr", "Mean_Cells_Count"))) %>% dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% dplyr::left_join(., cr.l1000.melt, by = c("Metadata_broad_sample" = "Var1")) %>% arrange(Corr.) %>% dplyr::mutate(value = round(value, 3)) %>% dplyr::rename(l1000.score = value) %>% dplyr::select(-Var2) 
+      
+      res.all <- res.out %>% mutate(gene = gene) %>% as.data.frame() %>% rbind(res.all, .)
+      
+      res.out %>% htmlTable::htmlTable() %>% cat(., file = "predictions.html", append = T)
       cat("<br> <hr>", file = "predictions.html", append = T)
     }
   }
   
-  return(list(genes = gn.list, V = V))
+  return(list(genes = gn.list, V = V, res.all = res.all))
 }
 
 ```
@@ -376,5 +382,6 @@ f <- fisher.test(res$V, alternative = "greater")
 
 print(f)
 print(res)
+saveRDS(res$res.all, "gene_compound_all.rds")
 
 ```
