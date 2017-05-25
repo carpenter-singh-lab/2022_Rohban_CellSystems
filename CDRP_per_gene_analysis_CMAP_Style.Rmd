@@ -279,7 +279,7 @@ length(which(!is.na(r))) %>% print
 D <- data.frame(compound = cmpds, AUC = r %>% unlist)
 D <- D %>% dplyr::filter(! is.na(AUC))
 D %>% mutate(AUC = round(AUC, 2)) %>% arrange(-AUC) %>% 
-  left_join(., moas, by = c("compound" = "Name")) %>% htmlTable::htmlTable()
+  left_join(., Pf.cmpd$data[,c("CPD_NAME", "MOA")] %>% unique, by = c("compound" = "CPD_NAME")) %>% htmlTable::htmlTable()
 
 ```
 ```{r Drug Discovery}
