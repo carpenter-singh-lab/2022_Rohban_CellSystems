@@ -18,7 +18,7 @@ permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
 LUAD <- F
 LUAD.mut <- F
-just.bioactives <- F
+just.bioactives <- T
 no.top.matches <- 15
 cor.thr <- 0.35
 p.val.thr <- 0.05
@@ -404,4 +404,40 @@ cr.melt %>%
   dplyr::left_join(., Pf.cmpd$data[, c("CPD_NAME", "MOA")], by = c("Var1" = "CPD_NAME")) %>%
   htmlTable::htmlTable()
 
+
 ```
+
+```{r}
+
+specificity <- function(vals) {
+  vals <- vals %>% as.matrix() %>% as.vector()
+  ord <- order(vals, decreasing = T)
+  return((mean(vals[ord[1:3]]) - mean(vals[ord[4:8]]))/(vals[ord[1]]))
+}
+
+make.match <- function(x) {
+  y <- x %>% 
+    arrange(-value) %>%
+    slice(1) %>%
+    select(Var2, value) 
+  return(y)
+}
+
+matches <- cr.melt %>% 
+  group_by(Var1) %>% 
+  do(data.frame(make.match(.))) %>%
+  dplyr::rename(best.gene.match = Var2, corr = value)
+
+cr.melt %>%
+  group_by(Var1) %>%
+  do(data.frame(spec. = specificity(.[,"value"]))) %>%
+  arrange(-spec.) %>%
+  dplyr::left_join(., Pf.cmpd$data[, c("CPD_NAME", "MOA")], by = c("Var1" = "CPD_NAME")) %>% 
+  dplyr::left_join(., matches, by = "Var1") %>% 
+  filter(corr > 0.4) %>% 
+  dplyr::mutate(spec. = round(spec., 2), 
+                corr = round(corr, 2)) %>%
+  htmlTable::htmlTable()
+
+```
+
