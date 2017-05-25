@@ -385,3 +385,23 @@ print(res)
 saveRDS(res$res.all, "gene_compound_all.rds")
 
 ```
+```{r}
+
+cr.melt %>%
+  filter(Var2 %in% c("KRAS_WT.1", "KRAS_G12V", "HRAS_G12V")) %>%
+  group_by(Var1) %>%
+  do(data.frame(WT_score = as.vector(.[which(.[,"Var2"] == "KRAS_WT.1"), "value"]), 
+                MUT1_score = as.vector(.[which(.[,"Var2"] == "KRAS_G12V"), "value"]), 
+                MUT2_score = as.vector(.[which(.[,"Var2"] == "HRAS_G12V"), "value"]))) %>%
+  dplyr::rename(WT_score = value, 
+                MUT_KRAS_score = value.1,
+                MUT_HRAS_score = value.2) %>% 
+  dplyr::arrange(-WT_score+(MUT_KRAS_score+MUT_HRAS_score)/2) %>%
+  dplyr::mutate(WT_score = round(WT_score, 2), 
+                MUT_KRAS_score = round(MUT_KRAS_score, 2), 
+                MUT_HRAS_score = round(MUT_HRAS_score, 2)) %>%
+  dplyr::filter(abs(WT_score) > 0.4) %>%
+  dplyr::left_join(., Pf.cmpd$data[, c("CPD_NAME", "MOA")], by = c("Var1" = "CPD_NAME")) %>%
+  htmlTable::htmlTable()
+
+```
