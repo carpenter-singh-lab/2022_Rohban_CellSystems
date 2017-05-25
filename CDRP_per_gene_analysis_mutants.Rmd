@@ -413,11 +413,7 @@ specificity <- function(vals, pos.matches) {
   vals <- vals %>% as.matrix() %>% as.vector()
   ord <- order(vals, decreasing = pos.matches)
   diff <- (mean(vals[ord[1:3]]) - mean(vals[ord[4:8]]))/(mean(vals[ord[1:3]]))
-  if (pos.matches) {
-    return(diff)
-  } else {
-    return(-diff)
-  }
+  return(diff)
 }
 
 make.match.pos <- function(x) {
