@@ -1,0 +1,35 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+rm(list = ls())
+
+library(dplyr)
+library(stringr)
+library(foreach)
+library(doMC)
+library(readr)
+
+doMC::registerDoMC(2)
+
+lst <- list.dirs("/Volumes/Seagate Backup Plus Drive/CDRP")
+cell.cnts <- foreach(lst.i = lst[2:length(lst)]) %dopar% {
+  fls <- list.files(lst.i) 
+  fl <- fls[which(str_detect(fls, "sqlite"))]
+  db <- src_sqlite(sprintf("%s/%s", lst.i, fl))
+  img <- tbl(db, "Image")
+  
+  cell.cnt <- img %>% 
+    select(Image_Count_Cells, Image_Metadata_Plate, Image_Metadata_Well) %>%
+    group_by(Image_Metadata_Plate, Image_Metadata_Well) %>%
+    summarise_each(funs("sum")) %>%
+    collect
+  cell.cnt
+}
+
+cell.cnts.agg <- do.call(rbind, cell.cnts)
+readr::write_csv(cell.cnts.agg, "Cell_counts.csv")
+
+```
