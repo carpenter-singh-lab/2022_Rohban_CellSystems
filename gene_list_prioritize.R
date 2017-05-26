@@ -66,7 +66,9 @@ res.sm <- res %>%
   dplyr::group_by(gene.name, allele.name) %>%
   dplyr::summarise(no.high.corr.in.l1000 = sum(l1000.score > 0.97, na.rm = T), 
                    avg.cell.count = mean(Mean_Cells_Count), 
-                   avg.validated = sum(validated, na.rm = T)) 
+                   avg.validated = sum(validated, na.rm = T),
+                   max.CP.mimics.score = max(Corr.),
+                   max.CP.antimimics.score = min(Corr.)) 
 
 res.sm %>% dplyr::mutate(avg.cell.count = round(avg.cell.count, 2)) %>% htmlTable::htmlTable()
 
