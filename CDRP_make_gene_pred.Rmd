@@ -1,0 +1,139 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r Load Gene OE and Compound data, eval=TRUE, warning=FALSE}
+
+rm(list = ls())
+library(dplyr)
+library(stringr)
+library(plyr)
+library(reshape2)
+library(htmlTable)
+library(foreach)
+library(doMC)
+library(magrittr)
+registerDoMC(cores = 3)
+
+source("rep.corr.func.R")
+use.repurp.annots <- F
+permute.moas <- F
+seed.moa <- -8     ## ignore, if permute.moas is False
+LUAD <- F
+LUAD.mut <- F
+
+base.dir <- "2016-07-20_90b7bb86"
+use.feat.selected.in.TA.ORF.in.common <- F
+corr.type <- "pearson"
+
+if (LUAD) {
+  load("../input/LUAD/LUAD.RData")
+  Pf.ta <- list(data = Px, factor_cols = "Metadata_x_mutation_status", feat_cols = setdiff(colnames(Px), "Metadata_x_mutation_status"))
+  Pf.ta.all <- Pf
+  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(str_detect(Metadata_x_mutation_status, "WT")) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta$factor_cols <- c(Pf.ta$factor_cols, "Treatment")
+  Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(str_detect(Metadata_x_mutation_status, "WT")) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta.all$factor_cols <- c(Pf.ta.all$factor_cols, "Treatment")
+
+  Pf.ta$data$Treatment <- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
+  Pf.ta.all$data$Treatment <- lapply(Pf.ta.all$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
+  Pf.ta$data <- Pf.ta$data %>% dplyr::group_by(Treatment) %>% slice(1) %>% dplyr::ungroup()
+} else if (LUAD.mut) {
+  load("../input/LUAD/LUAD.RData")
+  Pf.ta <- list(data = Px, factor_cols = "Metadata_x_mutation_status", feat_cols = setdiff(colnames(Px), "Metadata_x_mutation_status"))
+  Pf.ta.all <- Pf
+  a <- read.csv("../input/LUAD/allele_classification.csv")
+  GOF <- a$Allele[which(a$Benchmark.activity == "GOF" | a$eVIP_prediction %in% c("GOF", "Neutral"))]
+  s <- Pf.ta$data$Metadata_x_mutation_status %>% unique
+  s <- s[which(str_detect(s, "_WT"))]
+  GOF <- c(as.character(GOF), as.character(s))
+  
+  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Metadata_x_mutation_status %in% GOF) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta$factor_cols <- c(Pf.ta$factor_cols, "Treatment")
+  Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(str_detect(Metadata_x_mutation_status, "WT")) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta.all$factor_cols <- c(Pf.ta.all$factor_cols, "Treatment")
+
+  Pf.ta$data$Treatment <- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
+  Pf.ta.all$data$Treatment <- lapply(Pf.ta.all$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
+  Pf.ta$data <- dplyr::left_join(Pf.ta$data, uu, by = "Metadata_x_mutation_status")
+  Pf.ta$factor_cols <- c(Pf.ta$factor_cols, "strn")
+  Pf.ta$data <- Pf.ta$data %>% dplyr::group_by(Treatment) %>% arrange(-strn) %>% slice(1) %>% dplyr::ungroup()
+  Pf.ta$data %>% dplyr::select(Treatment, Metadata_x_mutation_status, strn) %>% unique %>% knitr::kable()
+} else {
+  load("../input/TA/Initial_analysis_workspace_new.RData")
+  Pf.ta <- Pf_org.org.collapsed
+  Pf.ta.all <- Pf_org.org
+  strong.trt <- Pf.trt.strong.collapsed$data$Treatment
+  data.annot <- Pf.strong %>% dplyr::filter(Treatment %in% strong.trt) %>% dplyr::select(one_of(c("Treatment", "Pathway", "Gene", "AlleleDesc"))) %>% 
+    dplyr::mutate(Pathway = str_replace(Pathway, "Canonical ", "")) %>% 
+    dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2)) %>%
+    dplyr::filter(AlleleDesc == "WT") %>% dplyr::group_by(Gene) %>% dplyr::slice(1) %>%
+    dplyr::ungroup() 
+  desired.ta <- data.annot$Treatment
+  Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(Treatment %in% c(as.character(desired.ta), "EMPTY_")) 
+  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta) 
+  
+  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta) 
+  Pf.ta$data$Treatment <- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist 
+}
+
+Pf.gene <- Pf.ta
+Pf.gene.all <- Pf.ta.all
+
+############
+
+Pf.cmpd.data1 <- readRDS("../results/master/2017-04-20_425d653/Pf_DOS_new.rds")
+Pf.cmpd.data2 <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
+Pf.cmpd.data <- rbind(Pf.cmpd.data1, Pf.cmpd.data2)
+
+cl <- colnames(Pf.cmpd.data)
+meta.cols <- cl[which(str_detect(cl, "Metadata"))]
+feat.cols <- setdiff(cl, meta.cols)
+Pf.cmpd <- list(data = Pf.cmpd.data, feat_cols = feat.cols, factor_cols = meta.cols)
+Pf.cmpd$data <- Pf.cmpd$data %>% 
+  dplyr::select(one_of(c("Metadata_broad_sample", Pf.cmpd$feat_cols))) %>%
+  dplyr::group_by(Metadata_broad_sample) %>%
+  dplyr::summarise_each(funs("mean")) 
+
+Pf.cmpd$factor_cols <- "Metadata_broad_sample"
+
+```
+
+```{r Align the features in Compound and Gene OE data, eval=TRUE}
+
+f1 <- Pf.cmpd$feat_cols
+f2 <- Pf.gene$feat_cols
+f <- intersect(f1, f2)
+
+Pf.cmpd$feat_cols <- f
+Pf.gene$feat_cols <- f
+
+Pf.cmpd$data <- Pf.cmpd$data[,c(Pf.cmpd$factor_cols, Pf.cmpd$feat_cols)]
+Pf.gene$data <- Pf.gene$data[,c(Pf.gene$factor_cols, Pf.gene$feat_cols)]
+
+if (use.feat.selected.in.TA.ORF.in.common) {
+  feats <- Pf_org$feat_cols
+  feats <- intersect(feats, Pf.cmpd$feat_cols)
+  Pf.cmpd$feat_cols <- feats
+  Pf.cmpd$data <- Pf.cmpd$data[,c(feats, Pf.cmpd$factor_cols)]
+  Pf.gene$feat_cols <- feats
+  Pf.gene$data <- Pf.gene$data[,c(feats, Pf.gene$factor_cols)]
+}
+
+print(length(Pf.cmpd$feat_cols))
+print(NROW(Pf.cmpd$data))
+
+print(length(Pf.gene$feat_cols))
+print(NROW(Pf.gene$data))
+
+```
+
+```{r Find the correlation matrix, eval=T}
+
+cr <- cor(Pf.cmpd$data[,Pf.cmpd$feat_cols] %>% t, Pf.gene$data[,Pf.gene$feat_cols] %>% t)
+rownames(cr) <- Pf.cmpd$data$Metadata_broad_sample
+colnames(cr) <- Pf.gene$data$Treatment
+cr.melt <- melt(cr)
+
+```
