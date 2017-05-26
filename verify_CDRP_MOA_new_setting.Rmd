@@ -118,11 +118,20 @@ print(quantile(acc, 0.99))
 
 ```{r, eval=T}
 
+cor.thr <- -1
 N <- 10
 ks <- 1:40
 
 Pf %<>% dplyr::filter(!is.na(MOA) & CPD_NAME != "")
 moas <- Pf[, c("CPD_NAME", "MOA")]
+moas_smooth <- read.csv("../input/CDP2/moas_smooth.csv")
+
+moas <- moas %>% 
+  left_join(., moas_smooth, by = "MOA")
+
+moas <- moas %>%
+  select(-MOA) %>%
+  rename(MOA = MOA.Group)
 
 cr <- Pf[,feat] %>% t %>% cor
 rownames(cr) <- Pf$CPD_NAME
@@ -133,10 +142,29 @@ cr.melt <- cr %>% melt %>% dplyr::filter(Var1 != Var2)
 cr.melt %<>% dplyr::left_join(., moas, by = c("Var1" = "CPD_NAME")) %>%
   dplyr::left_join(., moas, by = c("Var2" = "CPD_NAME"))
 
-is.matching <- function(x) {
-any(setdiff(str_split(x[,"MOA.x"], ", ") %>% unlist, NA) %in% setdiff(str_split(x[,"MOA.y"], ", ") %>% unlist, NA)) |
-        any(setdiff(str_split(x[,"MOA.y"], ", ") %>% unlist, NA) %in% setdiff(str_split(x[,"MOA.x"], ", ") %>% unlist, NA))
+split <- function(x) {
+  y <- str_split(x, ", ")
+  unlist(y)
 }
+
+split <- Vectorize(split)
+
+is.matching <- function(x, filter, thr) {
+  if (filter) {
+    x <- x[which(x[,"value"] > thr),]  
+  }
+  
+  if (NROW(x) == 0) {
+    return(FALSE)
+  }
+  
+  l1 <- split(x[,"MOA.x"] %>% as.vector()) %>% unlist %>% as.vector()
+  l2 <- split(x[,"MOA.y"] %>% as.vector()) %>% unlist %>% as.vector()
+  return(any(l1 %in% l2) | any(l2 %in% l1) | any(x[,"MOA.x"] == x[,"MOA.y"]))
+#  any(setdiff(str_split(x[,"MOA.x"], ", ") %>% unlist, NA) %in% setdiff(str_split(x[,"MOA.y"], ", ") %>% unlist, NA)) |
+#        any(setdiff(str_split(x[,"MOA.y"], ", ") %>% unlist, NA) %in% setdiff(str_split(x[,"MOA.x"], ", ") %>% unlist, NA))
+}
+
 D <- data.frame(k = c(0, 0), meas = c(0, 0), type = c("data", "null"), ci = c(0, 0))
 
 cr.arr.grp <- cr.melt %>% 
@@ -145,14 +173,14 @@ cr.arr.grp <- cr.melt %>%
  
 for (k in ks) {
   res <- cr.arr.grp %>%
-    do(data.frame(has.a.match = is.matching(.[1:k,]))) %>%
+    do(data.frame(has.a.match = is.matching(.[1:k,], filter = T, cor.thr))) %>%
     dplyr::filter(has.a.match)
   
   D <- rbind(D, data.frame(k = k, meas = NROW(res)/NROW(cr), type = "data", ci = 0))
   
   baseline <- foreach (i = 1:N) %dopar% {
     res <- cr.arr.grp %>%
-      do(data.frame(has.a.match = is.matching(.[sample(1:NROW(cr), k),]))) %>%
+      do(data.frame(has.a.match = is.matching(.[sample(1:NROW(cr), k),], filter = F, cor.thr))) %>%
       dplyr::filter(has.a.match) 
     
     NROW(res)/NROW(cr)
@@ -171,3 +199,23 @@ g
 ggsave("CDRP_eval_MOA.pdf", g, width = 6, height = 4)
 
 ```
+
+```{r}
+
+C <- data.frame()
+
+for (i in 1:length(thrs)) {
+  thr <- thrs[i]
+  D <- Ds[[i]]
+  v1 <- D %>% dplyr::filter(k == 5 & type == "data") %>% select(meas) %>% as.matrix %>% as.vector()
+  #v2 <- D %>% dplyr::filter(k == 3 & type == "null") %>% select(meas) %>% as.matrix %>% as.vector()
+  v2 <- 1
+  C <- rbind(C, data.frame(thr = thr, enrichment.ratio = v1/v2))
+}
+
+g <- ggplot(C, aes(x = thr, y = enrichment.ratio)) + geom_line()
+
+g
+
+```
+
