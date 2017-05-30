@@ -466,3 +466,14 @@ rbind(pos.t, neg.t) %>% arrange(-spec.) %>% htmlTable::htmlTable()
 
 ```
 
+```{r}
+
+rbind(pos.t, neg.t) %>% 
+  dplyr::group_by(best.gene.match) %>%
+  dplyr::summarise(spec.avg = mean(spec.)) %>%
+  dplyr::mutate(spec.avg = round(spec.avg, 2)) %>%
+  arrange(-spec.avg) %>%
+  htmlTable::htmlTable()
+
+```
+
