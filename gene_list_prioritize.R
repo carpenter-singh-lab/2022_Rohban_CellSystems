@@ -4,7 +4,7 @@ rm(list = ls())
 library(dplyr)
 library(stringr)
 
-res.all <- readRDS("../results/master/2017-05-17_15389033/gene_compound_all.rds") ## bioactives
+res.all <- readRDS("../results/master/2017-05-31_82992b40/gene_compound_all.rds") ## bioactives
 #res.all <- readRDS("../results/master/2017-05-17_e971110f/gene_compound_all.rds") ## all
 
 split <- function(x, i) {
@@ -68,7 +68,8 @@ res.sm <- res %>%
                    avg.cell.count = mean(Mean_Cells_Count), 
                    avg.validated = sum(validated, na.rm = T),
                    max.CP.mimics.score = max(Corr.),
-                   max.CP.antimimics.score = min(Corr.)) 
+                   max.CP.antimimics.score = min(Corr.), 
+                   highest.specificity = max(specificity)) 
 
 res.sm %>% dplyr::mutate(avg.cell.count = round(avg.cell.count, 2)) %>% htmlTable::htmlTable()
 
