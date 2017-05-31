@@ -294,7 +294,8 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
       u.res <- cr.melt %>% 
         dplyr::filter(Var2 == gn) %>%
         dplyr::arrange(-value) %>%
-        dplyr::mutate(value = round(value, 2)) %>% dplyr::filter(abs(value) > cor.thr) 
+        #dplyr::mutate(value = round(value, 2)) %>%
+        dplyr::filter(abs(value) > cor.thr) 
         
         up.reg <- u.res %>% left_join(., specificity.data, by = c("Var1", "Var2")) %>% 
           dplyr::filter(!is.na(spec.)) %>%
@@ -306,7 +307,7 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
       u.res <- cr.melt %>% 
         dplyr::filter(Var2 == gn) %>%
         sample_n(NROW(.)) %>%
-        dplyr::mutate(value = round(value, 2))
+        #dplyr::mutate(value = round(value, 2))
       up.reg <- u.res %>% left_join(., specificity.data, by = c("Var1", "Var2")) %>% 
           dplyr::filter(!is.na(spec.)) %>% head(., how.many) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
       down.reg <- u.res %>% left_join(., specificity.data, by = c("Var1", "Var2")) %>% 
