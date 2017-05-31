@@ -456,8 +456,8 @@ pos.t <- cr.melt.ext %>%
   dplyr::left_join(., matches.pos, by = "Var1") %>% 
   dplyr::rename(corr = value) %>%
   filter(abs(corr) > 0.4) %>% 
-  dplyr::mutate(spec. = round(spec., 2), 
-                corr = round(corr, 2)) %>%
+  #dplyr::mutate(spec. = round(spec., 2), 
+  #              corr = round(corr, 2)) %>%
   dplyr::rename(Var2 = Var2.x) %>%
   dplyr::select(Var1, Var2, spec.)
 
@@ -469,8 +469,8 @@ neg.t <- cr.melt.ext %>%
   dplyr::left_join(., matches.neg, by = "Var1") %>% 
   dplyr::rename(corr = value) %>%
   filter(abs(corr) > 0.4) %>% 
-  dplyr::mutate(spec. = round(spec., 2), 
-                corr = round(corr, 2)) %>%
+  #dplyr::mutate(spec. = round(spec., 2), 
+  #              corr = round(corr, 2)) %>%
   dplyr::rename(Var2 = Var2.x) %>%
   dplyr::select(Var1, Var2, spec.)
 
