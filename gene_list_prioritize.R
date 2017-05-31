@@ -3,8 +3,9 @@
 rm(list = ls())
 library(dplyr)
 library(stringr)
+library(ggplot2)
 
-res.all <- readRDS("../results/master/2017-05-31_82992b40/gene_compound_all.rds") ## bioactives
+res.all <- readRDS("../results/master/2017-05-31_c813eb9f/gene_compound_all.rds") ## bioactives
 #res.all <- readRDS("../results/master/2017-05-17_e971110f/gene_compound_all.rds") ## all
 
 split <- function(x, i) {
@@ -74,3 +75,18 @@ res.sm <- res %>%
 res.sm %>% dplyr::mutate(avg.cell.count = round(avg.cell.count, 2)) %>% htmlTable::htmlTable()
 
 res %>% write.csv(., "all_cons.csv", row.names = F)
+
+res.lim <- res %>% 
+  mutate(abs.score = abs(Corr.)) %>%
+  mutate(high.l1000.score = ifelse(is.na(l1000.score), F,
+                                   l1000.score > 0.97)) %>%
+  mutate(category = ifelse(high.l1000.score, 
+                           ifelse(validated, "High in L1000 - Validated (PPI)",
+                                  "High in L1000 - non-validated"), 
+                           ifelse(validated, "Low in L1000 - Validated (PPI)",
+                                  "Low in L1000 - non-validated")))
+
+g <- ggplot(res.lim, aes(x = specificity, 
+                    y = abs.score, 
+                    color = category)) + geom_point(size = 0.8)
+ggsave("scatter.png", g, width = 8, height = 5)
