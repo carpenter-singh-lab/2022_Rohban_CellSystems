@@ -92,9 +92,12 @@ feats <- colnames(profiles.mat) %>%
 metas <- setdiff(colnames(profiles.mat), feats)
 
 Pf <- list(data = profiles.mat, feat_cols = feats, factor_cols = metas)
-feats.to.remove <- Pf$data[,Pf$feat_cols] %>% 
-                      cor %>%
-                      caret::findCorrelation(., 0.9)
+#feats.to.remove <- Pf$data[,Pf$feat_cols] %>% 
+#                      cor %>%
+#                      caret::findCorrelation(., 0.9)
+
+feats.to.remove <- c()
+
 feats <- setdiff(Pf$feat_cols, Pf$feat_cols[feats.to.remove])
 Pf$feat_cols <- feats
 Pf$data <- Pf$data[,c(Pf$feat_cols, Pf$factor_cols)]
