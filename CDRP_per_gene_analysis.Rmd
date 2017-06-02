@@ -20,9 +20,9 @@ LUAD <- F
 LUAD.mut <- F
 just.bioactives <- T
 no.top.matches <- 15
-cor.thr <- 0.5
+cor.thr <- 0.50
 p.val.thr <- 0.005
-N <- 200                     ## number of Monte-carlo simulations to estimate expected random matches
+N <- 50                     ## number of Monte-carlo simulations to estimate expected random matches
 genes.to.remove <- c()        ## remove these genes before making matches
 
 base.dir <- "2016-07-20_90b7bb86"
@@ -151,7 +151,14 @@ print(NROW(Pf.gene$data))
 
 ```{r Find the correlation matrix, eval=T}
 
-cr <- cor(Pf.cmpd$data[,Pf.cmpd$feat_cols] %>% t, Pf.gene$data[,Pf.gene$feat_cols] %>% t)
+#f <- caret::findCorrelation(cor(Pf.cmpd$data[,Pf.cmpd$feat_cols]), 0.8)
+#f <- setdiff(1:length(Pf.cmpd$feat_cols), f)
+f <- 1:length(Pf.cmpd$feat_cols)
+x <- Pf.cmpd$data[,Pf.cmpd$feat_cols[f]] %>% t
+y <- Pf.gene$data[,Pf.cmpd$feat_cols[f]] %>% t
+
+cr <- cor(x, y)
+
 rownames(cr) <- Pf.cmpd$data$CPD_NAME
 colnames(cr) <- Pf.gene$data$Treatment
 cr.melt <- melt(cr)
