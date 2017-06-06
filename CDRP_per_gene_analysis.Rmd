@@ -20,10 +20,11 @@ LUAD <- F
 LUAD.mut <- F
 just.bioactives <- T
 no.top.matches <- 15
-cor.thr <- 0.50
+cor.thr <- 0.45
 p.val.thr <- 0.005
 N <- 50                     ## number of Monte-carlo simulations to estimate expected random matches
 genes.to.remove <- c()        ## remove these genes before making matches
+feat.keyword.keep <- c("_ER")
 
 base.dir <- "2016-07-20_90b7bb86"
 use.feat.selected.in.TA.ORF.in.common <- F
@@ -125,6 +126,13 @@ Pf.cmpd$data <- Pf.cmpd$data %>% dplyr::group_by(CPD_NAME) %>% slice(1) %>% ungr
 f1 <- Pf.cmpd$feat_cols
 f2 <- Pf.gene$feat_cols
 f <- intersect(f1, f2)
+fs <- c()
+
+for (ft.k in feat.keyword.keep) {
+  f.t <- f[which(str_detect(f, ft.k))]  
+  fs <- c(fs, f.t)
+}
+f <- unique(fs)
 
 Pf.cmpd$feat_cols <- f
 Pf.gene$feat_cols <- f
@@ -169,7 +177,7 @@ saveRDS(cr.melt, "cr_melt_cp.rds")
 ```{r}
 
 source("../l1ktools/R/cmap/io.R")
-ds <- parse.gctx("../results/manual/cmap.compound.score/result_WTCS.LM.COMBINED_n328x22962.gctx", set_annot_rownames = F)
+ds <- parse.gctx("../results/manual/cmap.compound.score/result_WTCS.LM.COMBINED_n328x22962.gctx")
 cmpd.gene.score.cmap <- attr(ds, "mat")
 rn <- rownames(cmpd.gene.score.cmap)
 rn <- sapply(str_split(rn, ":"), "[[", 2)
@@ -387,6 +395,8 @@ nl <- unlist(nl)
 print(mean(nl))
 print(quantile(nl, 0.95))
 max(nl)
+
+print(length(res$genes)/mean(nl))
 
 ```
 
