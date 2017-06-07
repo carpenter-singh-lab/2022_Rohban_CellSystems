@@ -9,8 +9,8 @@ library(magrittr)
 library(reshape2)
 library(htmlTable)
 
-Pf.1 <- readRDS("../results/master/2017-06-02_4df9ed93/Pf_bio_new.rds")
-
+Pf.1 <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
+top.percentage <- 0.05
 
 Pf.1 %<>% dplyr::filter(Metadata_ASSAY_WELL_ROLE != "mock")
 
@@ -75,7 +75,7 @@ saveRDS(list(data = Pf, feat_cols = feat, factor_cols = meta.col), "Pf_annotated
 
 ```{r}
 
-#Pf %<>% dplyr::filter(!is.na(MOA))
+Pf %<>% dplyr::filter(!is.na(MOA))
 moas <- Pf[, c("CPD_NAME", "MOA")]
 
 cr <- Pf[,feat] %>% t %>% cor
@@ -93,23 +93,23 @@ valid <- apply(cr.melt, 1, function(x) (any(setdiff(str_split(x["MOA.x"], ", ")[
         
 cr.melt.val <- cr.melt %>% dplyr::mutate(valid = valid)
 
-thr <- cr.melt.val$value %>% abs %>% quantile(., 0.95)
+thr <- cr.melt.val$value %>% quantile(., 1 - top.percentage)
 
-v11 <- cr.melt.val %>% dplyr::filter(abs(value) > thr & valid) %>% NROW
-v12 <- cr.melt.val %>% dplyr::filter(abs(value) > thr & !valid) %>% NROW
-v21 <- cr.melt.val %>% dplyr::filter(abs(value) < thr & valid) %>% NROW
-v22 <- cr.melt.val %>% dplyr::filter(abs(value) < thr & !valid) %>% NROW
+v11 <- cr.melt.val %>% dplyr::filter((value) > thr & valid) %>% NROW
+v12 <- cr.melt.val %>% dplyr::filter((value) > thr & !valid) %>% NROW
+v21 <- cr.melt.val %>% dplyr::filter((value) < thr & valid) %>% NROW
+v22 <- cr.melt.val %>% dplyr::filter((value) < thr & !valid) %>% NROW
 V <- rbind(c(v11, v12), c(v21, v22))
 
 fisher.test(V, alternative = "greater") %>% print
 
-cr.melt.val %>% dplyr::filter(abs(value) > thr & valid) %>% 
+cr.melt.val %>% dplyr::filter((value) > thr & valid) %>% 
   arrange(MOA.x) %>% htmlTable::htmlTable()
 
 tot <- cr.melt.val %>% group_by(MOA.x) %>% tally %>% dplyr::select(MOA.x, n)
 colnames(tot)[2] <- "total.n"
 
-cr.melt.val %>% dplyr::filter(abs(value) > thr & valid) %>% 
+cr.melt.val %>% dplyr::filter((value) > thr & valid) %>% 
   group_by(MOA.x) %>% tally %>% arrange(-n) %>% 
   dplyr::left_join(., tot, by = "MOA.x") %>% htmlTable::htmlTable()
 
