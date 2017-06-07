@@ -11,7 +11,7 @@ library(doMC)
 library(magrittr)
 library(readr)
 registerDoMC(cores = 3)
-use.snf <- F
+use.snf <- T
 
 source("rep.corr.func.R")
 use.repurp.annots <- F
@@ -22,9 +22,9 @@ LUAD.mut <- F
 just.bioactives <- T
 no.top.matches <- 15
 #cor.thr <- 0.50
-cor.thr.per <- 0.99
+#cor.thr.per <- 0.996
 p.val.thr <- 0.001
-N <- 200                     ## number of Monte-carlo simulations to estimate expected random matches
+N <- 1000                     ## number of Monte-carlo simulations to estimate expected random matches
 genes.to.remove <- c()        ## remove these genes before making matches
 feat.keyword.keep <- c("_")
 
@@ -179,7 +179,7 @@ if (use.snf) {
     afs <- c(afs, list(af))
   }
   
-  df.graph <- SNFtool::SNF(afs, K = 10, t = 10)
+  df.graph <- SNFtool::SNF(afs, K = 10, t = 15)
   cr <- df.graph
   rownames(cr) <- c(Pf.cmpd$data$CPD_NAME, Pf.gene$data$Treatment)
   colnames(cr) <- c(Pf.cmpd$data$CPD_NAME, Pf.gene$data$Treatment)
@@ -409,7 +409,7 @@ pb <- progress::progress_bar$new(total = N)
 
 library(foreach)
 library(doMC)
-doMC::registerDoMC(cores = 3)
+doMC::registerDoMC(cores = 62)
 
 nl <- foreach (i = 1:N) %dopar% {
   cr.tmp <- cr.melt %>% 
@@ -434,6 +434,7 @@ print(quantile(nl, 0.95))
 max(nl)
 
 print(length(res$genes)/mean(nl))
+saveRDS(length(res$genes)/mean(nl), "tmp.rds")
 
 ```
 
