@@ -179,7 +179,7 @@ if (use.snf) {
     afs <- c(afs, list(af))
   }
   
-  df.graph <- SNFtool::SNF(afs, K = 10, t = 20)
+  df.graph <- SNFtool::SNF(afs, K = 10, t = 15)
   cr <- df.graph
   rownames(cr) <- c(Pf.cmpd$data$CPD_NAME, Pf.gene$data$Treatment)
   colnames(cr) <- c(Pf.cmpd$data$CPD_NAME, Pf.gene$data$Treatment)
