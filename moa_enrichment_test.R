@@ -8,10 +8,12 @@ library(stringi)
 library(foreach)
 library(doMC)
 
-doMC::registerDoMC(cores = 3)
+doMC::registerDoMC(cores = 63)
 set.seed(42)
 
 source("rep.corr.func.R")
+ft.keyword <- "AGP"
+
 use.repurp.annots <- F
 permute.moas <- F
 profile.thresholding <- F
@@ -65,6 +67,9 @@ strong.cmpd <- Pf.cmpd$data %>% dplyr::group_by(Metadata_pert_iname) %>% dplyr::
   dplyr::filter(cnt >= 4) %>% dplyr::select(Metadata_pert_iname) %>% unique
 
 Pf.cmpd$data <- Pf.cmpd$data %>% dplyr::filter(Metadata_pert_iname %in% (strong.cmpd %>% as.matrix() %>% as.vector()))
+feats <- Pf.cmpd$feat_cols
+feats <- feats[which(str_detect(feats, ft.keyword))]
+Pf.cmpd$feat_cols <- feats
 
 distinct.moas <- lapply(Pf.cmpd$data$Metadata_moa, function(x) (str_split(x, "\\|")[[1]])) %>% unlist %>% 
   unique %>% setdiff(., NA)
@@ -113,5 +118,5 @@ cons <- foreach(moa = distinct.moas) %dopar% {
 MOA.consistency <- do.call(rbind, cons)
 MOA.consistency %>% dplyr::arrange(-(sig.strn - thresh)) %>% htmlTable()
 sum(MOA.consistency$consistent, na.rm = T)/(length(which(MOA.consistency$n.members > 1)))
-saveRDS(MOA.consistency, "MOA_consistency.rds")
+saveRDS(MOA.consistency, sprintf("MOA_consistency_%s.rds", ft.keyword))
 
