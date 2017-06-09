@@ -12,7 +12,8 @@ doMC::registerDoMC(cores = 63)
 set.seed(42)
 
 source("rep.corr.func.R")
-ft.keyword <- "AGP"
+for (ft.keyword in c("_RNA", "_AGP", "_DNA", "_Mito", "_ER")) {
+#ft.keyword <- "_"
 
 use.repurp.annots <- F
 permute.moas <- F
@@ -56,7 +57,6 @@ strong.cmpd <- lapply(strong.trt, function(x) str_split(x, "@")[[1]][1]) %>% unl
 all.cmpd <- lapply(u$Metadata_Treatment, function(x) str_split(x, "@")[[1]][1]) %>% unlist %>% unique
 sprintf("Hit ratio (compounds) : %f%%", round(length(strong.cmpd)/length(all.cmpd) * 100))
 x.all <- x
-x <- x %>% dplyr::filter(Metadata_Treatment %in% strong.trt)
 x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %>% 
   dplyr::select(one_of(c(feats, "Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa"))) %>% dplyr::summarise_each(funs("mean")) %>% dplyr::ungroup() %>% dplyr::filter(!is.na(Metadata_pert_iname))
 
@@ -64,7 +64,7 @@ Pf.cmpd <- list(data = x.collapsed, feat_cols = feats, factor_cols = c("Metadata
 Pf.cmpd.all <- list(data = x.all, feat_cols = feats, factor_cols = c("Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa"))
 
 strong.cmpd <- Pf.cmpd$data %>% dplyr::group_by(Metadata_pert_iname) %>% dplyr::summarise(cnt = n()) %>%
-  dplyr::filter(cnt >= 4) %>% dplyr::select(Metadata_pert_iname) %>% unique
+  dplyr::filter(cnt >= 1) %>% dplyr::select(Metadata_pert_iname) %>% unique
 
 Pf.cmpd$data <- Pf.cmpd$data %>% dplyr::filter(Metadata_pert_iname %in% (strong.cmpd %>% as.matrix() %>% as.vector()))
 feats <- Pf.cmpd$feat_cols
@@ -74,7 +74,8 @@ Pf.cmpd$feat_cols <- feats
 distinct.moas <- lapply(Pf.cmpd$data$Metadata_moa, function(x) (str_split(x, "\\|")[[1]])) %>% unlist %>% 
   unique %>% setdiff(., NA)
 
-agg.fn <- function(x) return(ifelse(max(x) > -min(x), max(x), min(x)))
+#agg.fn <- function(x) return(ifelse(max(x) > -min(x), max(x), min(x)))
+agg.fn <- function(x) max(x)
 #agg.fn <- function(x) return(ifelse(quantile(x, 0.7) > -quantile(x, 0.3), quantile(x, 0.7), quantile(x, 0.30)))
 #agg.fn <- mean
 
@@ -119,4 +120,4 @@ MOA.consistency <- do.call(rbind, cons)
 MOA.consistency %>% dplyr::arrange(-(sig.strn - thresh)) %>% htmlTable()
 sum(MOA.consistency$consistent, na.rm = T)/(length(which(MOA.consistency$n.members > 1)))
 saveRDS(MOA.consistency, sprintf("MOA_consistency_%s.rds", ft.keyword))
-
+}
