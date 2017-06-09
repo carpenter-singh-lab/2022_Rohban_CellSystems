@@ -78,7 +78,18 @@ saveRDS(list(data = Pf, feat_cols = feat, factor_cols = meta.col), "Pf_annotated
 Pf %<>% dplyr::filter(!is.na(MOA))
 moas <- Pf[, c("CPD_NAME", "MOA")]
 
-cr <- Pf[,feat] %>% t %>% cor
+afs <- c()
+for (category in c("_ER", "_RNA", "_DNA", "_Mito", "_AGP", "AreaShape")) {
+  feat.subset <- feat[which(str_detect(feat, category))]
+  cri <- Pf[,feat.subset] %>% t %>% cor
+  rownames(cri) <- Pf$CPD_NAME
+  colnames(cri) <- Pf$CPD_NAME
+  af <- SNFtool::affinityMatrix(1 - cri, K = 5, sigma = 0.55)
+  afs <- c(afs, list(af))
+}
+
+df.graph <- SNFtool::SNF(afs, K = 5, t = 5)
+cr <- df.graph
 rownames(cr) <- Pf$CPD_NAME
 colnames(cr) <- Pf$CPD_NAME
 

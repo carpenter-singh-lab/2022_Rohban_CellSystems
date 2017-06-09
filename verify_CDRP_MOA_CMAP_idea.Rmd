@@ -10,6 +10,7 @@ library(htmlTable)
 library(ggplot2)
 library(foreach)
 library(doParallel)
+use.snf <- T
 
 doParallel::registerDoParallel(cores = 3)
 
@@ -76,9 +77,26 @@ moas_smooth <- read.csv("../input/CDP2/moas_smooth.csv")
 moas <- moas %>% 
   left_join(., moas_smooth, by = "MOA")
 
-cr <- Pf[,feat] %>% t %>% cor
-rownames(cr) <- Pf$CPD_NAME
-colnames(cr) <- Pf$CPD_NAME
+if (use.snf) {
+  afs <- c()
+  for (category in c("_ER", "_RNA", "_DNA", "_Mito", "_AGP", "AreaShape")) {
+    feat.subset <- feat[which(str_detect(feat, category))]
+    cri <- Pf[,feat.subset] %>% t %>% cor
+    rownames(cri) <- Pf$CPD_NAME
+    colnames(cri) <- Pf$CPD_NAME
+    af <- SNFtool::affinityMatrix(1 - cri, K = 10, sigma = 0.8)
+    afs <- c(afs, list(af))
+  }
+  
+  df.graph <- SNFtool::SNF(afs, K = 10, t = 20)
+  cr <- df.graph
+  rownames(cr) <- Pf$CPD_NAME
+  colnames(cr) <- Pf$CPD_NAME
+} else {
+  cr <- Pf[,feat] %>% t %>% cor
+  rownames(cr) <- Pf$CPD_NAME
+  colnames(cr) <- Pf$CPD_NAME    
+}
 
 cr.melt <- cr %>% melt %>% dplyr::filter(Var1 != Var2)
 
@@ -145,8 +163,12 @@ doParallel::registerDoParallel(cores = 3)
 
 roc <- function(cmpd) {
   D <- c()
-  step.size <- 0.01
-  D <- foreach (thr = seq(from = -1, to = 1, by = step.size), .combine = rbind) %dopar% {
+  low.end <- min(cr.arr.grp$value)
+  high.end <- max(cr.arr.grp$value)
+  
+  step.size <- (high.end - low.end)/2/100
+  
+  D <- foreach (thr = seq(from = low.end, to = high.end, by = step.size), .combine = rbind) %dopar% {
     d <- evaluate(cr.arr.grp = cr.arr.grp, thr = thr, n = NROW(cr), cmpd = cmpd)
     cbind(d, data.frame(thr = thr))
   }
