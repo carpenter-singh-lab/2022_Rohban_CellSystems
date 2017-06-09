@@ -3,11 +3,11 @@ library(dplyr)
 library(stringr)
 library(ggplot2)
 
-DNA <- readRDS("../results/master/2017-06-08_6cf001b8/MOA_consistency_DNA.rds")
-RNA <- readRDS("../results/master/2017-06-08_6cf001b8/MOA_consistency_RNA.rds")
-Mito <- readRDS("../results/master/2017-06-08_6cf001b8/MOA_consistency_Mito.rds")
-ER <- readRDS("../results/master/2017-06-08_6cf001b8/MOA_consistency_ER.rds")
-AGP <- readRDS("../results/master/2017-06-08_6cf001b8/MOA_consistency_AGP.rds")
+DNA <- readRDS("../results/master/2017-06-09_de0bf46f/MOA_consistency__DNA.rds")
+RNA <- readRDS("../results/master/2017-06-09_de0bf46f/MOA_consistency__RNA.rds")
+Mito <- readRDS("../results/master/2017-06-09_de0bf46f/MOA_consistency__Mito.rds")
+ER <- readRDS("../results/master/2017-06-09_de0bf46f/MOA_consistency__ER.rds")
+AGP <- readRDS("../results/master/2017-06-09_de0bf46f/MOA_consistency__AGP.rds")
 
 lst <- list("DNA" = DNA, 
             "RNA" = RNA, 
