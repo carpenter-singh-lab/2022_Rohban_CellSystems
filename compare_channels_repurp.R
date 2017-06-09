@@ -117,3 +117,18 @@ data.frame(frequency = apply(agg[which(agg$how.many.chnls <= 4),c("consistent_DN
   geom_bar(stat = "identity", width = 0.2) +
   ylab("Number of MOAs with a strong signature \n in less than 5 channels") +
   xlab("Contributing channels")
+
+data.frame(frequency = apply(agg[which(agg$how.many.chnls == 1),c("consistent_DNA",
+                                                                  "consistent_RNA",
+                                                                  "consistent_Mito",
+                                                                  "consistent_ER",
+                                                                  "consistent_AGP")], 2,
+                             sum)) %>% 
+  tibble::rownames_to_column(var = "Channel") %>% 
+  mutate(Channel = str_replace_all(Channel, "consistent_", "")) %>%
+  arrange(-frequency) %>%
+  mutate(Channel = factor(Channel, levels = Channel)) %>%
+  ggplot(., aes(x = Channel, y = frequency)) + 
+  geom_bar(stat = "identity", width = 0.2) +
+  ylab("Number of MOAs with a strong signature \n in just one channel") +
+  xlab("Contributing channels")
