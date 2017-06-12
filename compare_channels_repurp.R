@@ -3,6 +3,12 @@ library(dplyr)
 library(stringr)
 library(ggplot2)
 
+# DNA <- readRDS("../results/master/2017-06-09_de0bf46f/MOA_consistency__DNA.rds")
+# RNA <- readRDS("../results/master/2017-06-09_de0bf46f/MOA_consistency__RNA.rds")
+# Mito <- readRDS("../results/master/2017-06-09_de0bf46f/MOA_consistency__Mito.rds")
+# ER <- readRDS("../results/master/2017-06-09_de0bf46f/MOA_consistency__ER.rds")
+# AGP <- readRDS("../results/master/2017-06-09_de0bf46f/MOA_consistency__AGP.rds")
+
 DNA <- readRDS("../results/master/2017-06-08_6cf001b8/MOA_consistency_DNA.rds")
 RNA <- readRDS("../results/master/2017-06-08_6cf001b8/MOA_consistency_RNA.rds")
 Mito <- readRDS("../results/master/2017-06-08_6cf001b8/MOA_consistency_Mito.rds")
@@ -96,3 +102,33 @@ agg2 <- agg2 %>%
   dplyr::select(MOA, how.many.chnls.x, which.chnls, n.members_DNA, strongest) %>%
   dplyr::rename(how.many.chnls = how.many.chnls.x, 
          n.members = n.members_DNA)
+
+data.frame(frequency = apply(agg[which(agg$how.many.chnls <= 4),c("consistent_DNA",
+             "consistent_RNA",
+             "consistent_Mito",
+             "consistent_ER",
+             "consistent_AGP")], 2,
+      sum)) %>% 
+  tibble::rownames_to_column(var = "Channel") %>% 
+  mutate(Channel = str_replace_all(Channel, "consistent_", "")) %>%
+  arrange(-frequency) %>%
+  mutate(Channel = factor(Channel, levels = Channel)) %>%
+  ggplot(., aes(x = Channel, y = frequency)) + 
+  geom_bar(stat = "identity", width = 0.2) +
+  ylab("Number of MOAs with a strong signature \n in less than 5 channels") +
+  xlab("Contributing channels")
+
+data.frame(frequency = apply(agg[which(agg$how.many.chnls == 1),c("consistent_DNA",
+                                                                  "consistent_RNA",
+                                                                  "consistent_Mito",
+                                                                  "consistent_ER",
+                                                                  "consistent_AGP")], 2,
+                             sum)) %>% 
+  tibble::rownames_to_column(var = "Channel") %>% 
+  mutate(Channel = str_replace_all(Channel, "consistent_", "")) %>%
+  arrange(-frequency) %>%
+  mutate(Channel = factor(Channel, levels = Channel)) %>%
+  ggplot(., aes(x = Channel, y = frequency)) + 
+  geom_bar(stat = "identity", width = 0.2) +
+  ylab("Number of MOAs with a strong signature \n in just one channel") +
+  xlab("Contributing channels")
