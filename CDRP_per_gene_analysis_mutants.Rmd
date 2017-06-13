@@ -184,7 +184,7 @@ cr <- data.all[,4:NCOL(data.all)] %>%
 rownames(cr) <- data.all$Treatment
 colnames(cr) <- data.all$Treatment
 
-hcl <- hclust(as.dist(1 - cr), method = "average")
+hcl <- hclust(as.dist(1 - cr), method = "complete")
 ct <- cutree(hcl, h = 1 - 0.45)
 
 genes <- Pf.gene$data$Treatment
