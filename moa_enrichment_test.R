@@ -12,7 +12,7 @@ doMC::registerDoMC(cores = 63)
 set.seed(42)
 
 source("rep.corr.func.R")
-for (ft.keyword in c("_RNA", "_AGP", "_DNA", "_Mito", "_ER")) {
+for (ft.keyword in c("AreaShape")) {
 #ft.keyword <- "_"
 
 use.repurp.annots <- F
@@ -74,8 +74,8 @@ Pf.cmpd$feat_cols <- feats
 distinct.moas <- lapply(Pf.cmpd$data$Metadata_moa, function(x) (str_split(x, "\\|")[[1]])) %>% unlist %>% 
   unique %>% setdiff(., NA)
 
-#agg.fn <- function(x) return(ifelse(max(x) > -min(x), max(x), min(x)))
-agg.fn <- function(x) max(x)
+agg.fn <- function(x) return(ifelse(max(x) > -min(x), max(x), min(x)))
+#agg.fn <- function(x) max(x)
 #agg.fn <- function(x) return(ifelse(quantile(x, 0.7) > -quantile(x, 0.3), quantile(x, 0.7), quantile(x, 0.30)))
 #agg.fn <- mean
 
