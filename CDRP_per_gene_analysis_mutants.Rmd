@@ -18,7 +18,7 @@ permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
 LUAD <- F
 LUAD.mut <- F
-just.bioactives <- T
+just.bioactives <- F
 no.top.matches <- 15
 cor.thr <- 0.35
 p.val.thr <- 0.05
@@ -156,7 +156,51 @@ print(NROW(Pf.gene$data))
 
 ```
 
-```{r Find the correlation matrix, eval=T}
+```{r save the data put together}
+
+Pf.cmpd.res <- Pf.cmpd
+#Pf.cmpd.res$data %<>% filter(!is.na(MOA) & MOA != "")
+data <- rbind(Pf.gene$data[,Pf.gene$feat_cols], Pf.cmpd.res$data[,Pf.cmpd$feat_cols])
+annot <- rbind(Pf.gene$data[,c("Treatment", "Pathway")] %>% as.matrix(),
+               Pf.cmpd.res$data[,c("CPD_NAME", "MOA")] %>% as.matrix())
+annot %<>% as.data.frame 
+colnames(annot) <- c("Treatment", "Pathway")
+annot <- cbind(annot, data.frame(Type = c(rep("gene", NROW(Pf.gene$data)),
+                                          rep("compound", NROW(Pf.cmpd.res$data)))))
+data.all <- cbind(annot, data)
+data.all %<>% 
+  dplyr::group_by(Treatment) %>%
+  dplyr::slice(1) %>%
+  dplyr::ungroup(.)
+write.table(data.all, 
+            file = "gene_compound.txt",
+            sep = "\t", 
+            row.names = F)
+
+cr <- data.all[,4:NCOL(data.all)] %>%
+  t %>%
+  cor
+
+rownames(cr) <- data.all$Treatment
+colnames(cr) <- data.all$Treatment
+
+hcl <- hclust(as.dist(1 - cr), method = "average")
+ct <- cutree(hcl, h = 1 - 0.45)
+
+genes <- Pf.gene$data$Treatment
+for (i in 1:max(ct)) {
+  cl <- which(ct == i) %>% names  
+  w <- which(genes %in% cl)
+  if (length(w) > 0) {
+    print(cl)
+    print("-------")
+  }
+}
+
+
+```
+
+```{r Find the correlation matrix, eval=F}
 
 cr <- cor(Pf.cmpd$data[,Pf.cmpd$feat_cols] %>% t, Pf.gene$data[,Pf.gene$feat_cols] %>% t)
 rownames(cr) <- Pf.cmpd$data$CPD_NAME
@@ -166,7 +210,7 @@ saveRDS(cr.melt, "cr_melt_cp.rds")
 
 ```
 
-```{r}
+```{r, eval = F}
 
 source("../l1ktools/R/cmap/io.R")
 ds <- parse.gctx("../results/manual/cmap.compound.score/result_WTCS.LM.COMBINED_n328x22962.gctx", set_annot_rownames = F)
@@ -212,7 +256,7 @@ rownames(cr.l1000) <- rownames(cmpd.gene.score.cmap)
 
 ```
 
-```{r}
+```{r, eval = F}
 
 moas <- read.csv("../input/moas.txt", sep = "\t")
 
@@ -392,7 +436,7 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
 
 ```
 
-```{r}
+```{r, eval = F}
 
 gene.to.cluster <- matrix(0, NROW(Pf.gene$data), 1)
 rownames(gene.to.cluster) <- Pf.gene$data$Treatment
@@ -479,7 +523,7 @@ spec.data <- rbind(pos.t, neg.t)
 
 ```
 
-```{r, eval=T}
+```{r, eval=F}
 
 system("rm predictions.html")
 res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, random.shuffle.genes = F, random.shuffle.cmpds = F, verbose = T, cor.thr = cor.thr, how.many = no.top.matches, specificity.data = spec.data)
@@ -487,7 +531,7 @@ f <- fisher.test(res$V, alternative = "greater")
 
 ```
 
-```{r, eval=T}
+```{r, eval=F}
 
 print(f)
 print(res)
