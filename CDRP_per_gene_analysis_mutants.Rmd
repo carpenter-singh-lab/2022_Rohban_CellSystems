@@ -192,8 +192,11 @@ for (i in 1:max(ct)) {
   cl <- which(ct == i) %>% names  
   w <- which(genes %in% cl)
   if (length(w) > 0) {
-    print(cl)
-    print("-------")
+     annot %>% 
+	dplyr::filter(Treatment %in% cl) %>%
+	dplyr::select(Treatment, Pathway) %>%
+	htmlTable::htmlTable(.) %>%
+	print
   }
 }
 
