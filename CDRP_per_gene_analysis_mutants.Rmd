@@ -16,7 +16,8 @@ registerDoMC(cores = 3)
 source("rep.corr.func.R")
 use.repurp.annots <- F
 permute.moas <- F
-random.shuffle <- T
+random.shuffle <- F
+N.run <- 10
 seed.moa <- -8     ## ignore, if permute.moas is False
 LUAD <- F
 LUAD.mut <- F
@@ -228,6 +229,15 @@ connectivity <- Vectorize(connectivity)
 ```
 
 ```{r save the data put together}
+sm.avg <- 0
+
+if (random.shuffle) {
+	n.run <- N.run
+} else {
+	n.run <- 1
+}
+
+for (i in 1:n.run) {
 
 Pf.cmpd.res <- Pf.cmpd
 #Pf.cmpd.res$data %<>% filter(!is.na(MOA) & MOA != "")
@@ -259,12 +269,16 @@ write.table(data.all,
 
 cr <- data.all[,4:NCOL(data.all)] %>%
   t %>%
-  cor 
+  cor %>%
+  abs
+
+cr[which(data.all$Type == "gene"), which(data.all$Type == "gene")] <- 0
+cr[which(data.all$Type == "compound"), which(data.all$Type == "compound")] <- 0 
 
 rownames(cr) <- data.all$Treatment
 colnames(cr) <- data.all$Treatment
 
-hcl <- hclust(as.dist(1 - cr), method = "complete")
+hcl <- hclust(as.dist(1 - cr), method = "average")
 ct <- cutree(hcl, h = 1 - 0.45)
 
 genes <- Pf.gene$data$Treatment
@@ -277,9 +291,11 @@ for (i in 1:max(ct)) {
 	    dplyr::filter(Treatment %in% cl) %>%
 	    dplyr::select(Treatment, Pathway)  
     
-    annot.cls %>%
+    if (!random.shuffle) {
+    	annot.cls %>%
 	    htmlTable::htmlTable(.) %>%
 	    print
+    }
     
     pathways <- Pf.gene$data$Pathway[Pf.gene$data$Treatment %in% genes[w]] %>% unique
     pathways <- lapply(pathways, function(x) str_replace_all(x, "Canonical ", "")) %>% unlist
@@ -290,13 +306,19 @@ for (i in 1:max(ct)) {
     if (!is.na(mn) && mn > 0.03) {
       sm <- sm + 1
     }
-    cat(sprintf("score is : %f", round(mn, 2)))
-    cat("<hr>")
-    cat("<br>")
+    if (!random.shuffle) {
+	    cat(sprintf("score is : %f", round(mn, 2)))
+	    cat("<hr>")
+	    cat("<br>")
+    }
   }
 }
 
-cat(sprintf("Total sig. clusters %d", sm))
+sm.avg <- sm.avg + sm
+
+}
+
+cat(sprintf("Total sig. clusters %d", (sm.avg)/n.run))
 
 ```
 
