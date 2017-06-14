@@ -16,7 +16,7 @@ registerDoMC(cores = 3)
 source("rep.corr.func.R")
 use.repurp.annots <- F
 permute.moas <- F
-random.shuffle <- F
+random.shuffle <- T
 seed.moa <- -8     ## ignore, if permute.moas is False
 LUAD <- F
 LUAD.mut <- F
@@ -286,8 +286,8 @@ for (i in 1:max(ct)) {
     MOAs <- annot.cls$Pathway[which(!annot.cls$Treatment %in% genes[w])] %>% unique
     MOAs <- setdiff(MOAs, "")
     
-    mn <- mean(outer(pathways, MOAs, connectivity))
-    if (mn > 0.03) {
+    mn <- mean(outer(pathways, MOAs, connectivity), na.rm = T)
+    if (!is.na(mn) && mn > 0.03) {
       sm <- sm + 1
     }
     cat(sprintf("score is : %f", round(mn, 2)))
