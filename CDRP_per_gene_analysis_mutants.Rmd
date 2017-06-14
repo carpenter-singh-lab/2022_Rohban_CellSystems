@@ -10,11 +10,13 @@ library(foreach)
 library(doMC)
 library(magrittr)
 library(readr)
+
 registerDoMC(cores = 3)
 #
 source("rep.corr.func.R")
 use.repurp.annots <- F
 permute.moas <- F
+random.shuffle <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
 LUAD <- F
 LUAD.mut <- F
@@ -156,13 +158,91 @@ print(NROW(Pf.gene$data))
 
 ```
 
+```{r some aux. func.}
+
+get.interacting.proteins <- function(protein.name) {
+  dr <- "../results/manual/ppis"
+  if (!dir.exists(dr)) {
+    system(sprintf("mkdir -p %s", dr))
+  }
+  f.name <- sprintf("%s/%s.rds", dr, protein.name)
+  if (file.exists(f.name)) {
+    return(readRDS(f.name))
+  }
+  
+  tbl <- read.table(sprintf("http://webservice.thebiogrid.org/interactions/?searchNames=true&geneList=%s&taxId=9606&includeHeader=true&accesskey=ca950b072394ce1897811022f7757222", protein.name), sep="\t", header = FALSE, fill = T)
+  tbl <- tbl[, c(8, 9, 12, 13, 14)] 
+  colnames(tbl) <- c("Protein.1", "Protein.2", "Method", "Type", "Evidence")
+  saveRDS(tbl, f.name)
+  return(tbl)
+}
+
+get.all.interacting.proteins <- function(protein.name) {
+  res <- c()
+  for (p in protein.name) {
+    ppi <- tryCatch(get.interacting.proteins(p), error = function(e) {})
+    res <- rbind(res, ppi)
+  }
+  return(res)
+}
+
+connectivity <- function(pathway, MOA.q) {
+  pathway.genes <- Pf.gene$data %>% 
+    dplyr::filter(str_detect(Pathway, pathway)) %>%
+    dplyr::select(Treatment) %>%
+    dplyr::group_by(Treatment) %>%
+    dplyr::summarise(gene = str_split(Treatment, "_")[[1]][1]) %>%
+    dplyr::select(gene) %>%
+    as.matrix() %>%
+    as.vector() %>%
+    unique
+  
+  MOA.genes <- Pf.cmpd$data %>%
+    dplyr::ungroup() %>%
+    dplyr::filter(str_detect(MOA, MOA.q)) %>%
+    dplyr::select(Target) %>%
+    as.matrix() %>%
+    as.vector() %>%
+    paste(., collapse = ", ") %>%
+    str_split(., ", ") %>%
+    unlist %>%
+    setdiff(., "") %>%
+    unique()
+  
+  ppi <- get.all.interacting.proteins(pathway.genes)
+  intr <- c(ppi$Protein.1 %>% as.character(),
+    ppi$Protein.2 %>% as.character()) %>%
+    unique
+  a <- (which(MOA.genes %in% intr) %>% length())/min(length(intr), length(MOA.genes))
+
+  ppi <- get.all.interacting.proteins(MOA.genes)
+  intr <- c(ppi$Protein.1 %>% as.character(),
+    ppi$Protein.2 %>% as.character()) %>%
+    unique
+  b <- (which(pathway.genes %in% intr) %>% length())/min(length(intr), length(pathway.genes))
+  return((a + b)/2)
+}
+
+connectivity <- Vectorize(connectivity)
+
+```
+
 ```{r save the data put together}
 
 Pf.cmpd.res <- Pf.cmpd
 #Pf.cmpd.res$data %<>% filter(!is.na(MOA) & MOA != "")
 data <- rbind(Pf.gene$data[,Pf.gene$feat_cols], Pf.cmpd.res$data[,Pf.cmpd$feat_cols])
-annot <- rbind(Pf.gene$data[,c("Treatment", "Pathway")] %>% as.matrix(),
+
+if (random.shuffle) {
+  a <- Pf.gene$data[,c("Treatment", "Pathway")] %>% as.matrix()
+  b <- Pf.cmpd.res$data[,c("CPD_NAME", "MOA")] %>% as.matrix()
+  a <- a[permute::shuffle(NROW(a)), ]
+  b <- b[permute::shuffle(NROW(b)), ]
+  annot <- rbind(a, b)
+} else {
+  annot <- rbind(Pf.gene$data[,c("Treatment", "Pathway")] %>% as.matrix(),
                Pf.cmpd.res$data[,c("CPD_NAME", "MOA")] %>% as.matrix())
+}
 annot %<>% as.data.frame 
 colnames(annot) <- c("Treatment", "Pathway")
 annot <- cbind(annot, data.frame(Type = c(rep("gene", NROW(Pf.gene$data)),
@@ -179,8 +259,7 @@ write.table(data.all,
 
 cr <- data.all[,4:NCOL(data.all)] %>%
   t %>%
-  cor %>%
-  abs
+  cor 
 
 rownames(cr) <- data.all$Treatment
 colnames(cr) <- data.all$Treatment
@@ -189,18 +268,35 @@ hcl <- hclust(as.dist(1 - cr), method = "complete")
 ct <- cutree(hcl, h = 1 - 0.45)
 
 genes <- Pf.gene$data$Treatment
+sm <- 0
 for (i in 1:max(ct)) {
   cl <- which(ct == i) %>% names  
   w <- which(genes %in% cl)
   if (length(w) > 0) {
-     annot %>% 
-	dplyr::filter(Treatment %in% cl) %>%
-	dplyr::select(Treatment, Pathway) %>%
-	htmlTable::htmlTable(.) %>%
-	print
+    annot.cls <- annot %>% 
+	    dplyr::filter(Treatment %in% cl) %>%
+	    dplyr::select(Treatment, Pathway)  
+    
+    annot.cls %>%
+	    htmlTable::htmlTable(.) %>%
+	    print
+    
+    pathways <- Pf.gene$data$Pathway[Pf.gene$data$Treatment %in% genes[w]] %>% unique
+    pathways <- lapply(pathways, function(x) str_replace_all(x, "Canonical ", "")) %>% unlist
+    MOAs <- annot.cls$Pathway[which(!annot.cls$Treatment %in% genes[w])] %>% unique
+    MOAs <- setdiff(MOAs, "")
+    
+    mn <- mean(outer(pathways, MOAs, connectivity))
+    if (mn > 0.03) {
+      sm <- sm + 1
+    }
+    cat(sprintf("score is : %f", round(mn, 2)))
+    cat("<hr>")
+    cat("<br>")
   }
 }
 
+cat(sprintf("Total sig. clusters %d", sm))
 
 ```
 
@@ -263,32 +359,6 @@ rownames(cr.l1000) <- rownames(cmpd.gene.score.cmap)
 ```{r, eval = F}
 
 moas <- read.csv("../input/moas.txt", sep = "\t")
-
-get.interacting.proteins <- function(protein.name) {
-  dr <- "../results/manual/ppis"
-  if (!dir.exists(dr)) {
-    system(sprintf("mkdir -p %s", dr))
-  }
-  f.name <- sprintf("%s/%s.rds", dr, protein.name)
-  if (file.exists(f.name)) {
-    return(readRDS(f.name))
-  }
-  
-  tbl <- read.table(sprintf("http://webservice.thebiogrid.org/interactions/?searchNames=true&geneList=%s&taxId=9606&includeHeader=true&accesskey=ca950b072394ce1897811022f7757222", protein.name), sep="\t", header = FALSE, fill = T)
-  tbl <- tbl[, c(8, 9, 12, 13, 14)] 
-  colnames(tbl) <- c("Protein.1", "Protein.2", "Method", "Type", "Evidence")
-  saveRDS(tbl, f.name)
-  return(tbl)
-}
-
-get.all.interacting.proteins <- function(protein.name) {
-  res <- c()
-  for (p in protein.name) {
-    ppi <- tryCatch(get.interacting.proteins(p), error = function(e) {})
-    res <- rbind(res, ppi)
-  }
-  return(res)
-}
 
 V <- matrix(0, 2, 2)
 
