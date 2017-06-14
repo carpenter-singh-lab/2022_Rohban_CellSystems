@@ -179,7 +179,8 @@ write.table(data.all,
 
 cr <- data.all[,4:NCOL(data.all)] %>%
   t %>%
-  cor
+  cor %>%
+  abs
 
 rownames(cr) <- data.all$Treatment
 colnames(cr) <- data.all$Treatment
