@@ -1,0 +1,138 @@
+```{r Load Gene OE and Compound data, eval=TRUE, warning=FALSE}
+
+rm(list = ls())
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(reshape2)
+library(htmlTable)
+source("rep.corr.func.R")
+
+x <- readRDS("../results/master/2016-12-13_da3e6bfb/2016_04_01_a549_48hr_batch1_normalized.rds")
+x <- cbind(x, data.frame(Metadata_Treatment = paste(x$Metadata_pert_id, x$Metadata_mg_per_ml, sep = "@")))
+set.seed(24)
+feats <- colnames(x)
+feats <- feats[which(!str_detect(feats, "Metadata"))]
+metadata <- colnames(x)
+metadata <- metadata[which(str_detect(metadata, "Metadata"))]
+thr <- non.rep.cor(list(data = x, feat_col = feats, factor_col = metadata), "Metadata_Treatment", feats)
+u <- rep.cor(list(data = x, feat_col = feats, factor_col = metadata), "Metadata_Treatment", feats)
+strong.trt <- u$Metadata_Treatment[which(u$cr > thr)]
+sprintf("Hit ratio (compound-concentrations) : %f%%", round(length(strong.trt)/NROW(u) * 100))
+strong.cmpd <- lapply(strong.trt, function(x) str_split(x, "@")[[1]][1]) %>% unlist %>% unique
+all.cmpd <- lapply(u$Metadata_Treatment, function(x) str_split(x, "@")[[1]][1]) %>% unlist %>% unique
+sprintf("Hit ratio (compounds) : %f%%", round(length(strong.cmpd)/length(all.cmpd) * 100))
+x <- x %>% dplyr::filter(Metadata_Treatment %in% strong.trt)
+
+x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %>% 
+  dplyr::select(one_of(c(feats, "Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa"))) %>% dplyr::summarise_each(funs("mean")) %>% dplyr::ungroup() %>% dplyr::filter(!is.na(Metadata_pert_iname))
+
+metadata.sel <- colnames(x.collapsed)
+metadata.sel <- metadata.sel[which(str_detect(metadata.sel, "Metadata"))]
+
+cmpd.moa <- x.collapsed[,c("Metadata_pert_iname", "Metadata_moa")] %>% unique()
+all.cmpd <- x.collapsed[,c("Metadata_pert_iname")] %>% unique() %>% as.matrix() %>% as.vector()
+
+summary_corr <- function(cr){
+  v1 <- quantile(cr, 0.75, na.rm = T) %>% as.matrix() %>% as.vector()
+  v2 <- quantile(cr, 0.25, na.rm = T) %>% as.matrix() %>% as.vector()
+  v <- c(v1, v2)
+  ordx <- order(abs(v), decreasing = T)
+  return(v[ordx[1]])
+}
+
+cr.melt.all <- c()
+
+dose.indx <- 1:6
+for (i in dose.indx) {
+  for (j in dose.indx) {
+    x1 <- x.collapsed %>% dplyr::group_by(Metadata_pert_iname) %>% dplyr::slice(i) %>% dplyr::ungroup()
+    x2 <- x.collapsed %>% dplyr::group_by(Metadata_pert_iname) %>% dplyr::slice(j) %>% dplyr::ungroup()
+    cr.i.j <- cor(x1[,feats] %>% t, x2[,feats] %>% t)
+    
+    rownames(cr.i.j) <- x1$Metadata_pert_iname
+    colnames(cr.i.j) <- x2$Metadata_pert_iname
+    z <- rep(NA, length(all.cmpd))
+    names(z) <- all.cmpd
+    cr <- outer(z, z, '*')
+    cr[rownames(cr.i.j), colnames(cr.i.j)] <- cr.i.j
+    diag(cr) <- NA
+    if (!is.null(cr.melt.all)) {
+      cr.melt.all <- cbind(cr.melt.all, melt(cr)[,3])  
+    } else {
+      cr.melt.all <- melt(cr)
+    }
+  }
+}
+
+v1 <- apply(cr.melt.all[,3:NCOL(cr.melt.all)], 1, function(x) max(x, na.rm = T))
+v2 <- apply(cr.melt.all[,3:NCOL(cr.melt.all)], 1, function(x) min(x, na.rm = T))
+v3 <- apply(cbind(abs(v1), abs(v2)), 1, function(x) (max(x) * c(1, -1)[which.max(x)]))
+
+z <- rep(NA, length(all.cmpd))
+names(z) <- all.cmpd
+cr <- outer(z, z, '*')
+cr.melt <- melt(cr)
+r <- as.numeric(as.character(v3)) %>% unlist
+cr.melt[,3] <- r
+#cr.melt <- cr.melt %>% dplyr::filter(as.character(Var1) < as.character(Var2))
+
+cmpd.moa <- data.frame(Metadata_pert_iname = colnames(cr))
+cmpd.moa.s <- x[,c("Metadata_pert_iname", "Metadata_moa")] %>% unique()
+cmpd.moa <- plyr::join(cmpd.moa, cmpd.moa.s, by = "Metadata_pert_iname")
+
+v1 <- cmpd.moa$Metadata_moa
+names(v1) <- cmpd.moa$Metadata_pert_iname
+v2 <- v1
+
+same.moa <- outer(v1, v2, FUN = "==")
+
+z <- rep(NA, length(all.cmpd))
+names(z) <- all.cmpd
+same.moa.mat <- outer(z, z, '*')
+same.moa.mat <- NA * same.moa.mat
+same.moa.mat[rownames(same.moa), colnames(same.moa)] <- same.moa
+same.moa.melt <- melt(same.moa.mat) #%>% dplyr::filter(as.character(Var1) < as.character(Var2))
+
+cr.melt <- cbind(cr.melt, data.frame(same.moa = same.moa.melt[,3]))
+
+```
+
+```{r plotting}
+
+cmpd.moa.s <- cmpd.moa.s %>%
+  mutate(Metadata_moa = str_replace_all(Metadata_moa, "\\|", ",")) %>%
+  mutate(Metadata_moa = str_replace_all(Metadata_moa, "\\[", "_")) %>%
+  mutate(Metadata_moa = str_replace_all(Metadata_moa, "\\]", "_"))
+
+cr.melt.ext <- cr.melt %>% 
+  left_join(., cmpd.moa.s, by = c("Var1" = "Metadata_pert_iname")) %>%
+  left_join(., cmpd.moa.s, by = c("Var2" = "Metadata_pert_iname")) %>%
+  mutate(same.moa = (str_detect(Metadata_moa.x, Metadata_moa.y) | str_detect(Metadata_moa.y, Metadata_moa.x)))
+
+cr <- cr.melt.ext %>% 
+  select(Var1, Var2, value) %>% 
+  tidyr::spread(., Var1, value) %>%
+  tibble::remove_rownames() %>%
+  tibble::column_to_rownames(., var = "Var2")
+
+gr <- cr.melt.ext %>% 
+  select(Var1, Var2, same.moa) %>% 
+  mutate(same.moa = ifelse(same.moa, 1, 0)) %>%
+  tidyr::spread(., Var1, same.moa) %>%
+  tibble::remove_rownames() %>%
+  tibble::column_to_rownames(., var = "Var2")
+
+diag(cr) <- 1
+cr[is.na(cr)] <- -2
+n <- NROW(cr)
+gr.ord <- apply(rbind(cr, gr), 2, function(x) x[(n+1):(2*n)][order(x[1:n], decreasing = T)])
+gr.ord[is.na(gr.ord)] <- 0
+or <- order(apply(gr.ord, 2, function(x) sum(x[1:20])), decreasing = T)
+gr.ord <- gr.ord[,or]
+
+wc <- which(apply(gr.ord, 2, sum) > 1)
+
+write.table(gr.ord[,wc], file = "gr_ord.txt", sep = "\t", row.names = F)
+```
+
