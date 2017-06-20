@@ -16,6 +16,7 @@ just.bioactives <- T
 
 base.dir <- "2016-07-20_90b7bb86"
 corr.type <- "pearson"
+just.common.cmpds <- T
 
 if (just.bioactives) {
   Pf <- readRDS("../results/master/2017-06-02_4df9ed93/Pf_bio_new.rds")
@@ -167,6 +168,24 @@ print(NROW(Pf.cdrp$data))
 
 print(length(Pf.gust$feat_cols))
 print(NROW(Pf.gust$data))
+
+
+```
+
+```{r restricting to the common compounds, eval=just.common.cmpds}
+
+cmpd1 <- Pf.cdrp$data$CPD_NAME %>% str_to_lower()
+cmpd2 <- Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME %>% str_to_lower()
+
+cmpd <- intersect(cmpd1, cmpd2)
+
+Pf.cdrp$data %<>%
+  dplyr::filter(str_to_lower(CPD_NAME) %in% cmpd) %>%
+  dplyr::mutate(MOA = str_to_lower(CPD_NAME))
+
+Pf.gust$data %<>%
+  dplyr::filter(str_to_lower(Image_Metadata_SOURCE_COMPOUND_NAME) %in% cmpd) %>%
+  dplyr::mutate(MOA = str_to_lower(Image_Metadata_SOURCE_COMPOUND_NAME))
 
 ```
 

@@ -13,6 +13,7 @@ permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
 hit.sel.quant <- 0.95
 just.bioactives <- T
+just.common.cmpds <- T
 
 base.dir <- "2016-07-20_90b7bb86"
 corr.type <- "pearson"
@@ -163,6 +164,23 @@ print(NROW(Pf.repurp$data))
 
 ```
 
+```{r restricting to the common compounds, eval=just.common.cmpds}
+
+cmpd1 <- Pf.cdrp$data$CPD_NAME %>% str_to_lower()
+cmpd2 <- Pf.repurp$data$Metadata_pert_iname %>% str_to_lower()
+
+cmpd <- intersect(cmpd1, cmpd2)
+
+Pf.cdrp$data %<>%
+  dplyr::filter(str_to_lower(CPD_NAME) %in% cmpd) %>%
+  dplyr::mutate(MOA = str_to_lower(CPD_NAME))
+
+Pf.repurp$data %<>%
+  dplyr::filter(str_to_lower(Metadata_pert_iname) %in% cmpd) %>%
+  dplyr::mutate(Metadata_moa = str_to_lower(Metadata_pert_iname))
+
+```
+
 ```{r Find the correlation matrix, eval=T}
 
 cr <- cor(Pf.repurp$data[,Pf.repurp$feat_cols] %>% t, 
@@ -176,7 +194,7 @@ cr.melt <- cr %>% melt
 
 #cr.melt <- cr.melt %>% group_by(Var1, Var2) %>% dplyr::summarise(value = ifelse(max(value, na.rm = T) > abs(min(value, na.rm = T)), max(value, na.rm = T), min(value, na.rm = T)))
 
-cr.melt <- cr.melt %>% group_by(Var1, Var2) %>% dplyr::summarise(value = mean(value, na.rm = T))
+cr.melt <- cr.melt %>% group_by(Var1, Var2) %>% dplyr::summarise(value = max(value, na.rm = T))
 
 crx <- cr.melt %>% reshape2::dcast(Var1 ~ Var2)
 crx <- crx %>% 
