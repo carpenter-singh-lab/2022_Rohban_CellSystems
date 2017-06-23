@@ -166,11 +166,21 @@ Pf.gust$feat_cols <- f
 Pf.cdrp$data <- Pf.cdrp$data[,c(Pf.cdrp$factor_cols, Pf.cdrp$feat_cols)]
 Pf.gust$data <- Pf.gust$data[,c(Pf.gust$factor_cols, Pf.gust$feat_cols)]
 
+k <- 60
+pr <- prcomp(rbind(Pf.cdrp$data[,f], Pf.gust$data[,f]), center = F, scale. = F, retx = T)
+d1 <- cbind(pr$x[1:NROW(Pf.cdrp$data),1:k] %>% as.data.frame(), Pf.cdrp$data[,Pf.cdrp$factor_cols] %>% as.data.frame())
+d2 <- cbind(pr$x[(NROW(Pf.cdrp$data)+1):NROW(pr$x),1:k] %>% as.data.frame(), Pf.gust$data[,Pf.gust$factor_cols] %>% as.data.frame())
+
+Pf.cdrp$data <- d1
+Pf.gust$data <- d2
+
+Pf.cdrp$feat_cols <- setdiff(colnames(d1), Pf.cdrp$factor_cols)
+Pf.gust$feat_cols <- setdiff(colnames(d2), Pf.gust$factor_cols)
+
 print(length(Pf.cdrp$feat_cols))
 print(NROW(Pf.cdrp$data))
 print(length(Pf.gust$feat_cols))
 print(NROW(Pf.gust$data))
-
 
 ```
 
@@ -232,7 +242,7 @@ cr.melt.ext %<>%
 matching.moas <- function(moa1, moa2) {
   m1 <- str_split(moa1, ", ")[[1]]  
   m2 <- str_split(moa2, ", ")[[1]]  
-  any(m1 %in% m2)
+  any(setdiff(m1, "NA") %in% setdiff(m2, "NA"))
 }
 
 matching.moas <- Vectorize(matching.moas)
@@ -360,3 +370,55 @@ print(d/sum(cr.melt.ext2$match))
 
 ```
 
+```{r, eval = F}
+
+D <- c()
+lb <- c()
+N <- 1000
+for (i in 1:N) {
+    c1 <- ""
+    c2 <- ""
+    
+    while(c1 == c2) {
+      c <- sample(cmpd, 2)
+      c1 <- c[1]
+      c2 <- c[2]
+    }
+    
+    d1 <- Pf.cdrp$data[which(str_to_lower(Pf.cdrp$data$CPD_NAME) == c1), Pf.cdrp$feat_cols] %>% slice(1)
+    d2 <- Pf.gust$data[which(str_to_lower(Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME) == c1), Pf.gust$feat_cols] %>% slice(1)
+    D <- rbind(D, c(d1 %>% as.matrix() %>% as.vector(), 
+                    d2 %>% as.matrix() %>% as.vector()))
+    lb <- c(lb, -1)
+}
+
+for (c in 1:N) {
+    c <- sample(cmpd, 1)
+    d1 <- Pf.cdrp$data[which(str_to_lower(Pf.cdrp$data$CPD_NAME) == c), Pf.cdrp$feat_cols] %>% slice(1)
+    d2 <- Pf.gust$data[which(str_to_lower(Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME) == c), Pf.gust$feat_cols] %>% slice(1)
+    D <- rbind(D, c(d1 %>% as.matrix() %>% as.vector(), 
+                    d2 %>% as.matrix() %>% as.vector()))
+    lb <- c(lb, 1)
+}
+
+```
+
+```{r, eval = F}
+
+D.all <- D
+ids <- sample(1:NROW(D.all), round(0.95 * NROW(D.all)))
+
+D.tr <- D.all[ids, ]
+D.ts <- D.all[-ids, ]
+lb.tr <- ((lb[ids] + 1)/2) %>% as.factor()
+lb.ts <- ((lb[-ids] + 1)/2) %>% as.factor()
+
+library(caret)
+
+colnames(D.tr) <- 1:NCOL(D.tr)
+model <- train(x = D.tr, y = lb.tr, method = "gbm")
+t <- table(lb.ts,  predict(model, cbind(D.ts, data.frame(label = lb.ts))))  
+acc <- (t[1, 1] + t[2, 2])/(sum(t))
+print(acc)
+
+```
