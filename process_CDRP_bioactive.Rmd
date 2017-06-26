@@ -10,6 +10,7 @@ library(doMC)
 library(ggplot2)
 source("rep.corr.func.R")
 just.strongs <- F
+remove.untreated <- F
 
 doMC::registerDoMC(64)
 
@@ -107,7 +108,9 @@ u.cntrl <- Pf$data %>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "mock") %>% dpl
 u.cntrl$cr %>% quantile(., na.rm = T) %>% print
 }
 
-Pf$data %<>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "treated")
+if (remove.untreated) {
+  Pf$data %<>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "treated")  
+}
 
 Pf.bio <- Pf
 Pf.nonbio <- Pf
