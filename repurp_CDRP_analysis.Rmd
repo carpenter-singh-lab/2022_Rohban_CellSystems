@@ -137,10 +137,10 @@ sprintf("Hit ratio (compounds) : %f%%", round(length(strong.cmpd)/length(all.cmp
 
 x.all <- x
 x <- x %>% dplyr::filter(Metadata_Treatment %in% strong.trt)
-x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %>% 
-  dplyr::select(one_of(c(feats, "Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa"))) %>% dplyr::summarise_each(funs("mean")) %>% dplyr::ungroup() %>% dplyr::filter(!is.na(Metadata_pert_iname))
+x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa, Metadata_broad_sample) %>% 
+  dplyr::select(one_of(c(feats, "Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa", "Metadata_broad_sample"))) %>% dplyr::summarise_each(funs("mean")) %>% dplyr::ungroup() %>% dplyr::filter(!is.na(Metadata_pert_iname))
 
-Pf.repurp <- list(data = x.collapsed, feat_cols = feats, factor_cols = c("Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa"))
+Pf.repurp <- list(data = x.collapsed, feat_cols = feats, factor_cols = c("Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa", "Metadata_broad_sample"))
 
 ```
 
@@ -156,6 +156,17 @@ Pf.repurp$feat_cols <- f
 Pf.cdrp$data <- Pf.cdrp$data[,c(Pf.cdrp$factor_cols, Pf.cdrp$feat_cols)]
 Pf.repurp$data <- Pf.repurp$data[,c(Pf.repurp$factor_cols, Pf.repurp$feat_cols)]
 
+k <- 120
+pr <- prcomp(rbind(Pf.cdrp$data[,f], Pf.repurp$data[,f]), center = F, scale. = F, retx = T)
+d1 <- cbind(pr$x[1:NROW(Pf.cdrp$data),1:k] %>% as.data.frame(), Pf.cdrp$data[,Pf.cdrp$factor_cols] %>% as.data.frame())
+d2 <- cbind(pr$x[(NROW(Pf.cdrp$data)+1):NROW(pr$x),1:k] %>% as.data.frame(), Pf.repurp$data[,Pf.repurp$factor_cols] %>% as.data.frame())
+
+Pf.cdrp$data <- d1
+Pf.repurp$data <- d2
+
+Pf.cdrp$feat_cols <- setdiff(colnames(d1), Pf.cdrp$factor_cols)
+Pf.repurp$feat_cols <- setdiff(colnames(d2), Pf.repurp$factor_cols)
+
 print(length(Pf.cdrp$feat_cols))
 print(NROW(Pf.cdrp$data))
 
@@ -164,20 +175,23 @@ print(NROW(Pf.repurp$data))
 
 ```
 
-```{r restricting to the common compounds, eval=just.common.cmpds}
+```{r, eval=just.common.cmpds}
 
-cmpd1 <- Pf.cdrp$data$CPD_NAME %>% str_to_lower()
-cmpd2 <- Pf.repurp$data$Metadata_pert_iname %>% str_to_lower()
+cmpd1 <- Pf.cdrp$data$Metadata_broad_sample %>% str_sub(., 1, 13)
+cmpd2 <- Pf.repurp$data$Metadata_broad_sample %>% str_sub(., 1, 13)
 
 cmpd <- intersect(cmpd1, cmpd2)
 
 Pf.cdrp$data %<>%
-  dplyr::filter(str_to_lower(CPD_NAME) %in% cmpd) %>%
-  dplyr::mutate(MOA = str_to_lower(CPD_NAME))
+  dplyr::filter(str_sub(Metadata_broad_sample, 1, 13) %in% cmpd) #%>%
+  #dplyr::mutate(MOA = str_sub(Metadata_broad_sample, 1, 13))
 
 Pf.repurp$data %<>%
-  dplyr::filter(str_to_lower(Metadata_pert_iname) %in% cmpd) %>%
-  dplyr::mutate(Metadata_moa = str_to_lower(Metadata_pert_iname))
+  dplyr::filter(str_sub(Metadata_broad_sample, 1, 13) %in% cmpd) #%>%
+  #dplyr::mutate(Metadata_moa = str_sub(Metadata_broad_sample, 1, 13))
+
+dim(Pf.cdrp$data)
+dim(Pf.repurp$data)
 
 ```
 
