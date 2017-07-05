@@ -19,10 +19,11 @@ seed.moa <- -8     ## ignore, if permute.moas is False
 hit.sel.quant <- 0.0
 hit.sel.quant.cdrp <- 0.0
 just.bioactives <- T
-dmos.null <- T
+dmos.null <- F
 manual.hit.sel.thr <- F
-hit.sel.thr.cdrp <- 0.52
-hit.sel.thr.bbbc <- 0.70
+error.analysis <- T
+hit.sel.thr.cdrp <- 0.64
+hit.sel.thr.bbbc <- 0.50
 do.pca <- T
 pca.thr <- 0.99
 perc.top <- 0.02
@@ -145,7 +146,10 @@ cmpds.all <- gust.cmpd %>%
                               as.character(Image_Metadata_SOURCE_COMPOUND_NAME),
                               as.character(Image_Metadata_BROAD_ID)))) %>%
   mutate(CPD_NAME = name, Image_Metadata_SOURCE_COMPOUND_NAME = name) %>% 
-  unique()
+  unique() %>%
+  group_by(Image_Metadata_BROAD_ID) %>%
+  slice(1) %>%
+  ungroup(.)
 
 Pf.cdrp$data %<>% 
   dplyr::select(-CPD_NAME) %>%
@@ -288,6 +292,17 @@ Pf.gust$data %<>%
                   Target) %>% 
   dplyr::summarise_each(funs("mean")) %>% 
   dplyr::ungroup() 
+
+
+Pf.cdrp$data %<>% 
+  group_by(CPD_NAME) %>%
+  slice(1) %>%
+  ungroup(.)
+
+Pf.gust$data %<>% 
+  group_by(Image_Metadata_SOURCE_COMPOUND_NAME) %>%
+  slice(1) %>%
+  ungroup(.)
 
 ```
 
@@ -510,7 +525,7 @@ print(d/sum(cr.melt.ext2$match))
 
 ```
 
-```{r error analysis, eval=!manual.hit.sel.thr}
+```{r error analysis, eval=error.analysis}
 
 u.gust <- u.gust %>% filter(cr >= thr.gust)
 u.cdrp <- u.cdrp %>% filter(cr >= thr.cdrp)
