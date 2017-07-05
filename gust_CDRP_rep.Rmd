@@ -17,6 +17,7 @@ source("rep.corr.func.R")
 permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
 hit.sel.quant <- 0.95
+hit.sel.quant.cdrp <- 0.999
 just.bioactives <- T
 
 base.dir <- "2016-07-20_90b7bb86"
@@ -45,7 +46,7 @@ thr <- non.rep.cor(list(data = Pf,
              factor_cols = setdiff(colnames(Pf), feat)),
         grp.var = "Metadata_broad_sample", 
         feat.var = feat, 
-        quant = hit.sel.quant)
+        quant = hit.sel.quant.cdrp)
 
 strongs <- u$Metadata_broad_sample[which(u$cr > thr)]
 Pf %<>% dplyr::filter(Metadata_broad_sample %in% strongs)
