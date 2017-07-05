@@ -22,8 +22,8 @@ just.bioactives <- T
 dmos.null <- F
 manual.hit.sel.thr <- F
 error.analysis <- T
-hit.sel.thr.cdrp <- 0.64
-hit.sel.thr.bbbc <- 0.50
+hit.sel.thr.cdrp <- 0.52
+hit.sel.thr.bbbc <- 0.70
 do.pca <- T
 pca.thr <- 0.99
 perc.top <- 0.02
@@ -546,7 +546,9 @@ D <- D.tst %>%
   dplyr::sample_n(n) 
 
 ggplot(D, aes(x = min.rep.cor, y = signature.cor, color = match)) + 
-  geom_point(stat = "identity")
+  geom_point(stat = "identity") + 
+  ylab("Signatures correlation for a compound pair") +
+  xlab("Minimum of replicate correlation for a compound pair")
 
 fn <- function(rep.cor.bbbc, 
                rep.cor.cdrp, 
