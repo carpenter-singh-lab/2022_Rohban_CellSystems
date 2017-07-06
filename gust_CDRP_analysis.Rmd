@@ -550,7 +550,7 @@ g <- ggplot(D, aes(x = min.rep.cor, y = signature.cor, color = match)) +
   ylab("Signatures correlation for a compound pair") +
   xlab("Minimum of replicate correlation for a compound pair")
 
-ggsave(g, "charac_plot.pdf")
+ggsave("charac_plot.pdf", g)
 
 fn <- function(rep.cor.bbbc, 
                rep.cor.cdrp, 
