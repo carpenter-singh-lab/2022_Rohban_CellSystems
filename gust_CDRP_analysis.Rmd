@@ -20,8 +20,8 @@ hit.sel.quant <- 0.0
 hit.sel.quant.cdrp <- 0.0
 just.bioactives <- T
 dmos.null <- F
-manual.hit.sel.thr <- F
-error.analysis <- T
+manual.hit.sel.thr <- T
+error.analysis <- F
 hit.sel.thr.cdrp <- 0.52
 hit.sel.thr.bbbc <- 0.70
 do.pca <- T
@@ -31,7 +31,7 @@ perc.top <- 0.02
 base.dir <- "2016-07-20_90b7bb86"
 corr.type <- "pearson"
 just.common.cmpds <- T
-set.moa.to.cmpd.name <- T
+set.moa.to.cmpd.name <- F
 
 if (just.bioactives) {
   Pf <- readRDS("../results/master/2017-06-26_5b0bbf7c/Pf_bio_new.rds")
@@ -318,6 +318,14 @@ cmpd <- setdiff(intersect(cmpd1, cmpd2), c("", NA))
 
 print(length(cmpd))
 
+strn.cdrp <- Pf.cdrp$data %>% 
+  group_by(CPD_NAME, Metadata_broad_sample) %>%
+  dplyr::do(data.frame(strength = sum(abs(.[,-c(1, 2, 3)]) > 1 )))
+
+strn.gust <- Pf.gust$data %>% 
+  group_by(Image_Metadata_SOURCE_COMPOUND_NAME, Image_Metadata_BROAD_ID) %>%
+  dplyr::do(data.frame(strength = sum(abs(.[,-c(1, 2, 3, 4)]) > 1 )))
+
 if (set.moa.to.cmpd.name) {
   Pf.cdrp$data %<>%
     dplyr::filter(CPD_NAME %in% cmpd) %>%
@@ -472,6 +480,20 @@ for (i in 1:N) {
 print(NROW(d)/length(unique(cr.melt.ext2.sor$Var1)))
 print(mean(ns)/length(unique(cr.melt.ext2.sor$Var1)))
 print(NROW(d)/mean(ns))
+
+d %>% htmlTable::htmlTable()
+
+d <- cr.melt.ext2.sor %>% 
+  dplyr::group_by(Var1, MOA.x) %>%
+  dplyr::slice(1:k) %>%
+  dplyr::summarise(success = any(match)) 
+
+a <- strn.cdrp %>%
+  dplyr::ungroup(.) %>%
+  dplyr::right_join(., d, by = c("Metadata_broad_sample" = "Var1")) %>%
+  select(strength) %>%
+  as.matrix() %>% 
+  as.vector()
 
 
 ```
