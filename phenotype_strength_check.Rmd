@@ -1,0 +1,99 @@
+---
+title: "Phenotype strength analysis"
+output: html_document
+---
+
+```{r}
+
+rm(list = ls())
+
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(magrittr)
+
+source("read_dataset.R")
+source("rep.corr.func.R")
+
+data.set.name <- "MOA"
+do.feat.sel <- F
+feat.sel.cutoff <- 0.85
+
+Pf <- read.dataset(data.set.name = data.set.name, just.bioactives = T)
+
+if (do.feat.sel) {
+  ft <- caret::findCorrelation(cor(Pf$data[,Pf$feat_cols]), cutoff = feat.sel.cutoff)
+  ft.all <- Pf$feat_cols
+  ft.sel <- ft.all[setdiff(1:length(ft.all), ft)]
+  Pf$feat_cols <- ft.sel
+  Pf$data <- Pf$data[,c(Pf$feat_cols, Pf$factor_cols)]
+}
+
+u <- rep.cor(Pf, "Metadata_broad_sample", Pf$feat_cols)
+v <- non.rep.cor(Pf, "Metadata_broad_sample", Pf$feat_cols)
+
+trt <- u %>%
+  dplyr::filter(cr > v) %>%
+  dplyr::select(Metadata_broad_sample) %>%
+  unique %>%
+  as.matrix() %>%
+  as.vector()
+
+Px.collapsed <- Pf$data %>%
+  dplyr::filter(Metadata_broad_sample %in% trt | Metadata_pert_iname == "dmso") %>%
+  dplyr::select(one_of(c("Metadata_plate_well", "Metadata_pert_iname", "Metadata_broad_sample", Pf$feat_cols))) %>%
+  dplyr::group_by(Metadata_plate_well, Metadata_pert_iname, Metadata_broad_sample) %>%
+  dplyr::summarise_all(funs("mean"))
+  
+all.sz <- Pf$data$Metadata_broad_sample %>%
+  unique %>%
+  length()
+all.sz <- all.sz - 1
+
+print(sprintf("Percentage of cmpds. with highly correlated reps. : %f%%", round(length(trt)/all.sz * 100, 1)))
+
+Px.strn <- Px.collapsed %>% 
+  group_by(Metadata_plate_well, Metadata_pert_iname, Metadata_broad_sample) %>%
+  do(data.frame(strn = sum(.[,Pf$feat_cols]^2)^0.5)) %>%
+  dplyr::ungroup(.) 
+
+Px.strn %<>%
+  mutate(Metadata_type = ifelse(Metadata_pert_iname == "dmso",
+                                "control",
+                                "trt")) 
+
+strn.thr <- Px.strn %>%
+  dplyr::filter(Metadata_type == "control") %>%
+  dplyr::select(strn) %>%
+  as.matrix() %>% 
+  as.vector() %>%
+  quantile(., 0.95)
+
+print(sprintf("Phenotype strength at %d dim : %f", length(Pf$feat_cols), strn.thr))
+
+br <- Px.strn %>%
+  dplyr::filter(Metadata_type == "trt" & strn > strn.thr) %>%
+  dplyr::select(Metadata_broad_sample) %>%
+  as.matrix() %>%
+  as.vector() %>%
+  unique %>%
+  length
+  
+sz <- Px.strn %>%
+  dplyr::filter(Metadata_type == "trt") %>%
+  dplyr::select(Metadata_broad_sample) %>%
+  as.matrix() %>%
+  as.vector() %>%
+  unique %>%
+  length
+
+print(sprintf("strong treatment percentage (out of cmpds. with highly correlated reps.) : %f%%", round(br/sz * 100, 1)))
+print(sprintf("total strong treatment percentage : %f%%", round(br/all.sz * 100, 1)))
+
+g <- ggplot(Px.strn[,c("Metadata_type", "strn")],
+      aes(x = strn, fill = Metadata_type, color = Metadata_type)) + 
+  ggplot2::geom_histogram(aes(y = ..density..), alpha = 0.6, bins = 80, position="identity", lwd=0.2)
+
+g
+
+```

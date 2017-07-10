@@ -20,9 +20,9 @@ hit.sel.quant <- 0.0
 hit.sel.quant.repurp <- 0.0
 just.bioactives <- T
 dmos.null <- F
-manual.hit.sel.thr <- F
-hit.sel.thr.repurp <- 0.64
-hit.sel.thr.bbbc <- 0.62
+manual.hit.sel.thr <- T
+hit.sel.thr.repurp <- 0.70
+hit.sel.thr.bbbc <- 0.68
 do.pca <- T
 pca.thr <- 0.99
 perc.top <- 0.02
@@ -30,7 +30,7 @@ perc.top <- 0.02
 base.dir <- "2016-07-20_90b7bb86"
 corr.type <- "pearson"
 just.common.cmpds <- T
-set.moa.to.cmpd.name <- T
+set.moa.to.cmpd.name <- F
 
 x <- readRDS("../input/repurp/2016_04_01_a549_48hr_batch1_normalized.rds")
 
