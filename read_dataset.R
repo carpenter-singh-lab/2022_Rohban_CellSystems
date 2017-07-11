@@ -244,34 +244,31 @@ read.dmso.single.cell <- function(data.set.name, just.bioactives = T, dose.close
   
   prf <- foreach (pli = pl, .combine = rbind) %do% {
     db <- dplyr::src_sqlite(sprintf("%s/%s/%s.sqlite", base.path, pli, pli))
+    cells <- dplyr::tbl(db, "Cells") #%>% dplyr::semi_join(., image, by = "ImageNumber")
+    cytoplasm <- dplyr::tbl(db, "Cytoplasm") #%>% dplyr::semi_join(., image, by = "ImageNumber")
+    nuclei <- dplyr::tbl(db, "Nuclei") #%>% dplyr::semi_join(., image, by = "ImageNumber")
+
     wells <- plate.well %>% 
       dplyr::filter(Metadata_Plate == pli) %>%
-      dplyr::select(Metadata_Well) %>%
-      as.character() %>%
-      as.matrix() %>% 
-      as.vector()
-    
-    image <- dplyr::tbl(db, "Image") %>%
-      dplyr::filter(Image_Metadata_Well %in% wells) %>%
+      dplyr::select(Metadata_Well)
+
+     img <- dplyr::tbl(db, "Image")
+
+     image <- wells %>%
+      dplyr::left_join(., img, by = c("Metadata_Well" = "Image_Metadata_Well"), copy = T) %>%
       dplyr::select(ImageNumber) %>%
-      dplyr::collect() %>%
-      as.character() %>%
-      as.matrix() %>%
-      as.vector()
-    
-    cells <- dplyr::tbl(db, "Cells") %>%
-      dplyr::filter(ImageNumber %in% image)
-    cytoplasm <- dplyr::tbl(db, "Cytoplasm") %>%
-      dplyr::filter(ImageNumber %in% image)
-    nuclei <- dplyr::tbl(db, "Nuclei") %>%
-      dplyr::filter(ImageNumber %in% image)
-    
-    prf <- cells %>%
-      dplyr::left_join(., cytoplasm, by = c("ImageNumber", "ObjectNumber")) %>%
-      dplyr::left_join(., nuclei, by = c("ImageNumber", "ObjectNumber"))
+      dplyr::collect()
+
+     prf <- image %>%
+      dplyr::left_join(., cells, by = "ImageNumber", copy = T) %>%
+      dplyr::left_join(., cytoplasm, by = c("ImageNumber", "ObjectNumber"), copy = T) %>%
+      dplyr::left_join(., nuclei, by = c("ImageNumber", "ObjectNumber"), copy = T) %>%
+      dplyr::collect()
+
     prf
   }
   ft <- colnames(prf)
-  ft[which(!str_detect(ft, "Metadata") & !ft %in% c("ImageNumber", "ObjectNumber"))]
+  ft <- ft[which(!str_detect(ft, "Metadata") & !str_detect(ft, "ImageNumber") 
+       & !str_detect(ft, "ObjectNumber") & !str_detect(ft, "TableNumber"))]
   return(prf[,ft])
 }
