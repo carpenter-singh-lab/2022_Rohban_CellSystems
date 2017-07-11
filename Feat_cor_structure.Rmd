@@ -1,0 +1,46 @@
+---
+title: "Testing whether feature correlations match in two related datasets"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+rm(list = ls())
+
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(magrittr)
+
+source("read_dataset.R")
+
+data.set.name.1 <- "Repurposing"
+data.set.name.2 <- "BBBC022"
+
+Pf.1 <- read.dataset(data.set.name = data.set.name.1)
+Pf.2 <- read.dataset(data.set.name = data.set.name.2)
+
+ft <- intersect(Pf.1$feat_cols, Pf.2$feat_cols)
+
+print(length(ft))
+
+cr.1 <- Pf.1$data %>%
+  dplyr::filter(Metadata_pert_iname == "dmso") %>%
+  dplyr::select(one_of(ft)) %>%
+  cor %>%
+  reshape2::melt() %>%
+  dplyr::filter(as.character(Var1) != as.character(Var2)) 
+
+cr.2 <- Pf.2$data %>%
+  dplyr::filter(Metadata_pert_iname == "dmso") %>%
+  dplyr::select(one_of(ft)) %>%
+  cor %>%
+  reshape2::melt() %>%
+  dplyr::filter(as.character(Var1) != as.character(Var2)) 
+
+cr <- cr.1 %>%
+  dplyr::left_join(., cr.2, by = c("Var1", "Var2"))
+
+abs(sum(cr$value.x * cr$value.y))/(sum(cr$value.x^2)^0.5 * sum(cr$value.y^2)^0.5)
+
+```

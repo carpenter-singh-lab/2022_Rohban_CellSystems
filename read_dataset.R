@@ -46,8 +46,7 @@ read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10) 
                                                  "DMSO",
                                                  as.character(Metadata_pert_iname))) %>%
       dplyr::mutate(Metadata_pert_iname = str_to_lower(Metadata_pert_iname),
-                    Metadata_Well = str_to_lower(Metadata_Well),
-                    Metadata_Plate = str_to_lower(Metadata_Plate))
+                    Metadata_Well = str_to_lower(Metadata_Well))
     
     Pf.gust$factor_cols <- c("Metadata_broad_sample",
                              "Metadata_moa",
@@ -57,6 +56,15 @@ read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10) 
                              "Metadata_Plate",
                              "Metadata_Well",
                              "Metadata_plate_well")
+    
+    f2 <- colnames(Pf.gust$data)
+    f2 <- str_replace_all(f2, "Syto", "RNA")
+    f2 <- str_replace_all(f2, "Hoechst", "DNA")
+    f2 <- str_replace_all(f2, "Ph_golgi", "AGP")
+    f2 <- str_replace_all(f2, "_3", "_3_0")
+    f2 <- str_replace_all(f2, "_5", "_5_0")
+    colnames(Pf.gust$data) <- f2
+    Pf.gust$feat_cols <- setdiff(colnames(Pf.gust$data), Pf.gust$factor_cols)
     
     return(Pf.gust)
       
@@ -129,8 +137,7 @@ read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10) 
                                                  Metadata_broad_sample, 
                                                  Metadata_pert_iname),
                     Metadata_pert_iname = str_to_lower(Metadata_pert_iname),
-                    Metadata_Well = str_to_lower(Metadata_Well),
-                    Metadata_Plate = str_to_lower(Metadata_Plate)
+                    Metadata_Well = str_to_lower(Metadata_Well)
                     )
     
     meta.col <- setdiff(colnames(Pf), feat)
@@ -169,8 +176,7 @@ read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10) 
                                                  "DMSO",
                                                  Metadata_pert_iname),
                     Metadata_pert_iname = str_to_lower(Metadata_pert_iname),
-                    Metadata_Well = str_to_lower(Metadata_Well),
-                    Metadata_Plate = str_to_lower(Metadata_Plate))
+                    Metadata_Well = str_to_lower(Metadata_Well))
     
     Pf.repurp$data %<>% filter(Metadata_pert_iname != "dmso" | 
                      (!str_detect(Metadata_Well, "01") &
@@ -216,4 +222,56 @@ read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10) 
   } else {
     return(NULL)
   }
+}
+
+read.dmso.single.cell <- function(data.set.name, just.bioactives = T, dose.closest = 10, well.samples = 10) {
+  Pf <- read.dataset(data.set.name, just.bioactives, dose.closest)
+  plate.well <- Pf$data %>% 
+    dplyr::filter(Metadata_pert_iname == "dmso") %>%
+    sample_n(well.samples) %>%
+    dplyr::select(Metadata_Plate, Metadata_Well) %>%
+    dplyr::arrange(Metadata_Plate)
+  pl <- plate.well$Metadata_Plate %>% unique
+  if (data.set.name == "CDRP") {
+    base.path <- "~/efs/2015_Bray_GigaScience/workspace/backend/CDRP"
+  } else if (data.set.name == "Repurposing") {
+    base.path <- "~/efs/2015_10_05_DrugRepurposing_AravindSubramanian_GolubLab_Broad/workspace/backend/2016_04_01_a549_48hr_batch1"
+  } else if (data.set.name == "BBBC022") {
+    base.path <- "~/efs/2016_12_13_Cytominer_Janssen/workspace/backend/BBBC022_2013"
+  } else {
+    return(NULL)
+  }
+  
+  prf <- foreach (pli = pl, .combine = rbind) %do% {
+    db <- dplyr::src_sqlite(sprintf("%s/%s/%s.sqlite", base.path, pli, pli))
+    wells <- plate.well %>% 
+      dplyr::filter(Metadata_Plate == pli) %>%
+      dplyr::select(Metadata_Well) %>%
+      as.character() %>%
+      as.matrix() %>% 
+      as.vector()
+    
+    image <- dplyr::tbl(db, "Image") %>%
+      dplyr::filter(Image_Metadata_Well %in% wells) %>%
+      dplyr::select(ImageNumber) %>%
+      dplyr::collect() %>%
+      as.character() %>%
+      as.matrix() %>%
+      as.vector()
+    
+    cells <- dplyr::tbl(db, "Cells") %>%
+      dplyr::filter(ImageNumber %in% image)
+    cytoplasm <- dplyr::tbl(db, "Cytoplasm") %>%
+      dplyr::filter(ImageNumber %in% image)
+    nuclei <- dplyr::tbl(db, "Nuclei") %>%
+      dplyr::filter(ImageNumber %in% image)
+    
+    prf <- cells %>%
+      dplyr::left_join(., cytoplasm, by = c("ImageNumber", "ObjectNumber")) %>%
+      dplyr::left_join(., nuclei, by = c("ImageNumber", "ObjectNumber"))
+    prf
+  }
+  ft <- colnames(prf)
+  ft[which(!str_detect(ft, "Metadata") & !ft %in% c("ImageNumber", "ObjectNumber"))]
+  return(prf[,ft])
 }
