@@ -2,6 +2,7 @@ library(dplyr)
 library(magrittr)
 library(stringr)
 library(foreach)
+library(doParallel)
 
 read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10) {
   if (data.set.name == "BBBC022") {
@@ -224,7 +225,9 @@ read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10) 
   }
 }
 
-read.dmso.single.cell <- function(data.set.name, just.bioactives = T, dose.closest = 10, well.samples = 10) {
+read.dmso.single.cell <- function(data.set.name, just.bioactives = T, dose.closest = 10, well.samples = 4, n.cores = 3) {
+
+  doParallel::registerDoParallel(cores = n.cores)
   Pf <- read.dataset(data.set.name, just.bioactives, dose.closest)
   plate.well <- Pf$data %>% 
     dplyr::filter(Metadata_pert_iname == "dmso") %>%
@@ -241,29 +244,62 @@ read.dmso.single.cell <- function(data.set.name, just.bioactives = T, dose.close
   } else {
     return(NULL)
   }
-  
-  prf <- foreach (pli = pl, .combine = rbind) %do% {
+ 
+  print(pl)
+ 
+  prf <- foreach (pli = pl, .combine = rbind) %dopar% {
     db <- dplyr::src_sqlite(sprintf("%s/%s/%s.sqlite", base.path, pli, pli))
-    cells <- dplyr::tbl(db, "Cells") #%>% dplyr::semi_join(., image, by = "ImageNumber")
-    cytoplasm <- dplyr::tbl(db, "Cytoplasm") #%>% dplyr::semi_join(., image, by = "ImageNumber")
-    nuclei <- dplyr::tbl(db, "Nuclei") #%>% dplyr::semi_join(., image, by = "ImageNumber")
+    cells <- dplyr::tbl(db, "Cells") 
+    cytoplasm <- dplyr::tbl(db, "Cytoplasm") 
+    nuclei <- dplyr::tbl(db, "Nuclei") 
+    img <- dplyr::tbl(db, "Image")
 
-    wells <- plate.well %>% 
+    wells <- plate.well %>%
       dplyr::filter(Metadata_Plate == pli) %>%
-      dplyr::select(Metadata_Well)
+      dplyr::select(Metadata_Well) %>%
+      as.matrix() %>%
+      as.vector()
 
-     img <- dplyr::tbl(db, "Image")
+    print(wells)
+    prf <- foreach (well = wells, .combine = rbind) %do% {
+	    prf <- img %>%
+		dplyr::filter(Image_Metadata_Well == well) %>%
+		dplyr::select(ImageNumber) %>%
+		dplyr::left_join(., cells, by = "ImageNumber") %>%
+		dplyr::left_join(., cytoplasm, by = c("ImageNumber", "ObjectNumber")) %>%
+		dplyr::left_join(., nuclei, by = c("ImageNumber", "ObjectNumber")) %>%
+		dplyr::collect()
 
-     image <- wells %>%
-      dplyr::left_join(., img, by = c("Metadata_Well" = "Image_Metadata_Well"), copy = T) %>%
-      dplyr::select(ImageNumber) %>%
-      dplyr::collect()
+	    prf
+    }
 
-     prf <- image %>%
-      dplyr::left_join(., cells, by = "ImageNumber", copy = T) %>%
-      dplyr::left_join(., cytoplasm, by = c("ImageNumber", "ObjectNumber"), copy = T) %>%
-      dplyr::left_join(., nuclei, by = c("ImageNumber", "ObjectNumber"), copy = T) %>%
-      dplyr::collect()
+#    wells <- plate.well %>% 
+#      dplyr::filter(Metadata_Plate == pli) %>%
+#      dplyr::select(Metadata_Well)
+
+
+ #    img <- dplyr::tbl(db, "Image")
+
+ #    image <- wells %>%
+ #     dplyr::left_join(., img, by = c("Metadata_Well" = "Image_Metadata_Well"), copy = T) %>%
+ #     dplyr::select(ImageNumber) %>%
+ #     dplyr::collect() %>%
+ #     as.matrix() %>%
+ #     as.vector()
+
+ #    print(image)
+ #    prf <- foreach (img.number = image, .combine = rbind) %do% {
+#	c1 <- cells %>% dplyr::filter(ImageNumber == img.number) 
+#        c2 <- cytoplasm %>% dplyr::filter(ImageNumber == img.number) 
+#	c3 <- nuclei %>% dplyr::filter(ImageNumber == img.number)
+
+#	prf <- c1 %>%
+#          dplyr::left_join(., c2, by = c("ImageNumber", "ObjectNumber")) %>%
+#          dplyr::left_join(., c3, by = c("ImageNumber", "ObjectNumber")) %>%
+#	  dplyr::collect()
+#
+#	prf
+#     }
 
     prf
   }
