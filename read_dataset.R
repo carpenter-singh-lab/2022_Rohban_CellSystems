@@ -4,7 +4,7 @@ library(stringr)
 library(foreach)
 library(doParallel)
 
-read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10) {
+read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10, standardize.well = T) {
   if (data.set.name == "BBBC022") {
     load("../input/Gustafsdottir/Initial_analysis.RData")
     Pf.full.plate.norm$data %<>% filter(Image_Metadata_BROAD_ID != "" | 
@@ -46,8 +46,11 @@ read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10) 
       dplyr::mutate(Metadata_pert_iname = ifelse(Metadata_pert_iname == "", 
                                                  "DMSO",
                                                  as.character(Metadata_pert_iname))) %>%
-      dplyr::mutate(Metadata_pert_iname = str_to_lower(Metadata_pert_iname),
-                    Metadata_Well = str_to_lower(Metadata_Well))
+      dplyr::mutate(Metadata_pert_iname = str_to_lower(Metadata_pert_iname)) 
+    
+    if (standardize.well) {
+  	Pf.gust$data %<>% dplyr::mutate(Metadata_Well = str_to_lower(Metadata_Well))
+    }
     
     Pf.gust$factor_cols <- c("Metadata_broad_sample",
                              "Metadata_moa",
@@ -137,10 +140,12 @@ read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10) 
       dplyr::mutate(Metadata_pert_iname = ifelse(is.na(Metadata_pert_iname) | Metadata_pert_iname == "",
                                                  Metadata_broad_sample, 
                                                  Metadata_pert_iname),
-                    Metadata_pert_iname = str_to_lower(Metadata_pert_iname),
-                    Metadata_Well = str_to_lower(Metadata_Well)
+                    Metadata_pert_iname = str_to_lower(Metadata_pert_iname)
                     )
-    
+    if (standardize.well) {        
+	Pf %<>% dplyr::mutate(Metadata_Well = str_to_lower(Metadata_Well))
+    } 
+
     meta.col <- setdiff(colnames(Pf), feat)
     Pf.cdrp <- list(data = Pf, feat_cols = feat, factor_cols = meta.col)
     
@@ -176,8 +181,11 @@ read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10) 
       dplyr::mutate(Metadata_pert_iname = ifelse(is.na(Metadata_pert_iname),
                                                  "DMSO",
                                                  Metadata_pert_iname),
-                    Metadata_pert_iname = str_to_lower(Metadata_pert_iname),
-                    Metadata_Well = str_to_lower(Metadata_Well))
+                    Metadata_pert_iname = str_to_lower(Metadata_pert_iname))
+
+    if (standardize.well) {        
+	Pf.repurp$data %<>% dplyr::mutate(Metadata_Well = str_to_lower(Metadata_Well))
+    }
     
     Pf.repurp$data %<>% filter(Metadata_pert_iname != "dmso" | 
                      (!str_detect(Metadata_Well, "01") &
@@ -206,8 +214,11 @@ read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10) 
                                                   Metadata_cell_id, 
                                                   Metadata_mmoles_per_liter, 
                                                   sep = "@")) %>%
-      dplyr::mutate(Metadata_plate_well = paste(Metadata_Plate_Map_Name, Metadata_Well, sep = "_"))  %>%
-      dplyr::mutate(Metadata_Well = str_to_lower(Metadata_Well))
+      dplyr::mutate(Metadata_plate_well = paste(Metadata_Plate_Map_Name, Metadata_Well, sep = "_"))
+
+    if (standardize.well) {        
+	data %<>% dplyr::mutate(Metadata_Well = str_to_lower(Metadata_Well))
+    }
     
     y <- colnames(data)
     y <- y[which(str_detect(y, "Metadata"))]
@@ -228,7 +239,7 @@ read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10) 
 read.dmso.single.cell <- function(data.set.name, just.bioactives = T, dose.closest = 10, well.samples = 4, n.cores = 3) {
 
   doParallel::registerDoParallel(cores = n.cores)
-  Pf <- read.dataset(data.set.name, just.bioactives, dose.closest)
+  Pf <- read.dataset(data.set.name, just.bioactives, dose.closest, F)
   plate.well <- Pf$data %>% 
     dplyr::filter(Metadata_pert_iname == "dmso") %>%
     sample_n(well.samples) %>%
