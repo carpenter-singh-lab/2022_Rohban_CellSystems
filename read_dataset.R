@@ -249,17 +249,24 @@ read.dmso.single.cell <- function(data.set.name, just.bioactives = T, dose.close
   if (data.set.name == "CDRP") {
     base.path <- "~/efs/2015_Bray_GigaScience/workspace/backend/CDRP"
   } else if (data.set.name == "Repurposing") {
-    base.path <- "~/efs/2015_10_05_DrugRepurposing_AravindSubramanian_GolubLab_Broad/workspace/backend/2016_04_01_a549_48hr_batch1"
+    base.path <- "~/bucket2/projects/2015_10_05_DrugRepurposing_AravindSubramanian_GolubLab_Broad/workspace/backend/2016_04_01_a549_48hr_batch1"
   } else if (data.set.name == "BBBC022") {
     base.path <- "~/efs/2016_12_13_Cytominer_Janssen/workspace/backend/BBBC022_2013"
   } else {
     return(NULL)
   }
  
-  print(pl)
+  print(plate.well)
  
   prf <- foreach (pli = pl, .combine = rbind) %dopar% {
-    db <- dplyr::src_sqlite(sprintf("%s/%s/%s.sqlite", base.path, pli, pli))
+    if (data.set.name == "Repurposing") {
+	system("mkdir -p tmp")
+    	system(sprintf("aws s3 sync s3://imaging-platform/projects/2015_10_05_DrugRepurposing_AravindSubramanian_GolubLab_Broad/workspace/backend/2016_04_01_a549_48hr_batch1/%s tmp --exclude \"*.csv\" --exclude \"*.gct\" ", pli))
+	db <- dplyr::src_sqlite(sprintf("tmp/%s.sqlite", pli))
+    } else {
+    	db <- dplyr::src_sqlite(sprintf("%s/%s/%s.sqlite", base.path, pli, pli))
+    }
+    
     cells <- dplyr::tbl(db, "Cells") 
     cytoplasm <- dplyr::tbl(db, "Cytoplasm") 
     nuclei <- dplyr::tbl(db, "Nuclei") 
@@ -279,9 +286,8 @@ read.dmso.single.cell <- function(data.set.name, just.bioactives = T, dose.close
 		dplyr::left_join(., cells, by = "ImageNumber") %>%
 		dplyr::left_join(., cytoplasm, by = c("ImageNumber", "ObjectNumber")) %>%
 		dplyr::left_join(., nuclei, by = c("ImageNumber", "ObjectNumber")) %>%
-		dplyr::collect()
-
-	    prf
+	dplyr::collect()
+prf
     }
 
 #    wells <- plate.well %>% 
@@ -314,8 +320,13 @@ read.dmso.single.cell <- function(data.set.name, just.bioactives = T, dose.close
 
     prf
   }
+
+  
   ft <- colnames(prf)
   ft <- ft[which(!str_detect(ft, "Metadata") & !str_detect(ft, "ImageNumber") 
        & !str_detect(ft, "ObjectNumber") & !str_detect(ft, "TableNumber"))]
+  if (data.set.name == "Repurposing") {
+	system("rm -R tmp")
+  }
   return(prf[,ft])
 }
