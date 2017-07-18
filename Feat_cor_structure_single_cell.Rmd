@@ -1,0 +1,52 @@
+---
+title: "Testing whether feature correlations match in two related datasets"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+rm(list = ls())
+
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(magrittr)
+
+source("read_dataset.R")
+
+data.set.name.1 <- "BBBC022"
+data.set.name.2 <- "CDRP"
+
+Pf.1 <- read.dataset.single.cell.dmso(data.set.name = data.set.name.1)
+Pf.2 <- read.dataset.single.cell.dmso(data.set.name = data.set.name.2)
+
+ft <- intersect(Pf.1$feat_cols, Pf.2$feat_cols)
+
+print(length(ft))
+
+cr.1 <- Pf.1$data %>%
+  dplyr::select(one_of(ft)) %>%
+  cor %>%
+  reshape2::melt() %>%
+  dplyr::filter(as.character(Var1) != as.character(Var2)) %>%
+  dplyr::filter(abs(value) < 0.8)
+
+cr.2 <- Pf.2$data %>%
+  dplyr::select(one_of(ft)) %>%
+  cor %>%
+  reshape2::melt() %>%
+  dplyr::filter(as.character(Var1) != as.character(Var2)) %>%
+  dplyr::filter(abs(value) < 0.8)
+
+cr <- cr.1 %>%
+  dplyr::left_join(., cr.2, by = c("Var1", "Var2"))
+
+(abs(sum(cr$value.x * cr$value.y, na.rm = T))/(sum(cr$value.x^2, na.rm = T)^0.5 * sum(cr$value.y^2, na.rm = T)^0.5)) %>% print
+
+crx <- cr %>%
+  group_by(Var1) %>%
+  do(data.frame(crx = (abs(sum(.[,"value.x"] * .[,"value.y"], na.rm = T))/(sum(.[,"value.x"]^2, na.rm = T)^0.5 * sum(.[,"value.y"]^2, na.rm = T)^0.5))))
+
+crx %>% arrange(-crx) %>% htmlTable::htmlTable()
+
+```

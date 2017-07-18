@@ -4,6 +4,25 @@ library(stringr)
 library(foreach)
 library(doParallel)
 
+read.dataset.single.cell.dmso <- function(data.set.name) {
+  if (data.set.name == "CDRP") {
+    Px <- readRDS("../results/master/2017-07-12_f947a2d1/CDRP_dmso_single_cell.rds")
+    Pf <- list(data = Px, feat_cols = colnames(Px), factor_cols = NULL)
+  } else if (data.set.name == "BBBC022") {
+    Px <- readRDS("../results/master/2017-07-12_2f6c36eb/BBBC022_dmso_single_cell.rds")
+    Pf <- list(data = Px, feat_cols = colnames(Px), factor_cols = NULL)
+  } else if (data.set.name == "Repurposing") {
+    Px.1 <- readRDS("../results/master/2017-07-13_e204cf3a__0/Repurposing_dmso_single_cell.rds")
+    Px.2 <- readRDS("../results/master/2017-07-13_e204cf3a__1/Repurposing_dmso_single_cell.rds")
+    Px.3 <- readRDS("../results/master/2017-07-17_e204cf3a/Repurposing_dmso_single_cell.rds")
+    ft <- intersect(intersect(colnames(Px.1), colnames(Px.2)), colnames(Px.3))
+    Px <- rbind(Px.1[,ft], Px.2[,ft], Px.3[,ft])
+    Pf <- list(data = Px, feat_cols = colnames(Px), factor_cols = NULL)
+  }
+  
+  return(Pf)
+}
+  
 read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10, standardize.well = T) {
   if (data.set.name == "BBBC022") {
     load("../input/Gustafsdottir/Initial_analysis.RData")
