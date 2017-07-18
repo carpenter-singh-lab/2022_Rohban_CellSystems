@@ -79,7 +79,7 @@ crx <- cr %>%
   do(data.frame(crx = (abs(sum(.[,"value.x"] * .[,"value.y"], na.rm = T))/(sum(.[,"value.x"]^2, na.rm = T)^0.5 * sum(.[,"value.y"]^2, na.rm = T)^0.5))))
 
 fts <- crx %>% 
-  dplyr::filter(crx > 0.50) %>%
+  dplyr::filter(crx > 0.30) %>%
   dplyr::select(Var1) %>%
   as.matrix() %>%
   as.vector()
