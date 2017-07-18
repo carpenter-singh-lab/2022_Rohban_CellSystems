@@ -3,7 +3,7 @@ title: "Testing whether feature correlations match in two related datasets"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup}
 
 rm(list = ls())
 
@@ -11,16 +11,49 @@ library(dplyr)
 library(ggplot2)
 library(stringr)
 library(magrittr)
+library(htmlTable)
 
 source("read_dataset.R")
 
 data.set.name.1 <- "BBBC022"
 data.set.name.2 <- "CDRP"
+n.lim <- 30000
 
 Pf.1 <- read.dataset.single.cell.dmso(data.set.name = data.set.name.1)
 Pf.2 <- read.dataset.single.cell.dmso(data.set.name = data.set.name.2)
 
-ft <- intersect(Pf.1$feat_cols, Pf.2$feat_cols)
+if (NROW(Pf.1$data) > n.lim) {
+  Pf.1$data %<>% 
+    dplyr::sample_n(n.lim)
+}
+
+if (NROW(Pf.2$data) > n.lim) {
+  Pf.2$data %<>% 
+    dplyr::sample_n(n.lim)
+}
+
+Pf.1.pr <- read.dataset(data.set.name = data.set.name.1)
+Pf.2.pr <- read.dataset(data.set.name = data.set.name.2)
+
+ft <- intersect(Pf.1.pr$feat_cols, Pf.2.pr$feat_cols)
+
+f1 <- Pf.1$data %>% 
+    dplyr::select(one_of(ft)) %>%
+    purrr::map(function(x) any(!is.numeric(x))) %>%
+    as.data.frame %>% tidyr::gather(feature, bad) %>%
+    dplyr::filter(!bad) %>%
+    dplyr::select(feature) %>%
+    as.matrix() %>% as.vector()
+
+f2 <- Pf.2$data %>% 
+    dplyr::select(one_of(ft)) %>%
+    purrr::map(function(x) any(!is.numeric(x))) %>%
+    as.data.frame %>% tidyr::gather(feature, bad) %>%
+    dplyr::filter(!bad) %>%
+    dplyr::select(feature) %>%
+    as.matrix() %>% as.vector()
+
+ft <- intersect(f1, f2)
 
 print(length(ft))
 
@@ -28,15 +61,13 @@ cr.1 <- Pf.1$data %>%
   dplyr::select(one_of(ft)) %>%
   cor %>%
   reshape2::melt() %>%
-  dplyr::filter(as.character(Var1) != as.character(Var2)) %>%
-  dplyr::filter(abs(value) < 0.8)
+  dplyr::filter(as.character(Var1) != as.character(Var2)) 
 
 cr.2 <- Pf.2$data %>%
   dplyr::select(one_of(ft)) %>%
   cor %>%
   reshape2::melt() %>%
-  dplyr::filter(as.character(Var1) != as.character(Var2)) %>%
-  dplyr::filter(abs(value) < 0.8)
+  dplyr::filter(as.character(Var1) != as.character(Var2)) 
 
 cr <- cr.1 %>%
   dplyr::left_join(., cr.2, by = c("Var1", "Var2"))
@@ -46,6 +77,14 @@ cr <- cr.1 %>%
 crx <- cr %>%
   group_by(Var1) %>%
   do(data.frame(crx = (abs(sum(.[,"value.x"] * .[,"value.y"], na.rm = T))/(sum(.[,"value.x"]^2, na.rm = T)^0.5 * sum(.[,"value.y"]^2, na.rm = T)^0.5))))
+
+fts <- crx %>% 
+  dplyr::filter(crx > 0.50) %>%
+  dplyr::select(Var1) %>%
+  as.matrix() %>%
+  as.vector()
+
+saveRDS(fts, sprintf("feats_%s_%s.rds", data.set.name.1, data.set.name.2))
 
 crx %>% arrange(-crx) %>% htmlTable::htmlTable()
 

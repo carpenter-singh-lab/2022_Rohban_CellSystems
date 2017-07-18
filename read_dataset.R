@@ -9,8 +9,17 @@ read.dataset.single.cell.dmso <- function(data.set.name) {
     Px <- readRDS("../results/master/2017-07-12_f947a2d1/CDRP_dmso_single_cell.rds")
     Pf <- list(data = Px, feat_cols = colnames(Px), factor_cols = NULL)
   } else if (data.set.name == "BBBC022") {
-    Px <- readRDS("../results/master/2017-07-12_2f6c36eb/BBBC022_dmso_single_cell.rds")
-    Pf <- list(data = Px, feat_cols = colnames(Px), factor_cols = NULL)
+    #Px <- readRDS("../results/master/2017-07-12_2f6c36eb/BBBC022_dmso_single_cell.rds")
+    Pf.gust <- readRDS("../input/Gustafsdottir/BBBC022_dmso/neg_ctrl_samples.rds")
+    f2 <- colnames(Pf.gust$data)
+    f2 <- str_replace_all(f2, "Syto", "RNA")
+    f2 <- str_replace_all(f2, "Hoechst", "DNA")
+    f2 <- str_replace_all(f2, "Ph_golgi", "AGP")
+    f2 <- str_replace_all(f2, "_3", "_3_0")
+    f2 <- str_replace_all(f2, "_5", "_5_0")
+    colnames(Pf.gust$data) <- f2
+    Pf.gust$feat_cols <- setdiff(colnames(Pf.gust$data), Pf.gust$factor_cols)
+    Pf <- Pf.gust
   } else if (data.set.name == "Repurposing") {
     Px.1 <- readRDS("../results/master/2017-07-13_e204cf3a__0/Repurposing_dmso_single_cell.rds")
     Px.2 <- readRDS("../results/master/2017-07-13_e204cf3a__1/Repurposing_dmso_single_cell.rds")
