@@ -15,7 +15,7 @@ library(htmlTable)
 
 source("read_dataset.R")
 
-data.set.name.1 <- "BBBC022"
+data.set.name.1 <- "Repurposing"
 data.set.name.2 <- "CDRP"
 n.lim <- 30000
 
