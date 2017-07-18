@@ -20,18 +20,19 @@ hit.sel.quant <- 0.0
 hit.sel.quant.cdrp <- 0.0
 just.bioactives <- T
 dmos.null <- F
-manual.hit.sel.thr <- T
-error.analysis <- F
+manual.hit.sel.thr <- F
+error.analysis <- T
 hit.sel.thr.cdrp <- 0.52
 hit.sel.thr.bbbc <- 0.70
 do.pca <- T
 pca.thr <- 0.99
 perc.top <- 0.02
+use.optimized.feats <- T
 
 base.dir <- "2016-07-20_90b7bb86"
 corr.type <- "pearson"
 just.common.cmpds <- T
-set.moa.to.cmpd.name <- F
+set.moa.to.cmpd.name <- T
 
 if (just.bioactives) {
   Pf <- readRDS("../results/master/2017-06-26_5b0bbf7c/Pf_bio_new.rds")
@@ -181,6 +182,13 @@ f2 <- Pf.gust$feat_cols
 
 f <- intersect(f1, f2)
 
+###############
+if (use.optimized.feats) {
+  ft <- readRDS("../results/master/2017-07-18_25a8520a/feats_BBBC022_CDRP.rds")
+  f <- intersect(ft, f)
+}
+###############
+
 Pf.cdrp$feat_cols <- f
 Pf.gust$feat_cols <- f
 
@@ -245,7 +253,7 @@ Pf.cdrp$data %<>% dplyr::filter(Metadata_broad_sample %in% strongs)
 
 Pf.cdrp$data %<>% dplyr::select(one_of(c(Pf.cdrp$feat_cols, "Metadata_broad_sample", "CPD_NAME", "MOA"))) %>%
   dplyr::group_by(Metadata_broad_sample, CPD_NAME, MOA) %>%
-  dplyr::summarise_each(funs("mean"))
+  dplyr::summarise_all(funs("mean"))
 
 ############
 
@@ -453,7 +461,7 @@ d %>%
 
 ```
 
-```{r matching CDRP to BBBC022}
+```{r matching CDRP to BBBC022, eval=!error.analysis}
 
 k <- max(round(perc.top * length(cmpd)), 1)
 N <- 300
@@ -498,7 +506,7 @@ a <- strn.cdrp %>%
 
 ```
 
-```{r matching BBBC022 to CDRP}
+```{r matching BBBC022 to CDRP, eval=!error.analysis}
 
 k <- max(round(perc.top * length(cmpd)), 1)
 N <- 300
