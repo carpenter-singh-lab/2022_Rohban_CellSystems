@@ -16,20 +16,21 @@ doParallel::registerDoParallel(cores = 3)
 source("rep.corr.func.R")
 permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
-hit.sel.quant <- 0.0
-hit.sel.quant.repurp <- 0.0
+hit.sel.quant <- 0.95
+hit.sel.quant.repurp <- 0.95
 just.bioactives <- T
 dmos.null <- F
-manual.hit.sel.thr <- T
+manual.hit.sel.thr <- F
 hit.sel.thr.repurp <- 0.70
 hit.sel.thr.bbbc <- 0.68
 do.pca <- T
+error.analysis <- F
 pca.thr <- 0.99
 perc.top <- 0.02
 
 base.dir <- "2016-07-20_90b7bb86"
 corr.type <- "pearson"
-just.common.cmpds <- T
+just.common.cmpds <- F
 set.moa.to.cmpd.name <- F
 
 x <- readRDS("../input/repurp/2016_04_01_a549_48hr_batch1_normalized.rds")
@@ -235,7 +236,7 @@ Pf.gust$data %<>%
 
 ```
 
-```{r restricting to the common compounds, eval=just.common.cmpds}
+```{r restricting to the common compounds, eval=T}
 
 Pf.repurp$data$Metadata_pert_iname <- Pf.repurp$data$Metadata_pert_iname %>% str_to_lower() 
 Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME <- Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME %>% str_to_lower()
@@ -243,7 +244,11 @@ Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME <- Pf.gust$data$Image_Metadata_
 cmpd1 <- Pf.repurp$data$Metadata_pert_iname
 cmpd2 <- Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME 
 
-cmpd <- setdiff(intersect(cmpd1, cmpd2), c("", NA, "NA"))
+if (just.common.cmpds) {
+  cmpd <- setdiff(intersect(cmpd1, cmpd2), c("", NA, "NA"))  
+} else {
+  cmpd <- c(cmpd1, cmpd2) %>% unique
+}
 
 print(length(cmpd))
 
@@ -379,7 +384,7 @@ d %>%
 
 ```
 
-```{r matching CDRP to BBBC022}
+```{r matching CDRP to BBBC022, eval=F}
 
 k <- max(round(perc.top * length(cmpd)), 1)
 N <- 300
@@ -410,7 +415,7 @@ print(NROW(d)/mean(ns))
 
 ```
 
-```{r matching BBBC022 to CDRP}
+```{r matching BBBC022 to CDRP, eval=F}
 
 k <- max(round(perc.top * length(cmpd)), 1)
 N <- 300
@@ -460,7 +465,7 @@ print(d/sum(cr.melt.ext2$match))
 
 ```
 
-```{r error analysis, eval=!manual.hit.sel.thr}
+```{r error analysis, eval=error.analysis}
 
 u.gust <- u.gust %>% filter(cr >= thr.gust)
 u.repurp <- u.repurp %>% filter(cr >= thr.repurp)

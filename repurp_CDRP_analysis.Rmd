@@ -16,21 +16,26 @@ doParallel::registerDoParallel(cores = 3)
 source("rep.corr.func.R")
 permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
-hit.sel.quant <- 0.0
-hit.sel.quant.repurp <- 0.0
+hit.sel.quant <- 0.95
+hit.sel.quant.repurp <- 0.95
 just.bioactives <- T
 dmos.null <- F
-manual.hit.sel.thr <- F
+manual.hit.sel.thr <- T
 hit.sel.thr.repurp <- 0.70
 hit.sel.thr.cdrp <- 0.48
 do.pca <- T
 pca.thr <- 0.99
 perc.top <- 0.02
+random.feat.sel <- F
+error.analysis <- F
+dose.to.select <- 5
+seed.x <- 30
+do.cca <- F
 
 base.dir <- "2016-07-20_90b7bb86"
 corr.type <- "pearson"
-just.common.cmpds <- T
-set.moa.to.cmpd.name <- T
+just.common.cmpds <- F
+set.moa.to.cmpd.name <- F
 
 x <- readRDS("../input/repurp/2016_04_01_a549_48hr_batch1_normalized.rds")
 
@@ -48,7 +53,7 @@ Pf.repurp$data %<>% dplyr::mutate(Metadata_plate_well = paste(Metadata_plate_map
 
 Pf.repurp$factor_cols <- c(Pf.repurp$factor_cols, "Metadata_plate_well")
 trts <- Pf.repurp$data %>% 
-  dplyr::mutate(tmp_dose = abs(Metadata_mmoles_per_liter - 10)) %>%
+  dplyr::mutate(tmp_dose = abs(Metadata_mmoles_per_liter - dose.to.select)) %>%
   dplyr::arrange(tmp_dose) %>%
   dplyr::group_by(Metadata_pert_iname) %>%
   dplyr::slice(1) %>%
@@ -127,6 +132,10 @@ f1 <- Pf.repurp$feat_cols
 f2 <- colnames(Pf.cdrp$data)
 
 f <- intersect(f1, f2)
+
+if (random.feat.sel) {
+  f <- sample(f, round(length(f) * 0.8))
+}
 
 Pf.repurp$feat_cols <- f
 Pf.cdrp$feat_cols <- f
@@ -251,7 +260,7 @@ Pf.cdrp$data %<>%
 
 ```
 
-```{r restricting to the common compounds, eval=just.common.cmpds}
+```{r restricting to the common compounds, eval=T}
 
 Pf.repurp$data$Metadata_pert_iname <- Pf.repurp$data$Metadata_pert_iname %>% str_to_lower() 
 Pf.cdrp$data$CPD_NAME <- Pf.cdrp$data$CPD_NAME %>% str_to_lower()
@@ -259,7 +268,12 @@ Pf.cdrp$data$CPD_NAME <- Pf.cdrp$data$CPD_NAME %>% str_to_lower()
 cmpd1 <- Pf.repurp$data$Metadata_pert_iname
 cmpd2 <- Pf.cdrp$data$CPD_NAME
 
-cmpd <- setdiff(intersect(cmpd1, cmpd2), c("", NA, "NA"))
+if (just.common.cmpds) {
+  cmpd <- setdiff(intersect(cmpd1, cmpd2), c("", NA, "NA"))
+} else {
+  cmpd <- c(cmpd1, cmpd2) %>% unique
+}
+  
 
 print(length(cmpd))
 
@@ -281,6 +295,29 @@ if (set.moa.to.cmpd.name) {
     dplyr::filter(CPD_NAME %in% cmpd) %>%
     dplyr::mutate(MOA = paste(CPD_NAME, MOA, sep = ", "))
 }
+
+```
+
+```{r do cca, eval = do.cca}
+
+x <- cancor(Pf.cdrp$data[,Pf.cdrp$feat_cols], Pf.repurp$data[,Pf.repurp$feat_cols], xcenter = F, ycenter = F)
+
+x1 <- apply(Pf.cdrp$data[,Pf.cdrp$feat_cols], 1, function(row) (row - x$xcenter)) %>% t
+x1 <- x1[,1:NROW(x$xcoef)] %*% x$xcoef
+x1 <- as.data.frame(x1)
+
+x2 <- apply(Pf.repurp$data[,Pf.repurp$feat_cols], 1, function(row) (row - x$ycenter)) %>% t
+x2 <- x2[,1:NROW(x$ycoef)] %*% x$ycoef
+x2 <- as.data.frame(x2)
+
+fact_cols <- setdiff(colnames(Pf.cdrp$data), Pf.cdrp$feat_cols)
+cdrp <- list(data = cbind(x1, Pf.cdrp$data[,fact_cols]), feat_cols = colnames(x1), factor_cols = fact_cols)
+
+fact_cols <- setdiff(colnames(Pf.repurp$data), Pf.repurp$feat_cols)
+repurp <- list(data = cbind(x2, Pf.repurp$data[,fact_cols]), feat_cols = colnames(x2), factor_cols = fact_cols)
+
+Pf.cdrp <- cdrp
+Pf.repurp <- repurp
 
 ```
 
@@ -395,7 +432,7 @@ d %>%
 
 ```
 
-```{r matching CDRP to BBBC022}
+```{r matching CDRP to BBBC022, eval=!error.analysis}
 
 k <- max(round(perc.top * length(cmpd)), 1)
 N <- 300
@@ -426,7 +463,7 @@ print(NROW(d)/mean(ns))
 
 ```
 
-```{r matching BBBC022 to CDRP}
+```{r matching BBBC022 to CDRP, eval=!error.analysis}
 
 k <- max(round(perc.top * length(cmpd)), 1)
 N <- 300
@@ -476,7 +513,7 @@ print(d/sum(cr.melt.ext2$match))
 
 ```
 
-```{r error analysis, eval=!manual.hit.sel.thr}
+```{r error analysis, eval=error.analysis}
 
 u.cdrp <- u.cdrp %>% filter(cr >= thr.cdrp)
 u.repurp <- u.repurp %>% filter(cr >= thr.repurp)
