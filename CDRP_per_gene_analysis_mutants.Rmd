@@ -69,7 +69,7 @@ if (LUAD) {
   Pf.ta <- Pf_org.org.collapsed
   Pf.ta.all <- Pf_org.org
   strong.trt <- Pf.trt.strong.collapsed$data$Treatment
-  r.cor <- rep.cor(Pf = Pf.trt, grp.var = "Treatment", feat.var = Pf.trt$feat_cols)
+  r.cor <- rep.cor(Pf = Pf.trt, grp.var = "Treatment", feat.var = Pf.trt$feat_cols, aux.var = "Treatment")
   
   data.annot <- Pf.strong %>% 
     dplyr::filter(Treatment %in% strong.trt) %>% 
@@ -109,7 +109,7 @@ if (!just.bioactives) {
   Pf <- Pf.1 
 }
 
-u <- rep.cor(list(data = Pf, feat_cols = Pf.cmpd$feat_cols, factor_cols = Pf.cmpd$factor_cols), grp.var = "Metadata_broad_sample", feat.var = Pf.cmpd$feat_cols)
+u <- rep.cor(list(data = Pf, feat_cols = Pf.cmpd$feat_cols, factor_cols = Pf.cmpd$factor_cols), grp.var = "Metadata_broad_sample", feat.var = Pf.cmpd$feat_cols, aux.var = "Metadata_broad_sample")
 up <- readr::read_csv("../results/master/2017-04-21_425d6537/Cell_counts.csv")
 
 x <- Pf %>% 
