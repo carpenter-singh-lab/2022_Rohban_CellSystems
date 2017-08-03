@@ -311,6 +311,54 @@ shuffle.cr.melt <- function(cr.melt, var) {
   #reshape2::  
 }
 
+all.targ <- lapply(Pf.cmpd$data$Target %>% unique, function(x) str_split(x, ", ")[[1]]) %>% do.call(c, .) %>% unique
+path <- sprintf("../results/manual/ppis")
+if (!dir.exists(path)) {
+  system(sprintf("mkdir -p %s", path))
+}
+if (file.exists(sprintf("%s/all.rds", path))) {
+  ppi.all <- readRDS(sprintf("%s/all.rds", path))
+} else {
+  ppi.all <- tryCatch(get.all.interacting.proteins(all.targ), error = function(e) {})
+  saveRDS(ppi.all, sprintf("%s/all.rds", path))
+}
+path <- sprintf("../results/manual/ppis")
+ppi.all <- readRDS(sprintf("%s/all.rds", path))
+ppi.all <- ppi.all %>%
+  filter(Protein.1 %in% Pf.gene$data$Treatment | Protein.2 %in% Pf.gene$data$Treatment)
+
+valid.pair <- function(gene.name, compound.targ) {
+  target <- compound.targ
+  
+  if (length(target) == 0) {
+    return(F)
+  }
+  
+  if (is.null(target)) {
+    return(F)
+  }
+  
+  if (is.na(target)) {
+    return(F)
+  }
+  
+  if(target == "") {
+    return(F)
+  }
+  
+  targets <- str_split(target, ", ")[[1]]
+  
+  n <- ppi.all %>% 
+    dplyr::filter(Protein.1 == gene.name & Protein.2 %in% targets |
+                    Protein.2 == gene.name & Protein.1 %in% targets) %>%
+    NROW
+  
+  if (n >= 1) {
+    return(T)
+  }
+  return(F)
+}
+
 sample.tot <- function(Pf.cmpd, Pf.gene, cr.melt, verbose = F, cor.thr = 0.5, how.many = 5) {
   gn.list <- c()
   gn.map <- Pf.gene$data$Treatment %>% as.matrix() %>% as.vector()
@@ -416,6 +464,44 @@ f <- fisher.test(res$V, alternative = "greater")
 
 print(f)
 print(res)
+
+```
+
+```{r}
+library(ggplot2)
+valid.pair <- Vectorize(valid.pair)
+
+cr.melt2 <- cr.melt
+cr.melt2 <- cr.melt2 %>%
+  left_join(., unique(Pf.cmpd$data[,c("CPD_NAME", "Target")]), by = c("Var1" = "CPD_NAME")) %>%
+  mutate(valid = valid.pair(as.character(Var2), as.character(Target)))
+
+thr <- 0.4 
+
+V11 <- cr.melt2 %>%
+  dplyr::filter(abs(value) > thr & valid) %>% NROW
+
+V12 <- cr.melt2 %>%
+  dplyr::filter(abs(value) > thr & !valid) %>% NROW
+
+V21 <- cr.melt2 %>%
+  dplyr::filter(abs(value) <= thr & valid) %>% NROW
+
+V22 <- cr.melt2 %>%
+  dplyr::filter(abs(value) <= thr & !valid) %>% NROW
+
+V <- rbind(c(V11, V12), c(V21, V22))
+
+fisher.test(V, alternative = "greater")
+
+cr.melt2 %>%
+  dplyr::filter(abs(value) > thr & valid) %>%
+  dplyr::mutate(value = round(value, 2)) %>%
+  htmlTable::htmlTable()
+
+cr.melt2$value <- abs(cr.melt2$value)
+g <- ggplot(cr.melt2, aes(x = value, color = valid, fill = valid)) + geom_density(alpha = 0.2)
+ggsave("density_cor.png", g)
 
 ```
 
