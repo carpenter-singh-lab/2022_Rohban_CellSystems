@@ -20,7 +20,7 @@ N.run <- 10
 seed.moa <- -8     ## ignore, if permute.moas is False
 LUAD <- F
 LUAD.mut <- F
-just.bioactives <- T
+just.bioactives <- F
 no.top.matches <- 15
 cor.thr <- 0.35
 p.val.thr <- 0.05
@@ -645,7 +645,15 @@ saveRDS(res$res.all, "gene_compound_all.rds")
 
 ```{r, eval=F}
 
-cr.melt %>%
+library(ggplot2)
+
+cmpd.list <- readr::read_csv("../input/hras/Compound_List.csv") %>% as.matrix() %>% as.vector()
+cr.n <- cor(Pf.cmpd$data[,Pf.cmpd$feat_cols] %>% t, Pf.gene$data[,Pf.gene$feat_cols] %>% t)
+rownames(cr.n) <- Pf.cmpd$data$Metadata_broad_sample
+colnames(cr.n) <- Pf.gene$data$Treatment
+cr.melt.n <- melt(cr.n)
+
+df <- cr.melt.n %>%
   filter(Var2 %in% c("KRAS_WT.1", "KRAS_G12V", "HRAS_G12V")) %>%
   group_by(Var1) %>%
   do(data.frame(WT_score = as.vector(.[which(.[,"Var2"] == "KRAS_WT.1"), "value"]), 
@@ -658,9 +666,97 @@ cr.melt %>%
   dplyr::mutate(WT_score = round(WT_score, 2), 
                 MUT_KRAS_score = round(MUT_KRAS_score, 2), 
                 MUT_HRAS_score = round(MUT_HRAS_score, 2)) %>%
-  dplyr::filter(abs(WT_score) > 0.4) %>%
-  dplyr::left_join(., Pf.cmpd$data[, c("CPD_NAME", "MOA")], by = c("Var1" = "CPD_NAME")) %>%
-  htmlTable::htmlTable()
+  dplyr::left_join(., Pf.cmpd$data[, c("Metadata_broad_sample", "MOA", "CPD_NAME")], by = c("Var1" = "Metadata_broad_sample")) %>%
+  dplyr::mutate(MUT_Score = (MUT_KRAS_score + MUT_HRAS_score)/2)
+  
 
+df %>% 
+  filter(MUT_Score  > 0.35 & WT_score < 0.25 | 
+           MUT_Score < -0.35 & WT_score > -0.25) %>% 
+  print
+
+df %>% 
+  filter(MUT_Score  < 0.25 & WT_score > 0.35 | 
+           MUT_Score > -0.25 & WT_score < -0.35) %>% 
+  print
+
+g <- ggplot(df, aes(y = MUT_Score, x = WT_score)) + geom_point()
+ggsave("WT_vs_Mut.png", g)
 
 ```
+```{r}
+
+cos.d <- function(x, y) {
+  rx <- apply(x, 2, function(x) sum(x^2)^0.5)
+  ry <- apply(y, 2, function(x) sum(x^2)^0.5)
+  cx <- t(outer(rep(1, length(ry)), rx))
+  cy <- t(outer(ry, rep(1, length(rx))))
+  d <- (t(x) %*% y)/(cx * cy)
+  return(d)
+}
+
+kras.wt <- Pf.gene$data %>% 
+  filter(Treatment == "KRAS_WT.1") %>% select(one_of(Pf.gene$feat_cols)) %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("feature") %>%
+  dplyr::rename(value_kras_wt = V1)
+
+kras.g12v <- Pf.gene$data %>% 
+  filter(Treatment == "KRAS_G12V") %>% select(one_of(Pf.gene$feat_cols)) %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("feature") %>%
+  dplyr::rename(value_kras_mt = V1)
+
+hras.g12v <- Pf.gene$data %>% 
+  filter(Treatment == "HRAS_G12V") %>% select(one_of(Pf.gene$feat_cols)) %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("feature") %>%
+  dplyr::rename(value_hras_mt = V1)
+
+u <- kras.wt %>% 
+  left_join(., kras.g12v, by = "feature") %>%
+  left_join(., hras.g12v, by = "feature")
+
+for (i in 2:4) {
+  u[,i] <- u[,i]/(sum(abs(u[,i]))) * NROW(u)
+}
+
+ft.mt <- u %>% 
+  arrange(-abs(value_kras_wt)) %>%
+  filter(abs(value_kras_mt) > 1 & value_kras_wt/value_kras_mt < 0.1) %>%
+  select(feature) %>%
+  as.matrix() %>%
+  as.vector()
+#ft.rest <- setdiff(u$feature, ft.mt)
+ft.rest <- u %>% 
+  arrange(-abs(value_kras_wt)) %>%
+  filter(abs(value_kras_mt) > 1 & value_kras_wt/value_kras_mt > 0.8) %>%
+  select(feature) %>%
+  as.matrix() %>%
+  as.vector()
+
+cr.n <- (cos.d(Pf.cmpd$data[,ft.mt] %>% t, Pf.gene$data[which(Pf.gene$data$Treatment == "KRAS_G12V"),ft.mt] %>% t))
+rownames(cr.n) <- Pf.cmpd$data$Metadata_broad_sample
+
+cr.p <- abs(cos.d(Pf.cmpd$data[,ft.rest] %>% t, Pf.gene$data[which(Pf.gene$data$Treatment == "KRAS_WT.1"),ft.rest] %>% t))
+rownames(cr.p) <- Pf.cmpd$data$Metadata_broad_sample
+
+colnames(cr.n) <- "score.spec.mt"
+colnames(cr.p) <- "score.comm"
+
+cr.n <- cr.n %>% as.data.frame() %>% tibble::rownames_to_column("compound ID")
+cr.p <- cr.p %>% as.data.frame() %>% tibble::rownames_to_column("compound ID")
+
+cr.all <- cr.n %>% 
+  left_join(cr.p, by = "compound ID") %>% 
+  mutate(score = score.spec.mt - sign(score.spec.mt) * score.comm) %>%
+  left_join(., Pf.cmpd$data[,c("Metadata_broad_sample", "CPD_NAME", "MOA")], by = c("compound ID" = "Metadata_broad_sample"))
+
+cr.all <- cr.all %>% 
+  filter(abs(score.comm) < 0.1)
+
+```
+
