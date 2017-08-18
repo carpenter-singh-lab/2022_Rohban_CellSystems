@@ -738,6 +738,24 @@ ft.rest <- u %>%
   as.matrix() %>%
   as.vector()
 
+u %>% 
+  filter(feature %in% ft.mt) %>% 
+  arrange(-abs(value_kras_mt)) %>% 
+  select(-value_hras_mt) %>% 
+  mutate(value_kras_mt = round(value_kras_mt, 2),
+         value_kras_wt = round(value_kras_wt, 2)) %>% 
+  as.data.frame() %>% 
+  htmlTable::htmlTable()
+
+u %>% 
+  filter(feature %in% ft.rest) %>% 
+  arrange(-abs(value_kras_mt)) %>% 
+  select(-value_hras_mt) %>% 
+  mutate(value_kras_mt = round(value_kras_mt, 2),
+         value_kras_wt = round(value_kras_wt, 2)) %>% 
+  as.data.frame() %>% 
+  htmlTable::htmlTable()
+
 cr.n <- (cos.d(Pf.cmpd$data[,ft.mt] %>% t, Pf.gene$data[which(Pf.gene$data$Treatment == "KRAS_G12V"),ft.mt] %>% t))
 rownames(cr.n) <- Pf.cmpd$data$Metadata_broad_sample
 
@@ -757,6 +775,8 @@ cr.all <- cr.n %>%
 
 cr.all <- cr.all %>% 
   filter(abs(score.comm) < 0.1)
+
+cr.all %>% filter(abs(score) > 0.5) %>% htmlTable::htmlTable()
 
 ```
 
