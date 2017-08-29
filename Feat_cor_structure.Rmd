@@ -15,12 +15,17 @@ library(magrittr)
 source("read_dataset.R")
 
 data.set.name.1 <- "Repurposing"
-data.set.name.2 <- "BBBC022"
+data.set.name.2 <- "CDRP"
+use.optimized.feats <- T
 
 Pf.1 <- read.dataset(data.set.name = data.set.name.1)
 Pf.2 <- read.dataset(data.set.name = data.set.name.2)
 
 ft <- intersect(Pf.1$feat_cols, Pf.2$feat_cols)
+if (use.optimized.feats) {
+  ftx <- readRDS("../results/master/2017-07-18_14203406/feats_Repurposing_CDRP.rds")
+  ft <- intersect(ft, ftx)
+}
 
 print(length(ft))
 
