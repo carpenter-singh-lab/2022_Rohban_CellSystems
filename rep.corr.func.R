@@ -2,9 +2,9 @@ library(dplyr)
 library(reshape2)
 library(permute)
 
-rep.cor <- function(Pf, grp.var, feat.var, aux.var) {
-  x <- Pf$data %>% dplyr::select(one_of(c(grp.var, aux.var, feat.var))) %>%
-    dplyr::group_by_(grp.var, aux.var) %>% do(data.frame(cr = median(as.dist(cor(t(.[,feat.var]))), na.rm = T)))
+rep.cor <- function(Pf, grp.var, feat.var) {
+  x <- Pf$data %>% dplyr::select(one_of(c(grp.var, feat.var))) %>%
+    dplyr::group_by_(grp.var) %>% do(data.frame(cr = median(as.dist(cor(t(.[,feat.var]))), na.rm = T)))
   return(x)
 }
 
