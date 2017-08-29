@@ -185,15 +185,22 @@ read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10, 
     Pf.repurp$data %<>% dplyr::mutate(Metadata_plate_well = paste(Metadata_plate_map_name, Metadata_Well, sep = "_"))
     
     Pf.repurp$factor_cols <- c(Pf.repurp$factor_cols, "Metadata_plate_well")
-    trts <- Pf.repurp$data %>% 
-      dplyr::mutate(tmp_dose = abs(Metadata_mmoles_per_liter - dose.closest)) %>%
-      dplyr::arrange(tmp_dose) %>%
-      dplyr::group_by(Metadata_pert_iname) %>%
-      dplyr::slice(1) %>%
-      dplyr::ungroup(.) %>%
-      dplyr::select(Metadata_Treatment) %>%
-      as.matrix() %>%
-      as.vector()
+    if (!is.null(dose.closest)) {
+      trts <- Pf.repurp$data %>% 
+        dplyr::mutate(tmp_dose = abs(Metadata_mmoles_per_liter - dose.closest)) %>%
+        dplyr::arrange(tmp_dose) %>%
+        dplyr::group_by(Metadata_pert_iname) %>%
+        dplyr::slice(1) %>%
+        dplyr::ungroup(.) %>%
+        dplyr::select(Metadata_Treatment) %>%
+        as.matrix() %>%
+        as.vector()
+    } else {
+      trts <- Pf.repurp$data %>% 
+        dplyr::select(Metadata_Treatment) %>%
+        as.matrix() %>%
+        as.vector()
+    }
     
     Pf.repurp$data %<>%
       dplyr::filter(Metadata_Treatment %in% c(trts, "NA@0")) %>%
