@@ -17,6 +17,21 @@ cr <- cor(a[,Pf.repurp$feat_cols] %>% t)
 colnames(cr) <- a$Metadata_Treatment
 rownames(cr) <- a$Metadata_Treatment
 
+selected.trt <- Pf.repurp$data %>%
+  filter(Metadata_pert_iname %in% c("clofoctol",
+                                    "disulfiram",
+                                    "felbamate",
+                                    "kpt-330",
+                                    "mk-2206",
+                                    "mozavaptan",
+                                    "sta-5326",
+                                    "tosedostat")) %>%
+  select(Metadata_Treatment) %>% 
+  as.matrix() %>% 
+  as.vector()
+
+cr <- cr[selected.trt,]
+
 cr.melt <- cr %>% 
   reshape2::melt() %>% 
   left_join(., 
@@ -25,15 +40,7 @@ cr.melt <- cr %>%
   left_join(., 
             Pf.repurp$data[,c("Metadata_pert_iname", "Metadata_moa", "Metadata_Treatment")] %>% unique, 
             by = c("Var2" = "Metadata_Treatment")) %>%
-  filter(Metadata_pert_iname.x != Metadata_pert_iname.y) %>%
-  filter(Metadata_pert_iname.x %in% c("clofoctol",
-                     "disulfiram",
-                     "felbamate",
-                     "KPT-330",
-                     "MK-2206",
-                     "mozavaptan",
-                     "STA-5326",
-                     "tosedostat")) 
+  filter(Metadata_pert_iname.x != Metadata_pert_iname.y) 
 
 #View(cr.melt)
 u <- cr.melt %>% 
