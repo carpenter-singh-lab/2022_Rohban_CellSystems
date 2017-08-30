@@ -35,7 +35,7 @@ collapse.profiles <- T
 
 base.dir <- "2016-07-20_90b7bb86"
 corr.type <- "pearson"
-just.common.cmpds <- F
+just.common.cmpds <- T
 set.moa.to.cmpd.name <- T
 
 if (just.bioactives) {
@@ -546,6 +546,8 @@ d %>%
 ```{r matching CDRP to BBBC022, eval=F}
 
 k <- max(round(perc.top * length(cmpd)), 1)
+k <- 3
+print(k)
 N <- 300
 
 d <- cr.melt.ext2.sor %>% 
@@ -591,6 +593,7 @@ d <- cr.melt.ext2.sor %>%
 ```{r matching BBBC022 to CDRP, eval=F}
 
 k <- max(round(perc.top * length(cmpd)), 1)
+k <- 3
 N <- 300
 
 d <- cr.melt.ext2.sor %>% 
@@ -830,6 +833,36 @@ print(sprintf("optimal f.score : %f", s.max))
 #           nbcocluster = c(50, 40))
 # quartz(width = 15, height = 10)
 # plot(cl)
+
+```
+
+```{r}
+
+cdrp.dat <- Pf.cdrp$data %>% 
+  dplyr::select(Metadata_broad_sample, CPD_NAME) %>% 
+  unique %>%
+  dplyr::rename(Metadata_pert_iname = CPD_NAME)
+
+gust.dat <- Pf.gust$data %>% 
+  dplyr::select(Image_Metadata_BROAD_ID, Image_Metadata_SOURCE_COMPOUND_NAME) %>% 
+  unique %>%
+  dplyr::rename(Metadata_broad_sample = Image_Metadata_BROAD_ID,
+                Metadata_pert_iname = Image_Metadata_SOURCE_COMPOUND_NAME)
+  
+source("read_dataset.R")
+cdrp <- read.dataset("CDRP")
+gust <- read.dataset("BBBC022")
+
+cdrp.dat2 <- cdrp.dat %>% 
+  left_join(., unique(cdrp$data[,c("Metadata_Well", "Metadata_Plate", "Metadata_broad_sample")]),
+            by = c("Metadata_broad_sample"))
+
+gust.dat2 <- gust.dat %>% 
+  left_join(., unique(gust$data[,c("Metadata_Well", "Metadata_Plate", "Metadata_broad_sample")]),
+            by = c("Metadata_broad_sample"))
+
+readr::write_csv(cdrp.dat2, "CDRP_meta.csv")
+readr::write_csv(gust.dat2, "BBBC022_meta.csv")
 
 ```
 
