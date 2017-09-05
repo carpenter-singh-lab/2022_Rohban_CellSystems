@@ -69,7 +69,7 @@ lst <- list.dirs("../../../backend/CDRP")
 profiles <- foreach (i = lst[2:length(lst)]) %dopar% {
   pl <- str_split(i, "/")[[1]]
   pl <- pl[length(pl)]
-  fl <- sprintf("%s/%s_augmented.csv", i, pl)
+  fl <- sprintf("%s/%s_normalized.csv", i, pl)
   if (file.exists(fl)) {
     c <- readr::read_csv(fl)  
     process.plate(c, normalize.data)
