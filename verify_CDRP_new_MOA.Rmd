@@ -9,7 +9,7 @@ library(magrittr)
 library(reshape2)
 library(htmlTable)
 
-Pf.1 <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
+Pf.1 <- readRDS("../results/master/2017-09-05_e2847e98/Pf_bio_new.rds")
 top.percentage <- 0.05
 
 Pf.1 %<>% dplyr::filter(Metadata_ASSAY_WELL_ROLE != "mock")
