@@ -19,7 +19,8 @@ use.repurp.annots <- F
 permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
 LUAD <- F
-LUAD.mut <- F
+LUAD.mut <- T
+only.GOF <- F
 
 base.dir <- "2016-07-20_90b7bb86"
 use.feat.selected.in.TA.ORF.in.common <- F
@@ -42,22 +43,27 @@ if (LUAD) {
   Pf.ta <- list(data = Px, factor_cols = "Metadata_x_mutation_status", feat_cols = setdiff(colnames(Px), "Metadata_x_mutation_status"))
   Pf.ta.all <- Pf
   a <- read.csv("../input/LUAD/allele_classification.csv")
-  GOF <- a$Allele[which(a$Benchmark.activity == "GOF" | a$eVIP_prediction %in% c("GOF", "Neutral"))]
+  GOF <- a$Allele[which(a$Benchmark.activity == "GOF" | a$eVIP_prediction %in% c("GOF", "Neutral", "COF"))]
   s <- Pf.ta$data$Metadata_x_mutation_status %>% unique
   s <- s[which(str_detect(s, "_WT"))]
   GOF <- c(as.character(GOF), as.character(s))
   
-  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Metadata_x_mutation_status %in% GOF) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  if (only.GOF) {
+    Pf.ta$data <- Pf.ta$data %>% filter(Metadata_x_mutation_status %in% GOF) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status) 
+  } else {
+    Pf.ta$data <- Pf.ta$data %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  }
+  
   Pf.ta$factor_cols <- c(Pf.ta$factor_cols, "Treatment")
   Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(str_detect(Metadata_x_mutation_status, "WT")) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
   Pf.ta.all$factor_cols <- c(Pf.ta.all$factor_cols, "Treatment")
 
-  Pf.ta$data$Treatment <- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
-  Pf.ta.all$data$Treatment <- lapply(Pf.ta.all$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
-  Pf.ta$data <- dplyr::left_join(Pf.ta$data, uu, by = "Metadata_x_mutation_status")
-  Pf.ta$factor_cols <- c(Pf.ta$factor_cols, "strn")
-  Pf.ta$data <- Pf.ta$data %>% dplyr::group_by(Treatment) %>% arrange(-strn) %>% slice(1) %>% dplyr::ungroup()
-  Pf.ta$data %>% dplyr::select(Treatment, Metadata_x_mutation_status, strn) %>% unique %>% knitr::kable()
+#  Pf.ta$data$Treatment <- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
+#  Pf.ta.all$data$Treatment <- lapply(Pf.ta.all$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
+#  Pf.ta$data <- dplyr::left_join(Pf.ta$data, uu, by = "Metadata_x_mutation_status")
+#  Pf.ta$factor_cols <- c(Pf.ta$factor_cols, "strn")
+#  Pf.ta$data <- Pf.ta$data %>% dplyr::group_by(Treatment) %>% arrange(-strn) %>% slice(1) %>% dplyr::ungroup()
+#  Pf.ta$data %>% dplyr::select(Treatment, Metadata_x_mutation_status, strn) %>% unique %>% knitr::kable()
 } else {
   load("../input/TA/Initial_analysis_workspace_new.RData")
   Pf.ta <- Pf_org.org.collapsed
@@ -382,3 +388,136 @@ print(quantile(nl, 0.95))
 max(nl)
 
 ```
+```{r}
+
+gene.set <- lapply(Pf.gene$data$Metadata_x_mutation_status, function(x) str_split(x, "_")[[1]][1]) %>% 
+  unlist %>%
+  unique
+  
+gene.avai <- moas %>% 
+  filter(Name %in% unique(cr.melt$Var1)) %>%
+  select(Target) %>%
+  as.matrix() %>%
+  as.vector() %>%
+  lapply(., function(x) str_split(x, ", ")[[1]]) %>%
+  do.call(c, .) %>%
+  unique
+
+gene.to.test <- intersect(gene.set, gene.avai)
+sm <- 0
+
+for (gene in gene.to.test) {
+n.top <- 10
+
+tp <- cr.melt %>% 
+  filter(str_detect(Var2, gene)) %>%
+  arrange(-value) %>%
+  group_by(Var2) %>%
+  slice(1:n.top) %>%
+  ungroup() %>%
+  left_join(., moas, by = c("Var1" = "Name"))
+
+bt <- cr.melt %>% 
+  filter(str_detect(Var2, gene)) %>%
+  arrange(value) %>%
+  group_by(Var2) %>%
+  slice(1:n.top) %>%
+  ungroup() %>%
+  left_join(., moas, by = c("Var1" = "Name"))
+
+tp %>% htmlTable::htmlTable()
+bt %>% htmlTable::htmlTable()
+
+parse.target <- function(targets, gene) {
+  return(gene %in% str_split(targets, ", ")[[1]])
+}
+
+parse.target <- Vectorize(parse.target)
+
+V11 <- cr.melt %>%
+  filter(Var1 %in% tp$Var1 & str_detect(Var2, gene)) %>%
+  left_join(., moas, by = c("Var1" = "Name")) %>%
+  filter(parse.target(Target, gene)) %>%
+  NROW
+  
+V12 <- cr.melt %>%
+  filter(Var1 %in% tp$Var1 & str_detect(Var2, gene)) %>%
+  left_join(., moas, by = c("Var1" = "Name")) %>%
+  filter(!parse.target(Target, gene)) %>%
+  NROW
+
+V21 <- cr.melt %>%
+  filter((!Var1 %in% tp$Var1) & str_detect(Var2, gene)) %>%
+  left_join(., moas, by = c("Var1" = "Name")) %>%
+  filter(parse.target(Target, gene)) %>%
+  NROW
+
+V22 <- cr.melt %>%
+  filter((!Var1 %in% tp$Var1) & str_detect(Var2, gene)) %>%
+  left_join(., moas, by = c("Var1" = "Name")) %>%
+  filter(!parse.target(Target, gene)) %>%
+  NROW
+
+V <- rbind(c(V11, V12), c(V21, V22))
+f <- fisher.test(V, alternative = "greater")
+
+if (f$p.value < 0.05) {
+  print(gene)
+  print(f)
+  print(V)
+  sm <- sm + 1
+
+  cr.melt %>%
+    filter(Var1 %in% tp$Var1 & str_detect(Var2, gene)) %>%
+    left_join(., moas, by = c("Var1" = "Name")) %>%
+    filter(parse.target(Target, gene)) %>%
+    knitr::kable()
+}
+
+}
+
+print(sm)
+```
+
+```{r}
+
+thr <- quantile(cr.melt$value, 0.95)
+parse.gene <- function(x) {
+  str_split(x, "_")[[1]][1]
+}
+
+parse.gene <- Vectorize(parse.gene)
+
+V11 <- cr.melt %>%
+  filter(value > thr) %>%
+  mutate(gene = parse.gene(Var2)) %>%
+  left_join(., moas, by = c("Var1" = "Name")) %>%
+  filter(parse.target(Target, gene)) %>%
+  NROW
+  
+V12 <- cr.melt %>%
+  filter(value > thr) %>%
+  mutate(gene = parse.gene(Var2)) %>%
+  left_join(., moas, by = c("Var1" = "Name")) %>%
+  filter(!parse.target(Target, gene)) %>%
+  NROW
+
+V21 <- cr.melt %>%
+  filter(value <= thr) %>%
+  mutate(gene = parse.gene(Var2)) %>%
+  left_join(., moas, by = c("Var1" = "Name")) %>%
+  filter(parse.target(Target, gene)) %>%
+  NROW
+
+V22 <- cr.melt %>%
+  filter(value <= thr) %>%
+  mutate(gene = parse.gene(Var2)) %>%
+  left_join(., moas, by = c("Var1" = "Name")) %>%
+  filter(!parse.target(Target, gene)) %>%
+  NROW
+
+V <- rbind(c(V11, V12), c(V21, V22))
+f <- fisher.test(V, alternative = "greater")
+
+```
+
