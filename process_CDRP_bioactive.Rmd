@@ -12,10 +12,11 @@ library(ggplot2)
 source("rep.corr.func.R")
 just.strongs <- F
 remove.untreated <- F
+normalize.data <- T
 
 doMC::registerDoMC(64)
 
-process.plate <- function(plate.data) {
+process.plate <- function(plate.data, normalize.data = F) {
   c <- plate.data
   c %<>% unique
   
@@ -49,8 +50,10 @@ process.plate <- function(plate.data) {
     purrr::map(function(x) c(mean(x, na.rm = T), sd(x, na.rm = T))) %>% as.data.frame %>% as.matrix()
   
   c.nrm <- c
-  c.nrm[,feats] <- c[,feats] %>% 
-    scale(., center = (v[1, feats]), scale = as.vector(v[2, feats]))
+  if (normalize.data) {
+	  c.nrm[,feats] <- c[,feats] %>% 
+	    scale(., center = (v[1, feats]), scale = as.vector(v[2, feats]))
+  }
 
   i <- c.nrm[,feats] %>% apply(., 2, function(x) !any(is.na(x)))
   c.nrm <- c.nrm[,c(feats[i], metas)]
@@ -69,7 +72,7 @@ profiles <- foreach (i = lst[2:length(lst)]) %dopar% {
   fl <- sprintf("%s/%s_augmented.csv", i, pl)
   if (file.exists(fl)) {
     c <- readr::read_csv(fl)  
-    process.plate(c)
+    process.plate(c, normalize.data)
   } else {
     return(NULL)
   }
