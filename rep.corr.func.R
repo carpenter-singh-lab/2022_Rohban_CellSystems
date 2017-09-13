@@ -22,6 +22,6 @@ non.rep.cor.rob <- function(Pf, grp.var, feat.var, quant = 0.95) {
 non.rep.cor <- function(Pf, grp.var, feat.var, quant = 0.95) {
   pr <- permute::shuffle(NROW(Pf$data))
   Pf$data[,grp.var] <- Pf$data[pr,grp.var]
-  u <- rep.cor(Pf, grp.var, feat.var, grp.var)
+  u <- rep.cor(Pf, grp.var, feat.var)
   return(quantile(u$cr, quant, na.rm = T))
 }
