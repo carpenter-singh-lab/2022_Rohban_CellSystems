@@ -21,8 +21,8 @@ dt <- Pf %>%
   as.matrix() %>%
   as.vector()
 
-mn <- mean(dt)
-sdv <- sd(dt)
+mn <- mean(dt, na.rm = T)
+sdv <- sd(dt, na.rm = T)
 
 cell.counts <- Pf %>% 
   left_join(., cell.count, by = c("Metadata_Plate", "Metadata_Well")) %>%
