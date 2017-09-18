@@ -330,7 +330,7 @@ cat(sprintf("Total sig. clusters %d", (sm.avg)/n.run))
 
 ```
 
-```{r Find the correlation matrix, eval=F}
+```{r Find the correlation matrix, eval=T}
 
 cr <- cor(Pf.cmpd$data[,Pf.cmpd$feat_cols] %>% t, Pf.gene$data[,Pf.gene$feat_cols] %>% t)
 rownames(cr) <- Pf.cmpd$data$CPD_NAME
@@ -340,7 +340,7 @@ saveRDS(cr.melt, "cr_melt_cp.rds")
 
 ```
 
-```{r, eval = F}
+```{r, eval = T}
 
 source("../l1ktools/R/cmap/io.R")
 ds <- parse.gctx("../results/manual/cmap.compound.score/result_WTCS.LM.COMBINED_n328x22962.gctx", set_annot_rownames = F)
@@ -386,7 +386,7 @@ rownames(cr.l1000) <- rownames(cmpd.gene.score.cmap)
 
 ```
 
-```{r, eval = F}
+```{r, eval = T}
 
 moas <- read.csv("../input/moas.txt", sep = "\t")
 
@@ -540,7 +540,7 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
 
 ```
 
-```{r, eval = F}
+```{r, eval = T}
 
 gene.to.cluster <- matrix(0, NROW(Pf.gene$data), 1)
 rownames(gene.to.cluster) <- Pf.gene$data$Treatment
@@ -627,7 +627,7 @@ spec.data <- rbind(pos.t, neg.t)
 
 ```
 
-```{r, eval=F}
+```{r, eval=T}
 
 system("rm predictions.html")
 res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, random.shuffle.genes = F, random.shuffle.cmpds = F, verbose = T, cor.thr = cor.thr, how.many = no.top.matches, specificity.data = spec.data)
@@ -635,7 +635,7 @@ f <- fisher.test(res$V, alternative = "greater")
 
 ```
 
-```{r, eval=F}
+```{r, eval=T}
 
 print(f)
 print(res)
@@ -684,7 +684,7 @@ g <- ggplot(df, aes(y = MUT_Score, x = WT_score)) + geom_point()
 ggsave("WT_vs_Mut.png", g)
 
 ```
-```{r}
+```{r, eval = F}
 
 cos.d <- function(x, y) {
   rx <- apply(x, 2, function(x) sum(x^2)^0.5)
