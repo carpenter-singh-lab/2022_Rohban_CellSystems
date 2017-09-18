@@ -3,7 +3,7 @@ library(stringr)
 
 cdrp1 <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
 cdrp2 <- readRDS("../results/master/2017-04-20_425d653/Pf_DOS_new.rds")
-
+presel <- c("leflunomide", "spironolactone", "nitrofural")
 cdrp <- rbind(cdrp1, cdrp2)
 
 feats <- colnames(cdrp)
@@ -11,7 +11,7 @@ feats <- feats[which(!str_detect(feats, "Metadata_"))]
 
 all.cons <- readRDS("../results/master/2017-09-16_e1d600ab/gene_compound_all.rds")
 cmpds <- all.cons %>% 
-  filter(gene == "SMAD3_WT.1" & specificity > 0.1) %>%
+  filter(gene == "SMAD3_WT.1" & specificity > 0.1 & !CPD_NAME %in% presel) %>%
   select(Metadata_broad_sample) %>%
   as.matrix() %>%
   as.vector()
@@ -26,7 +26,7 @@ rownames(cr) <- cdrp.sub$Metadata_broad_sample
 colnames(cr) <- cdrp.sub$Metadata_broad_sample
 
 hcl <- hclust(as.dist(1 - cr), method = "complete")
-ct <- cutree(hcl, k = 8)
+ct <- cutree(hcl, k = 7)
 
 clst <- ct %>% 
   as.data.frame() %>% 
@@ -34,7 +34,7 @@ clst <- ct %>%
   rename(!!"cluster" := !!".")
 
 grp1 <- all.cons %>%
-  filter(gene == "SMAD3_WT.1" & specificity > 0.1) %>%
+  filter(gene == "SMAD3_WT.1" & specificity > 0.1 & !CPD_NAME %in% presel) %>%
   left_join(., clst) %>%
   arrange(-specificity) %>%
   group_by(cluster) %>%
@@ -43,7 +43,7 @@ grp1 <- all.cons %>%
   select(-cluster)
 
 grp2 <- all.cons %>%
-  filter(gene == "SMAD3_WT.1" & CPD_NAME %in% c("leflunomide", "spironolactone")) 
+  filter(gene == "SMAD3_WT.1" & CPD_NAME %in% presel) 
 
 cmpd <- rbind(grp1, grp2)
 
