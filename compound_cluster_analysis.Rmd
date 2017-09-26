@@ -128,7 +128,7 @@ cr <- cdrp.profiles %>%
 cr.melt %>% 
   filter(as.character(Var1) < as.character(Var2)) %>%
   arrange(-value) %>%
-  slice(1:round(n() * top.p)) %>%
+  slice(1:round(n() * 0.05)) %>%
   filter(same.moa) %>%
   group_by(MOA.x) %>%
   tally() %>%
@@ -171,7 +171,7 @@ cr.norm <- apply(cr, 1, function(x) (ecdf(x)(x)))
 cr.norm <- (cr.norm + t(cr.norm))/2
 rownames(cr.norm) <- colnames(cr.norm)
 
-plot.within.MOA <- function(MOA.name, cor.thr = 0.90, plot.mat = F) {
+plot.within.MOA <- function(MOA.name, cor.thr = 0.95, plot.mat = F) {
   brds <- cdrp.profiles %>% 
     filter(str_detect(MOA, MOA.name)) %>%
     select(Metadata_broad_sample) %>% 
@@ -206,7 +206,10 @@ plot.within.MOA <- function(MOA.name, cor.thr = 0.90, plot.mat = F) {
   v22 <- which(z2 < cor.thr) %>% length
   
   V <- rbind(c(v11, v12), c(v21, v22))
-  return(fisher.test(V, alternative = "greater")$p.value)
+  
+  fsh <- fisher.test(V, alternative = "greater")
+  return(data.frame(p.value = fsh$p.value, 
+                    odds.ratio = fsh$estimate))
 }
 
 sig.moas <- cdrp.profiles %>%
@@ -233,8 +236,7 @@ MOA.list <- cdrp.profiles %>%
 
 moa.corr <- sapply(sig.moas, plot.within.MOA)
 moa.corr <- moa.corr %>% 
-  as.data.frame() %>% 
-  rename(!!"p.value" := !!".") %>%
+  t %>%
   tibble::rownames_to_column("MOA") %>%
   mutate(p.value = p.adjust(p.value, method = "BH")) %>%
   left_join(., MOA.list %>% 
@@ -306,6 +308,62 @@ for (MOA.name in moa.names) {
       print
   }
 }
+
+```
+
+```{r}
+
+rep.moa <- function(x, colname) {
+  if (!is.na(x[,colname])) {
+    moas <- str_split(x[,colname] %>% as.character(), ", ")[[1]]
+    df <- data.frame(cl = moas, x[, setdiff(colnames(x), colname)])
+    u <- colnames(df)
+    u[1] <- colname
+    colnames(df) <- u
+    return(df)
+  } 
+  return(x)
+}
+
+cr.melt.exp <- cr.melt %>% 
+  mutate(MOA.x = as.character(MOA.x), MOA.y = as.character(MOA.y)) %>%
+  mutate(rownm = 1:n()) %>%
+  filter(as.character(Var1) < as.character(Var2)) %>% 
+  arrange(-value) %>% 
+  slice(1:round(n() * 0.05)) %>% 
+  group_by(rownm) %>%
+  do(data.frame(rep.moa(.[], "MOA.y"))) %>%
+  ungroup() %>%
+  select(-rownm) %>%
+  mutate(rownm = 1:n()) %>%
+  group_by(rownm) %>%
+  do(data.frame(rep.moa(.[], "MOA.x")))
+
+moas.list <- moa.corr %>% mutate(is.consistent = p.value < 0.005) %>% filter(is.consistent) %>% select(MOA) %>% as.matrix() %>% as.vector() %>% unique
+
+cf <- matrix(0, nrow = length(moas.list), ncol = length(moas.list))
+rownames(cf) <- moas.list
+colnames(cf) <- moas.list
+
+cr.n <- cr.melt.exp %>%
+  group_by(MOA.x, MOA.y) %>%
+  tally()
+
+cx <- cf %>%
+  reshape2::melt() %>%
+  left_join(., cr.n, by = c("Var1" = "MOA.x", "Var2" = "MOA.y")) %>%
+  mutate(value = ifelse(is.na(n), 0, n)) %>%
+  select(-n) %>%
+  reshape2::acast(Var1 ~ Var2)
+  
+i <- which(apply(cx, 1, sum) > 0)
+cx <- cx[i, i]
+
+v <- diag(apply(cx, 1, sum)^-0.5) %*% cx %*% diag(apply(cx, 1, sum)^-0.5)
+colnames(v) <- colnames(cx)
+rownames(v) <- rownames(cx)
+v[v < 0.10] <- 0
+corrplot::corrplot(v, method = "color", is.corr = F)
 
 ```
 
