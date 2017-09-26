@@ -14,15 +14,13 @@ cdrp <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
 feats <- colnames(cdrp)
 feats <- feats[which(!str_detect(feats, "Metadata_"))]
 
-
-cdrp.dmso <- readRDS("../results/master/2017-09-05_da5f3073/Pf_bio_new_all.rds")
-
 if (whiten) {
+  cdrp.dmso <- readRDS("../results/master/2017-09-05_da5f3073/Pf_bio_new_all.rds")
   cdrp.dmso <- cdrp.dmso %>% filter(Metadata_ASSAY_WELL_ROLE == "mock") %>% select(one_of(feats))
   mn <- apply(cdrp.dmso, 2, mean)
   cv <- cov(cdrp.dmso)
   ev <- eigen(cv)
-  eps <- 10^1
+  eps <- 10^-1
   W <- diag((ev$values + eps)^-0.5) %*% t(ev$vectors)
   cdrp[, feats] <- t(W %*% (apply(cdrp[, feats], 1, function(x) (x - mn))))
 }
@@ -173,7 +171,7 @@ cr.norm <- apply(cr, 1, function(x) (ecdf(x)(x)))
 cr.norm <- (cr.norm + t(cr.norm))/2
 rownames(cr.norm) <- colnames(cr.norm)
 
-plot.within.MOA <- function(MOA.name, plot.mat = F) {
+plot.within.MOA <- function(MOA.name, cor.thr = 0.90, plot.mat = F) {
   brds <- cdrp.profiles %>% 
     filter(str_detect(MOA, MOA.name)) %>%
     select(Metadata_broad_sample) %>% 
@@ -196,16 +194,19 @@ plot.within.MOA <- function(MOA.name, plot.mat = F) {
                        col = colorRampPalette(c("green", "white", "darkred", "white", "darkblue"))(200))
   }
   
-  x <- cr[brds, brds]
-  diag(x) <- NA
-  y <- cr[brds, other.brds]
+  x <- cr.norm[brds, brds] %>% as.dist() %>% as.vector()
+  y <- cr.norm[brds, other.brds] %>% as.vector()
   
-  z1 <- apply(x, 1, function(x) mean(x, na.rm = T))
-  z2 <- apply(y, 1, function(x) mean(x, na.rm = T))
-  if (length(z1) < 3) {
-    return(1)
-  }
-  return(t.test(z1, z2, alternative = "greater", paired = T)$p.value)
+  z1 <- x
+  z2 <- y
+  
+  v11 <- which(z1 > cor.thr) %>% length
+  v12 <- which(z1 < cor.thr) %>% length
+  v21 <- which(z2 > cor.thr) %>% length
+  v22 <- which(z2 < cor.thr) %>% length
+  
+  V <- rbind(c(v11, v12), c(v21, v22))
+  return(fisher.test(V, alternative = "greater")$p.value)
 }
 
 sig.moas <- cdrp.profiles %>%
@@ -267,7 +268,7 @@ extremest.value <- function(x) {
 } 
 
 moa.names <- moa.corr %>% 
-  filter(med.corr > thr) %>%
+  filter(p.value < 0.05) %>%
   select(MOA) %>% 
   as.matrix() %>%
   as.vector()
@@ -296,7 +297,7 @@ for (MOA.name in moa.names) {
     gene.compound.cr %>% 
       filter(Var1 %in% brds) %>% 
       group_by(Var2) %>% 
-      summarise(value = mean(value)) %>%
+      summarise(value = extremest.value(value)) %>%
       arrange(-value) %>% 
       slice(c(1:5, (n()-4):n())) %>% 
       rename(gene = Var2) %>% 
