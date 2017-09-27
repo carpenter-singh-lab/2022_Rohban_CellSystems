@@ -164,16 +164,24 @@ for (i in 1:length(cls)) {
 
 ```
 
-
 ```{r, results='asis'}
 
 cr.norm <- apply(cr, 1, function(x) (ecdf(x)(x)))
 cr.norm <- (cr.norm + t(cr.norm))/2
 rownames(cr.norm) <- colnames(cr.norm)
 
-plot.within.MOA <- function(MOA.name, cor.thr = 0.95, plot.mat = F) {
+is.in <- function(x, y) {
+  z <- str_split(x, ", ")[[1]]
+  return(y %in% z)
+}
+
+is.in <- Vectorize(is.in)
+
+plot.within.MOA <- function(MOA.name, cor.thr = 0.90, plot.mat = F, verbose = F) {
+  MOA.name <- MOA.name %>% as.matrix() %>% as.vector()
+  
   brds <- cdrp.profiles %>% 
-    filter(str_detect(MOA, MOA.name)) %>%
+    filter(is.in(MOA, MOA.name)) %>%
     select(Metadata_broad_sample) %>% 
     as.matrix() %>% 
     as.vector()
@@ -207,6 +215,10 @@ plot.within.MOA <- function(MOA.name, cor.thr = 0.95, plot.mat = F) {
   
   V <- rbind(c(v11, v12), c(v21, v22))
   
+  if (verbose) {
+    print(V)
+  }
+  
   fsh <- fisher.test(V, alternative = "greater")
   return(data.frame(p.value = fsh$p.value, 
                     odds.ratio = fsh$estimate))
@@ -234,23 +246,29 @@ MOA.list <- cdrp.profiles %>%
   do(data.frame(MOA.sep = sep.MOA(.))) %>%
   dplyr::rename(MOA = MOA.sep)
 
-moa.corr <- sapply(sig.moas, plot.within.MOA)
-moa.corr <- moa.corr %>% 
-  t %>%
-  tibble::rownames_to_column("MOA") %>%
-  mutate(p.value = p.adjust(p.value, method = "BH")) %>%
-  left_join(., MOA.list %>% 
-              group_by(MOA) %>% 
-              tally %>% 
-              ungroup(), 
-            by = "MOA")
+df <- data.frame(MOA = sig.moas)
+df <- df %>% 
+  group_by(MOA) %>%
+  do(data.frame(plot.within.MOA(.[,"MOA"]))) %>%
+  ungroup()
+  
+moa.corr <- df %>% as.data.frame()
 
-moa.corr %>% 
-  filter(n >= 4) %>%
+moa.corr <- moa.corr %>% 
+  left_join(., MOA.list %>% 
+            group_by(MOA) %>% 
+            tally %>% 
+            ungroup(), 
+          by = "MOA") %>%
+  filter(n >= 6) %>%
+  mutate(p.value = p.adjust(p.value, method = "BH")) 
+
+moa.corr %>%
   mutate(is.consistent = p.value < 0.05) %>%
   arrange(p.value) %>%
   mutate(p.value = round(-log(p.value)/log(10), 2)) %>%
   rename(`-log(adj. p.value)` = p.value) %>%
+  mutate(odds.ratio = round(odds.ratio, 2)) %>%
   htmlTable::htmlTable()
 
 ```
@@ -339,7 +357,7 @@ cr.melt.exp <- cr.melt %>%
   group_by(rownm) %>%
   do(data.frame(rep.moa(.[], "MOA.x")))
 
-moas.list <- moa.corr %>% mutate(is.consistent = p.value < 0.005) %>% filter(is.consistent) %>% select(MOA) %>% as.matrix() %>% as.vector() %>% unique
+moas.list <- moa.corr %>% mutate(is.consistent = p.value < 0.05) %>% filter(is.consistent) %>% select(MOA) %>% as.matrix() %>% as.vector() %>% unique
 
 cf <- matrix(0, nrow = length(moas.list), ncol = length(moas.list))
 rownames(cf) <- moas.list
@@ -362,8 +380,13 @@ cx <- cx[i, i]
 v <- diag(apply(cx, 1, sum)^-0.5) %*% cx %*% diag(apply(cx, 1, sum)^-0.5)
 colnames(v) <- colnames(cx)
 rownames(v) <- rownames(cx)
-v[v < 0.10] <- 0
-corrplot::corrplot(v, method = "color", is.corr = F)
+#v[v < 0.10] <- 0
+#v[v > 0.5] <- 0.5
+
+od <- order(diag(v), decreasing = T)
+v <- v[od, od]
+
+corrplot::corrplot(v, method = "color", is.corr = F, tl.cex = 0.5)
 
 ```
 
