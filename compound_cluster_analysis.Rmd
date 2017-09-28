@@ -166,9 +166,16 @@ for (i in 1:length(cls)) {
 
 ```{r, results='asis'}
 
+randomize <- F
 cr.norm <- apply(cr, 1, function(x) (ecdf(x)(x)))
 cr.norm <- (cr.norm + t(cr.norm))/2
 rownames(cr.norm) <- colnames(cr.norm)
+
+if (randomize) {
+  m <- sample(rownames(cr.norm), NROW(cr.norm))
+  rownames(cr.norm) <- m
+  colnames(cr.norm) <- m
+}
 
 is.in <- function(x, y) {
   z <- str_split(x, ", ")[[1]]
@@ -287,11 +294,28 @@ extremest.value <- function(x) {
   }
 } 
 
+count.sig <- function(x, thr = 0.5) {
+  y <- length(which(x >= thr))
+  z <- length(which(x <= -thr))
+  
+  ifelse(y > z, y, -z)
+}
+
 moa.names <- moa.corr %>% 
   filter(p.value < 0.05) %>%
   select(MOA) %>% 
   as.matrix() %>%
   as.vector()
+
+addn <- MOA.list %>%
+  group_by(MOA) %>%
+  tally() %>%
+  filter(n < 6 & n >= 2) %>%
+  select(MOA) %>%
+  as.matrix() %>%
+  as.vector()
+
+#moa.names <- c(moa.names, addn)
 
 for (MOA.name in moa.names) {
   brds <- cdrp.profiles %>% 
@@ -317,7 +341,7 @@ for (MOA.name in moa.names) {
     gene.compound.cr %>% 
       filter(Var1 %in% brds) %>% 
       group_by(Var2) %>% 
-      summarise(value = extremest.value(value)) %>%
+      summarise(value = count.sig(value, 0.45)) %>%
       arrange(-value) %>% 
       slice(c(1:5, (n()-4):n())) %>% 
       rename(gene = Var2) %>% 
@@ -387,6 +411,191 @@ od <- order(diag(v), decreasing = T)
 v <- v[od, od]
 
 corrplot::corrplot(v, method = "color", is.corr = F, tl.cex = 0.5)
+
+```
+
+```{r}
+
+thr <- 0.97
+
+gene.compound.cr <- readRDS("../results/master/2017-05-02_9796dc34/cr_melt_cp.rds")
+cr.gc <- gene.compound.cr %>% 
+  group_by(Var1, Var2) %>%
+  slice(1) %>%
+  ungroup() %>%
+  reshape2::acast(Var1 ~ Var2)
+
+cr.norm.gc <- apply(cr.gc, 2, function(x) (ecdf(x)(x))) 
+rownames(cr.norm.gc) <- rownames(cr.gc)
+colnames(cr.norm.gc) <- colnames(cr.gc)
+
+gene.compound.cr <- cr.norm.gc %>% 
+  reshape2::melt()
+
+gene.compound.cr.ext <- gene.compound.cr %>%
+  left_join(., cdrp.profiles %>% 
+              select(CPD_NAME.x, Metadata_broad_sample, MOA, Target) %>%
+              mutate(CPD_NAME.x = ifelse(str_detect(CPD_NAME.x, "BRD-"), 
+                                         Metadata_broad_sample, 
+                                         str_to_lower(CPD_NAME.x))),  
+            by = c("Var1" = "CPD_NAME.x")) %>%
+  group_by(Var1, Var2) %>%
+  slice(1) %>%
+  ungroup() 
+
+v11 <- gene.compound.cr.ext %>%
+  filter(str_detect(Target, paste0(Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2)) |
+           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           Target == Var2) %>%
+  filter(value > thr | value < 1 - thr) %>%
+  NROW
+
+v12 <- gene.compound.cr.ext %>%
+  filter(! (str_detect(Target, paste0(Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2)) |
+           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           Target == Var2)) %>%
+  filter(value > thr | value < 1 - thr) %>% 
+  NROW
+
+v21 <- gene.compound.cr.ext %>%
+  filter(str_detect(Target, paste0(Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2)) |
+           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           Target == Var2) %>%
+  filter(! (value > thr | value < 1 - thr)) %>% 
+  NROW
+
+v22 <- gene.compound.cr.ext %>%
+  filter(!(str_detect(Target, paste0(Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2)) |
+           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           Target == Var2)) %>%
+  filter(! (value > thr | value < 1 - thr)) %>% 
+  NROW
+
+V <- rbind(c(v11, v12), c(v21, v22))
+
+fisher.test(V, alternative = "greater") %>% print
+
+gene.compound.cr.ext %>%
+  filter(str_detect(Target, paste0(Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2)) |
+           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           Target == Var2) %>%
+  filter(value > thr | value < 1 - thr) %>%
+  arrange(Var2) %>%
+  htmlTable::htmlTable()
+
+```
+
+```{r}
+
+source("getPPI.R")
+thr <- 0.97
+
+gene.compound.cr <- readRDS("../results/master/2017-05-02_9796dc34/cr_melt_cp.rds")
+cr.gc <- gene.compound.cr %>% 
+  group_by(Var1, Var2) %>%
+  slice(1) %>%
+  ungroup() %>%
+  reshape2::acast(Var1 ~ Var2)
+
+cr.norm.gc <- apply(cr.gc, 2, function(x) (ecdf(x)(x))) 
+rownames(cr.norm.gc) <- rownames(cr.gc)
+colnames(cr.norm.gc) <- colnames(cr.gc)
+
+gene.compound.cr <- cr.norm.gc %>% 
+  reshape2::melt()
+
+gene.compound.cr.ext <- gene.compound.cr %>%
+  left_join(., cdrp.profiles %>% 
+              select(CPD_NAME.x, Metadata_broad_sample, MOA, Target) %>%
+              mutate(CPD_NAME.x = ifelse(str_detect(CPD_NAME.x, "BRD-"), 
+                                         Metadata_broad_sample, 
+                                         str_to_lower(CPD_NAME.x))),  
+            by = c("Var1" = "CPD_NAME.x")) %>%
+  group_by(Var1, Var2) %>%
+  slice(1) %>%
+  ungroup() 
+
+
+expand.prot.target <- function(target) {
+  target <- target %>% as.character() %>% as.matrix() %>% as.vector()
+  if (is.na(target)) {
+    return(target)
+  }
+  
+  ppis <- get.all.interacting.proteins(str_split(target, ", ")[[1]])
+  if (is.null(ppis)) {
+    return(NA)
+  }
+  
+  return(ppis %>% 
+           select(Protein.1, Protein.2) %>% 
+           group_by(Protein.1, Protein.2) %>%
+           tally() %>%
+           filter(n >= 5) %>%
+           ungroup() %>%
+           as.matrix %>% as.vector() %>% unique() %>% paste(., collapse = ", "))
+}
+
+cmpd.targ <- gene.compound.cr.ext %>% 
+  select(Var1, Target) %>% 
+  distinct() %>%
+  group_by(Var1) %>%
+  do(data.frame(Target = expand.prot.target(.[,"Target"])))
+  
+gene.compound.cr.ext <- gene.compound.cr.ext %>%
+  select(-Target) %>%
+  left_join(., cmpd.targ %>% ungroup(), by = "Var1")
+
+v11 <- gene.compound.cr.ext %>%
+  filter(str_detect(Target, paste0(Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2)) |
+           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           Target == Var2) %>%
+  filter(value > thr | value < 1 - thr) %>%
+  NROW
+
+v12 <- gene.compound.cr.ext %>%
+  filter(! (str_detect(Target, paste0(Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2)) |
+           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           Target == Var2)) %>%
+  filter(value > thr | value < 1 - thr) %>% 
+  NROW
+
+v21 <- gene.compound.cr.ext %>%
+  filter(str_detect(Target, paste0(Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2)) |
+           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           Target == Var2) %>%
+  filter(! (value > thr | value < 1 - thr)) %>% 
+  NROW
+
+v22 <- gene.compound.cr.ext %>%
+  filter(!(str_detect(Target, paste0(Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2)) |
+           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           Target == Var2)) %>%
+  filter(! (value > thr | value < 1 - thr)) %>% 
+  NROW
+
+V <- rbind(c(v11, v12), c(v21, v22))
+
+fisher.test(V, alternative = "greater") %>% print
+
+gene.compound.cr.ext %>%
+  filter(str_detect(Target, paste0(Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2)) |
+           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           Target == Var2) %>%
+  filter(value > thr | value < 1 - thr) %>%
+  select(-Target) %>%
+  arrange(Var2) %>%
+  htmlTable::htmlTable()
 
 ```
 
