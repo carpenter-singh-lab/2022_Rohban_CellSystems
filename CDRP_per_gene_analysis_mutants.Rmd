@@ -330,6 +330,17 @@ cat(sprintf("Total sig. clusters %d", (sm.avg)/n.run))
 
 ```
 
+```{r}
+
+cr <- cor(Pf.cmpd$data[,Pf.cmpd$feat_cols] %>% t, Pf.gene$data[,Pf.gene$feat_cols] %>% t)
+rownames(cr) <- Pf.cmpd$data$Metadata_broad_sample
+colnames(cr) <- Pf.gene$data$Treatment
+cr.melt <- melt(cr)
+saveRDS(cr.melt, "cr_melt_cp_canon.rds")
+
+
+```
+
 ```{r Find the correlation matrix, eval=T}
 
 cr <- cor(Pf.cmpd$data[,Pf.cmpd$feat_cols] %>% t, Pf.gene$data[,Pf.gene$feat_cols] %>% t)
