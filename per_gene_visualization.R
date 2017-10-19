@@ -29,6 +29,7 @@ data.frame(gene = .gene, p.value = p.vals) %>%
   left_join(., pthw, by = c("gene" = "Gene")) %>%
   rename(adjusted.p.value = p.value) %>%
   left_join(., cmpd.annot, by = c("gene" = "Var2")) %>%
+  rename(Gene = gene, Gene.Pathway = Pathway)
   htmlTable::htmlTable()
 
 # gene.compound.cr %>% 
