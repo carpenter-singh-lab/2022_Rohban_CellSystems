@@ -5,6 +5,8 @@ rm(list = ls())
 library(dplyr)
 library(stringr)
 library(doParallel)
+source("moa_evaluations.R")
+
 doParallel::registerDoParallel(cores = 4)
 
 whiten <- F
@@ -276,6 +278,33 @@ moa.corr %>%
   mutate(p.value = round(-log(p.value)/log(10), 2)) %>%
   rename(`-log(adj. p.value)` = p.value) %>%
   mutate(odds.ratio = round(odds.ratio, 2)) %>%
+  htmlTable::htmlTable()
+
+```
+
+```{r}
+
+metadata <- cdrp.profiles %>%
+  select(Metadata_broad_sample, MOA) %>%
+  rename(Metadata_moa = MOA) %>% 
+  distinct()
+
+moas.score <- moa_recall(cr, metadata = metadata, n.cores = 3, N = 10000)
+
+moas.score <- moas.score %>% filter(!is.na(p.value))
+
+#moas.score <- moas.score %>% mutate(p.value = p.adjust(p.value, method = "BH"))
+
+moas.score %>% 
+  left_join(., MOA.list %>% 
+            group_by(MOA) %>% 
+            tally %>% 
+            ungroup(), 
+          by = "MOA") %>%
+  filter(n >= 2) %>%
+  #mutate(p.value = p.adjust(p.value, "BH")) %>%
+  filter(p.value < 0.05) %>%
+  arrange(p.value) %>%
   htmlTable::htmlTable()
 
 ```
