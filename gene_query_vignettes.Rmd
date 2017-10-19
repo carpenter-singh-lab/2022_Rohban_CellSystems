@@ -1,0 +1,114 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r read data}
+
+rm(list = ls())
+set.seed(42)
+
+library(dplyr)
+library(stringr)
+library(foreach)
+library(doParallel)
+library(pbapply)
+doParallel::registerDoParallel(cores = 4)
+
+source("validate_compound_conn.R")
+valid.pair <- Vectorize(valid.pair)
+
+load("../input/TA/Initial_analysis_workspace_new.RData")
+gene.compound.cr <- readRDS("../results/master/2017-05-02_9796dc34/cr_melt_cp.rds")
+moa2 <- readr::read_csv("../input/CDP2/MOA_annot2.csv")
+
+```
+
+```{r}
+
+moa2 <- moa2 %>%
+  mutate(CPD_NAME = str_to_lower(CPD_NAME)) %>%
+  mutate(CPD_NAME = ifelse(str_sub(CPD_NAME, 1, 4) == "brd-", Metadata_broad_sample, CPD_NAME))
+
+pthw <- Pf_org$data %>%
+  select(Gene, Pathway) %>%
+  unique %>%
+  filter(Gene != "EMPTY")
+
+gene.compound.cr <- gene.compound.cr %>%
+  left_join(., moa2, by = c("Var1" = "CPD_NAME")) %>%
+  left_join(., pthw, by = c("Var2" = "Gene")) %>%
+  mutate(valid = valid.pair(Var2, Target))
+
+```
+
+```{r}
+
+k <- 30
+N <- 10000
+n <- 10
+permute <- F
+
+if (permute) {
+  .cr <- gene.compound.cr %>% 
+    group_by(Var1, Var2) %>% 
+    summarise(value = max(value, na.rm = T)) %>%
+    select(Var1, Var2, value) %>%
+    reshape2::acast(Var1 ~ Var2)
+  
+  rn <- rownames(.cr) 
+  cn <- colnames(.cr) 
+  
+  while(T) {
+    cn.pr <- sample(cn, size = length(cn))
+    if (all(cn.pr != cn)) {
+      break
+    }
+  }
+    
+  colnames(.cr) <- cn.pr
+  
+  gene.compound.cr.pr <- .cr %>%
+    reshape2::melt() %>%
+    left_join(., gene.compound.cr %>% select(-value), by = c("Var1", "Var2")) 
+} else {
+  gene.compound.cr.pr <- gene.compound.cr
+}
+
+gene.compound.cr.pr <- gene.compound.cr.pr %>% 
+  arrange(-abs(value)) %>%
+  filter(!is.na(Target))
+
+matching.score <- function(gene.x, top.k, N, n) {
+  sg.v <- gene.compound.cr.pr %>% filter(Var2 == gene.x) %>% slice(1:top.k) %>% select(valid) %>% as.matrix() %>% as.vector() 
+  sg <- sum(sg.v)
+  
+  cr.rem <- gene.compound.cr.pr %>% filter(Var2 == gene.x) %>% slice((top.k + 1):n())
+  
+  p.val <- foreach (j = 1:n, .combine = rbind) %do% {
+    nl <- foreach (i = 1:N) %dopar% {
+       cr.rem %>% sample_n(length(sg.v)) %>% select(valid) %>% as.matrix() %>% as.vector() %>% sum
+    }
+    
+    nl <- unlist(nl)
+    if (max(nl) == 0) {
+      return(1)
+    }
+    return(1 - ecdf(nl)(sg))
+  }
+  
+  mean(p.val)
+}
+
+p.vals <- pblapply(.gene, function(x) matching.score(x, top.k = k, N, n)) %>% unlist 
+
+gene.blacklist <- gene.compound.cr %>% group_by(Var2) %>% summarise(x = sum(valid)) %>% filter(x == 0) %>% select(Var2) %>% as.matrix() %>% as.vector()
+
+data.frame(gene = .gene, p.value = p.vals) %>%
+  filter(!gene %in% gene.blacklist) %>% 
+  mutate(p.value = p.adjust(p.value, "BH")) %>%
+  arrange(p.value) %>%
+  htmlTable::htmlTable()
+
+```
+
