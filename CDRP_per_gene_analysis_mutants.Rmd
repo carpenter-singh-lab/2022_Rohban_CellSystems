@@ -398,6 +398,12 @@ cr.l1000 %>% reshape2::melt() %>% saveRDS(., "cr_melt_l1000.rds")
 
 ```
 
+```{r, eval = F}
+
+Pf.trt.strong.collapsed$data %>% select(Treatment, Pathway) %>% unique %>% mutate(Gene = lapply(str_split(Treatment, "_"), function(x) x[1]), Allele_Description = lapply(str_split(Treatment, "_"), function(x) str_sub(x[2], 1, 2))) %>% filter(Allele_Description == "WT") %>% select(Gene, Pathway) %>% unique  %>% mutate(Pathway = str_replace(Pathway, "Canonical ", "")) %>% group_by(Pathway) %>% summarise(`Gene members` = paste0(Gene, collapse = ", ")) %>% htmlTable::htmlTable()
+
+```
+
 ```{r, eval = T}
 
 moas <- read.csv("../input/moas.txt", sep = "\t")
