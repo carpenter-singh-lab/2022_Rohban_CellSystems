@@ -139,6 +139,76 @@ cr.melt %>%
 
 ```
 
+```{r network view of data}
+
+library(igraph)
+k <- 2
+
+sim_normalize <- function(sim_mat) {
+  sim_mat_norm <- apply(sim_mat, 1, function(x) (ecdf(x)(x)))
+  sim_mat_norm <- (sim_mat_norm + t(sim_mat_norm))/2
+  rownames(sim_mat_norm) <- rownames(sim_mat)
+  colnames(sim_mat_norm) <- colnames(sim_mat)
+  return(sim_mat_norm)
+}
+
+cr <- cr.melt %>%
+  reshape2::acast(Var1 ~ Var2, value.var = "value")
+
+cr.norm <- sim_normalize(cr)
+
+cr.melt <- cr.melt %>%
+  select(-value) %>%
+  left_join(., cr.norm %>% reshape2::melt(), by = c("Var1", "Var2")) 
+
+
+moa.cnt <- moa2 %>% 
+  filter(Metadata_broad_sample %in% cr.melt$Var1) %>% 
+  group_by(MOA) %>% 
+  tally
+
+moa.adj.mat <- cr.melt %>% 
+  left_join(., moa.cnt, by = c("MOA.x" = "MOA")) %>% 
+  left_join(., moa.cnt, by = c("MOA.y" = "MOA")) %>% 
+  filter(Var1 != Var2) %>%
+  filter(n.x >= 6 & n.y >= 6) %>% 
+  group_by(MOA.x, MOA.y) %>% 
+  summarise(n.z = sum(value > 0.99)/n.x[1]/n.y[1]) %>%
+  arrange(-n.z) %>%
+  slice(1:k) %>%
+  ungroup() %>%
+  reshape2::acast(MOA.x ~ MOA.y, value.var = "n.z") %>%
+  reshape2::melt() %>%
+  mutate(value = ifelse(is.na(value), 0, value)) %>%
+  reshape2::acast(Var1 ~ Var2)
+
+all.names <- unique(c(rownames(moa.adj.mat), colnames(moa.adj.mat)))
+moa.adj.mat.rep <- matrix(0, length(all.names), length(all.names))
+rownames(moa.adj.mat.rep) <- all.names
+colnames(moa.adj.mat.rep) <- all.names
+moa.adj.mat.rep[rownames(moa.adj.mat), colnames(moa.adj.mat)] <- moa.adj.mat
+
+symmetrize <- function(a) {
+  u <- apply(rbind(a[lower.tri(a)], a[upper.tri(a)]), 2, max)
+  a[lower.tri(a)] <- u
+  a[upper.tri(a)] <- u
+  return(a)
+}
+
+moa.adj.mat.rep <- symmetrize(moa.adj.mat.rep)
+moa.adj.mat <- moa.adj.mat.rep
+
+gr <- graph_from_adjacency_matrix(moa.adj.mat, mode = "undirect", weighted = T)
+
+#l <- layout_with_lgl(gr)
+l <- layout_with_fr(gr)
+
+quartz(width = 20, height = 15)
+plot(gr, vertex.size = 2, edge.arrow.mode = 0, layout = l, vertex.frame.color = NA, vertex.label.cex = 1, edge.width = E(gr)$weight * 20)
+dev.print(device = pdf, "graph.pdf")
+
+```
+
 ```{r, eval=F}
 
 hcl <- hclust(as.dist(1 - cr), method = "average")
