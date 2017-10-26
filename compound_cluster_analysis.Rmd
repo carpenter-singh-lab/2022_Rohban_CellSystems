@@ -142,7 +142,7 @@ cr.melt %>%
 ```{r network view of data}
 
 library(igraph)
-k <- 2
+k <- 4
 
 sim_normalize <- function(sim_mat) {
   sim_mat_norm <- apply(sim_mat, 1, function(x) (ecdf(x)(x)))
