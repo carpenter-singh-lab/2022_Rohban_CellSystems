@@ -1,0 +1,75 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+rm(list = ls())
+library(dplyr)
+library(stringr)
+library(Rtsne)
+library(ggplot2)
+set.seed(12)
+
+cdrp.bio <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
+cdrp.DOS <- readRDS("../results/master/2017-04-20_425d653/Pf_DOS_new.rds")
+
+cdrp.all <- rbind(cdrp.bio, cdrp.DOS)
+
+feat.cols <- colnames(cdrp.all)
+feat.cols <- feat.cols[which(!str_detect(feat.cols, "Metadata"))]
+metadata.cols <- setdiff(colnames(cdrp.all), feat.cols)
+  
+Px <- cdrp.all %>%
+  group_by(Metadata_broad_sample, Metadata_Plate_Map_Name) %>%
+  summarise_at(.vars = feat.cols, .funs = "mean") %>%
+  ungroup() %>%
+  mutate(Metadata_Treatment = paste0(Metadata_broad_sample, ":", "Metadata_Plate_Map_Name"))
+
+metadata.cols <- c(metadata.cols, "Metadata_Treatment")
+
+```
+
+```{r}
+
+hits <- c("BRD-K26994486", "BRD-K91354313")
+
+has.hits <- function(x) {
+  any(str_detect(x, hits))  
+}
+
+has.hits <- Vectorize(has.hits)
+
+hits.canonical <- Px %>%
+  filter(has.hits(Metadata_broad_sample)) %>%
+  select(Metadata_broad_sample) %>%
+  as.matrix() %>% 
+  as.vector()
+  
+rownames(Px) <- Px$Metadata_broad_sample
+
+cr <- cor(Px %>% filter(Metadata_broad_sample %in% hits.canonical) %>% select(one_of(feat.cols)) %>% t %>% as.matrix(), Px[, feat.cols] %>% t %>% as.matrix())
+  
+rownames(cr) <- hits.canonical
+colnames(cr) <- Px$Metadata_broad_sample
+
+moa2 <- readr::read_csv("../input/CDP2/MOA_annot2.csv")
+moa2 <- moa2 %>% mutate(Name = ifelse(is.na(Name), CPD_NAME, Name))
+
+cr.melt <- cr %>%
+  reshape2::melt() %>%
+  arrange(-value) %>%
+  left_join(., moa2, by = c("Var2" = "Metadata_broad_sample")) %>%
+  select(-CPD_NAME) %>%
+  filter(!is.na(Name))
+
+cr.melt %>% 
+  group_by(Var1) %>%
+  slice(1:10) %>%
+  ungroup() %>%
+  arrange(Var1) %>%
+  htmlTable::htmlTable()
+
+```
+
