@@ -1,0 +1,228 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+rm(list = ls())
+
+library(cytominer)
+library(dplyr)
+library(stringr)
+library(doParallel)
+source("moa_evaluations.R")
+
+top.p <- 0.01
+
+cdrp <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
+feats <- colnames(cdrp)
+feats <- feats[which(!str_detect(feats, "Metadata_"))]
+
+brd.to.name <- readr::read_csv("../input/CDP2/cdrp.cpd.meta.csv")
+moa <- read.csv("../input/moas.txt", sep = "\t")
+
+moa <- moa %>% 
+  mutate(Name.cano = str_to_lower(Name)) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, "-", "")) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, " ", "")) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, "\\[", "")) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, "\\]", "")) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, "\\(", "")) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, "\\)", "")) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, "\\+", "")) 
+  
+cdrp.profiles <- cdrp %>% 
+  group_by(Metadata_broad_sample) %>%
+  summarise_at(.vars = feats, .funs = mean) %>%
+  mutate(Metadata_broad_id_trunc = str_sub(Metadata_broad_sample, 1, 13)) %>%
+  left_join(., brd.to.name, by = c("Metadata_broad_id_trunc" = "BROAD_CPD_ID")) %>% 
+  filter(CPD_NAME != "")
+  
+cdrp.profiles <- cdrp.profiles %>% 
+  mutate(Name.cano = str_to_lower(CPD_NAME)) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, "-", "")) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, " ", "")) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, "\\[", "")) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, "\\]", "")) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, "\\(", "")) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, "\\)", "")) %>%
+  mutate(Name.cano = str_replace_all(Name.cano, "\\+", "")) 
+
+moa2 <- readr::read_csv("../input/CDP2/MOA_annot2.csv")
+moa2 <- moa2 %>% mutate(Name = ifelse(is.na(Name), CPD_NAME, Name))
+
+cdrp.profiles <- cdrp.profiles %>%
+  left_join(., moa2, by = "Metadata_broad_sample") %>%
+  filter(!is.na(Name) & !is.na(MOA))
+
+cdrp.profiles <- cdrp.profiles %>% 
+  group_by(Metadata_broad_sample) %>%
+  slice(1) %>%
+  ungroup()
+
+rownames(cdrp.profiles) <- cdrp.profiles$Metadata_broad_sample
+
+single.cell <- readRDS("../results/master/2017-07-12_f947a2d1/CDRP_dmso_single_cell.rds")
+cl <- intersect(colnames(single.cell), feats)
+single.cell <- single.cell %>% select(one_of(cl))
+
+single.cell <- scale(single.cell)
+single.cell <- as.data.frame(single.cell)
+  
+```
+
+```{r}
+
+fts <- entropy_feature_selection(population = single.cell, variables = colnames(single.cell), n_feature = NCOL(single.cell))
+
+```
+
+```{r}
+
+evaluate_feat_set <- function(Px, feats, same.moa.df) {
+  top.p <- 0.01
+  
+  cr.melt <- Px %>%
+    select(one_of(feats)) %>%
+    t %>%
+    cor %>% 
+    reshape2::melt() %>%
+    cbind(., same.moa.df)
+  
+  cr.melt.sorted <- cr.melt %>% 
+    filter(as.character(Var1) < as.character(Var2)) %>%
+    arrange(-value)
+  
+  v11 <- cr.melt.sorted %>%
+    slice(1:round(n() * top.p)) %>%
+    filter(same.moa) %>%
+    NROW
+  
+  v12 <- cr.melt.sorted %>%
+    slice(1:round(n() * top.p)) %>%
+    filter(!same.moa) %>%
+    NROW
+  
+  v21 <- cr.melt.sorted %>%
+    slice((round(n() * top.p)+1):n()) %>%
+    filter(same.moa) %>%
+    NROW
+  
+  v22 <- cr.melt.sorted %>%
+    slice((round(n() * top.p)+1):n()) %>%
+    filter(!same.moa) %>%
+    NROW
+  
+  V <- rbind(c(v11, v12), c(v21, v22))
+  
+  fisher.test(V, alternative = "greater")
+}  
+
+gsea_plot <- function(Px, feats, same.moa.df) {
+
+  cr.melt <- Px %>%
+    select(one_of(feats)) %>%
+    t %>%
+    cor %>% 
+    reshape2::melt() %>%
+    cbind(., same.moa.df)
+  
+  cr.melt.sorted <- cr.melt %>% 
+    filter(as.character(Var1) < as.character(Var2)) %>%
+    arrange(-value)
+  
+  s1 <- sum(cr.melt.sorted$same.moa)
+  s2 <- sum(!cr.melt.sorted$same.moa)
+  
+  v <- as.numeric(cr.melt.sorted$same.moa)
+  v[which(v > 0)] <- 1/s1
+  v[which(v == 0)] <- -1/s2
+  gsea <- cumsum(v)
+  
+  return(gsea)
+}  
+
+```
+
+```{r}
+
+N <- 10
+
+Px <- cdrp.profiles
+
+same.moa <- function(x, y) {
+  if (is.na(x) || is.na(y) || x == "" || y == "") 
+    return(FALSE)
+  xs <- str_split(x, ", ")[[1]]
+  ys <- str_split(y, ", ")[[1]]
+  return(any(xs %in% ys) | any(ys %in% xs))
+}
+
+same.moa <- Vectorize(same.moa)
+
+same.moa.df <- Px %>%
+  select(one_of(feats)) %>%
+  t %>%
+  cor %>% 
+  reshape2::melt() %>%
+  left_join(., Px %>% 
+              select(Metadata_broad_sample, MOA), by = c("Var1" = "Metadata_broad_sample")) %>%
+  left_join(., Px %>% 
+              select(Metadata_broad_sample, MOA), by = c("Var2" = "Metadata_broad_sample")) %>%
+  mutate(same.moa = same.moa(MOA.x, MOA.y)) %>%
+  select(same.moa)
+  
+g1 <- gsea_plot(Px = Px, feats = feats, same.moa.df = same.moa.df)
+
+g2 <- gsea_plot(Px = Px, feats = fts$feats[fts$CE > 0], same.moa.df = same.moa.df)
+
+g3 <- NULL
+
+for (i in 1:N) {
+  gx <- gsea_plot(Px = Px, feats = sample(feats, sum(fts$CE > 0)), same.moa.df = same.moa.df)  
+  if (is.null(g3)) {
+    g3 <- gx
+  } else {
+    g3 <- g3 + gx
+  }
+}
+
+g3 <- g3 / N
+
+
+```
+
+```{r}
+
+library(ggplot2)
+
+g1 <- head(g1, round(0.05 * length(g1)))
+g2 <- head(g2, round(0.05 * length(g2)))
+g3 <- head(g3, round(0.05 * length(g3)))
+  
+df.1 <- data.frame(GSEA = g1) %>%
+  mutate(index = 1:length(g1)) %>%
+  mutate(method = "All the features") 
+  
+df.2 <- data.frame(GSEA = g2) %>%
+  mutate(index = 1:length(g2)) %>%
+  mutate(method = "SR-SVD") 
+
+df.3 <- data.frame(GSEA = g3) %>%
+  mutate(index = 1:length(g3)) %>%
+  mutate(method = "random of size as in SR-SVD") 
+
+df <- rbind(df.1, df.2, df.3)
+
+g <- ggplot(df, aes(x = index, y = GSEA, color = method)) + 
+  geom_line() +
+  xlab("index of sorted conn.") + 
+  ylab("enrichment score")
+
+g
+
+ggsave("CDRP_eval.png", g)
+
+```
+
