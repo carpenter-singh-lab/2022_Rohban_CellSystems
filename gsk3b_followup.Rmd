@@ -64,11 +64,73 @@ cr.melt <- cr %>%
   select(-CPD_NAME) %>%
   filter(!is.na(Name))
 
-cr.melt %>% 
+x <- cr.melt %>% 
   group_by(Var1) %>%
   slice(1:10) %>%
   ungroup() %>%
-  arrange(Var1) %>%
+  arrange(Var1) 
+
+x %>%
+  htmlTable::htmlTable()
+
+cmpd.matches <- x %>%
+  select(Var2) %>%
+  as.matrix() %>%
+  as.vector() 
+
+```
+
+```{r}
+
+gene.matches <- c("BRD-K59184148-001-10-9", "BRD-K93051667-001-01-8", "BRD-K68303333-001-01-8", "BRD-K84480302-001-01-1", "BRD-K68074655-001-01-5", "BRD-K80298065-001-01-8", "BRD-K87264606-001-01-9", "BRD-K99195544-001-01-6", "BRD-A62505706-001-02-3", "BRD-K04407772-001-01-2", "BRD-K26994486-001-01-0", "BRD-K50710722-001-01-3", "BRD-K88156935-001-01-8", "BRD-K91354313-001-01-6", "BRD-K54148510-001-01-8")
+
+Px.sub <- Px %>%
+  filter(Metadata_broad_sample %in% gene.matches)
+
+cr.sub <- Px.sub %>% 
+  select(one_of(feat.cols)) %>%
+  t %>%
+  cor 
+  
+y <- Rtsne::Rtsne(Px %>% select(one_of(feat.cols)), perplexity = 20)
+  
+z <- as.data.frame(y$Y)
+
+z <- cbind(z, Px %>% select(Metadata_broad_sample)) %>%
+  filter(Metadata_broad_sample %in% gene.matches) %>%
+  mutate(compound =  ifelse(Metadata_broad_sample == "BRD-K59184148-001-10-9",
+                            "SB-216763", 
+                            ifelse(str_detect(Metadata_broad_sample, hits[1]), hits[1], 
+                                   ifelse(str_detect(Metadata_broad_sample, hits[2]), hits[2],
+                                          "other compound matches")))) %>%
+  mutate(size = 2) %>%
+  mutate(Metadata_broad_sample = str_sub(Metadata_broad_sample, 1, 13))
+
+g <- ggplot(z, aes(x = V1, y = V2, colour = compound, label = Metadata_broad_sample)) +
+  geom_text_repel(size = 3.5, segment.size = 0) 
+
+ggsave("tsne_gsk3_matches.png", g, width = 12, height = 10)
+
+```
+
+```{r}
+
+cr.cmpd.gene <- readRDS("../results/master/2017-10-11_7d18c89d/cr_melt_cp.rds")
+
+cmpd <- hits[1]
+cr.cmpd.gene %>% 
+  filter(str_detect(Var1, cmpd)) %>%
+  arrange(value) %>%
+  head %>%
+  mutate(value = round(value, 2)) %>%
+  htmlTable::htmlTable()
+
+cmpd <- hits[2]
+cr.cmpd.gene %>% 
+  filter(str_detect(Var1, cmpd)) %>%
+  arrange(value) %>%
+  head %>%
+  mutate(value = round(value, 2)) %>%
   htmlTable::htmlTable()
 
 ```
