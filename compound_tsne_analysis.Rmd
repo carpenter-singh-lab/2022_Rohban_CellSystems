@@ -1,0 +1,88 @@
+---
+title: "Running tsne analysis on the profiles"
+output: html_document
+---
+
+```{r setup}
+
+rm(list = ls())
+library(dplyr)
+library(stringr)
+library(Rtsne)
+library(ggplot2)
+set.seed(12)
+
+cdrp.bio <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
+cdrp.DOS <- readRDS("../results/master/2017-04-20_425d653/Pf_DOS_new.rds")
+
+cdrp.all <- rbind(cdrp.bio, cdrp.DOS)
+
+feat.cols <- colnames(cdrp.all)
+feat.cols <- feat.cols[which(!str_detect(feat.cols, "Metadata"))]
+metadata.cols <- setdiff(colnames(cdrp.all), feat.cols)
+  
+Px <- cdrp.all %>%
+  group_by(Metadata_broad_sample, Metadata_Plate_Map_Name) %>%
+  summarise_at(.vars = feat.cols, .funs = "mean") %>%
+  ungroup() %>%
+  mutate(Metadata_Treatment = paste0(Metadata_broad_sample, ":", "Metadata_Plate_Map_Name"))
+
+metadata.cols <- c(metadata.cols, "Metadata_Treatment")
+
+```
+
+```{r running tsne analysis}
+
+ts <- Rtsne::Rtsne(Px[, feat.cols], dims = 2, perplexity = 20)
+
+```
+
+```{r visualizing the results}
+
+moa2 <- readr::read_csv("../input/CDP2/MOA_annot2.csv") %>%
+  group_by(Metadata_broad_sample) %>%
+  slice(1) %>%
+  ungroup()
+
+m <- moa2 %>% group_by(MOA) %>% tally() %>% filter(n >= 6 & !is.na(MOA)) %>% select(MOA) %>% as.matrix() %>% as.vector()
+
+df <- ts$Y %>% 
+  as.data.frame() %>%
+  mutate(Metadata_broad_sample = Px$Metadata_broad_sample) %>%
+  left_join(., moa2, by = "Metadata_broad_sample") %>%
+  left_join(., cdrp.all %>% select(Metadata_broad_sample, Metadata_Plate_Map_Name), by = "Metadata_broad_sample")
+
+df.dos <- df %>% filter(!str_detect(Metadata_Plate_Map_Name, "H-BIO")) %>%
+  unique()
+
+df <- df %>% filter(str_detect(Metadata_Plate_Map_Name, "H-BIO")) %>%
+  filter(MOA %in% m) %>%
+  unique()
+
+ds <- dist(df[, c("V1", "V2")]) %>% as.matrix()
+colnames(ds) <- df$Metadata_broad_sample
+rownames(ds) <- df$Metadata_broad_sample
+
+k <- 20
+cmpd.size <- apply(ds, 2, function(x) colnames(ds)[order(x, decreasing = F)[2:(k+1)]]) %>% 
+  t %>% 
+  reshape2::melt() %>%
+  select(-Var2) %>%
+  rename(cmpd1 = Var1, cmpd2 = value) %>%
+  left_join(., moa2, by = c("cmpd1" = "Metadata_broad_sample")) %>%
+  left_join(., moa2, by = c("cmpd2" = "Metadata_broad_sample")) %>%
+  group_by(cmpd1) %>%
+  summarise(n = sum(MOA.x == MOA.y))
+
+df <- df %>%
+  left_join(., cmpd.size, by = c("Metadata_broad_sample" = "cmpd1")) %>%
+  mutate(n = n^1.5 + 0.5) %>%
+  mutate(MOA = as.factor(MOA))
+
+g <- ggplot() + scale_colour_manual(values = colorRampPalette(RColorBrewer::brewer.pal(9, "Set1"))(length(m))) + geom_point(data = df.dos, aes(x = V1, y = V2, size = 0.01, alpha = 0.01), color = "gray") +
+geom_point(data = df, aes(x = V1, y = V2, colour = MOA, size = n)) + guides(size = F, alpha = F) 
+
+ggsave("MOA_overlay.png", g, width = 15, height = 10)
+
+```
+
