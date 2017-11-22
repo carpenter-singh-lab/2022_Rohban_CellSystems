@@ -30,6 +30,11 @@ moa2 <- moa2 %>%
   mutate(CPD_NAME = str_to_lower(CPD_NAME)) %>%
   mutate(CPD_NAME = ifelse(str_sub(CPD_NAME, 1, 4) == "brd-", Metadata_broad_sample, CPD_NAME))
 
+moa2 <- moa2 %>% 
+  group_by(Name) %>%
+  slice(1) %>%
+  ungroup()
+
 pthw <- Pf_org$data %>%
   select(Gene, Pathway) %>%
   unique %>%
@@ -39,6 +44,125 @@ gene.compound.cr <- gene.compound.cr %>%
   left_join(., moa2, by = c("Var1" = "CPD_NAME")) %>%
   left_join(., pthw, by = c("Var2" = "Gene")) %>%
   mutate(valid = valid.pair(Var2, Target))
+
+```
+
+```{r}
+
+vls <- gene.compound.cr %>% 
+  filter(!is.na(Target)) %>%
+  arrange(-abs(value)) %>%
+  select(valid) %>%
+  as.matrix() %>%
+  as.vector()
+
+pos.avg <- sum(vls)/sum(vls != 0)
+zr <- which(vls == 0)
+nzr <- which(vls != 0)
+
+hash.marks <- vls
+vls[zr] <- -1/length(zr)
+vls[nzr] <- vls[nzr]/length(nzr)/pos.avg
+
+cs <- cumsum(vls)
+
+plot(cs, type = "l")
+
+```
+
+```{r}
+
+valid.pair2 <- function(targets, gene) {
+  gene %in% (str_split(targets, ", ")[[1]])
+}
+
+valid.pair2 <- Vectorize(valid.pair2)
+
+gene.compound.cr.precise <- gene.compound.cr %>%
+  mutate(valid2 = valid.pair2(Target, Var2)) 
+  #mutate(valid2 = (valid >= 8 | valid.pair2(Target, Var2))) 
+
+```
+
+```{r}
+
+thr <- 0.35
+
+s11 <- gene.compound.cr.precise %>%
+  filter(abs(value) >= thr & valid2) 
+
+s12 <- gene.compound.cr.precise %>%
+  filter(abs(value) < thr & valid2) 
+
+s21 <- gene.compound.cr.precise %>%
+  filter(abs(value) >= thr & !valid2)
+
+s22 <- gene.compound.cr.precise %>%
+  filter(abs(value) < thr & !valid2) 
+    
+  
+V <- rbind(c(s11 %>% NROW, s12 %>% NROW), c(s21 %>% NROW, s22 %>% NROW))
+fisher.test(V, alternative = "greater")
+
+s11 %>% htmlTable::htmlTable()
+V %>% htmlTable::htmlTable()
+
+```
+
+```{r}
+
+library(igraph)
+
+coeff <- 1.5
+
+adj.mat <- s11 %>% 
+  mutate(value = ifelse(value > 0, 2, ifelse(value < 0, 1, 0))) %>% 
+  reshape2::acast(Name ~ Var2, fill = 0) 
+
+org.adj.mat <- adj.mat 
+
+mt1 <- matrix(0, NROW(adj.mat), NROW(adj.mat))
+rownames(mt1) <- rownames(adj.mat)
+colnames(mt1) <- rownames(adj.mat)
+
+mt2 <- matrix(0, NCOL(adj.mat), NCOL(adj.mat))
+rownames(mt2) <- colnames(adj.mat)
+colnames(mt2) <- colnames(adj.mat)
+
+cls <- c(rep("black", NROW(mt1)),
+         rep("dark green", NROW(mt2)))
+
+vertex.shape <- c(rep("none", NROW(mt1)),
+         rep("none", NROW(mt2)))
+
+vertex.size <- coeff * c(rep(10, NROW(mt1)),
+         rep(10, NROW(mt2)))
+
+vertex.size2 <- coeff * c(rep(4, NROW(mt1)),
+         rep(4, NROW(mt2)))
+
+vertex.label.cex = coeff * c(rep(1, NROW(mt1)),
+         rep(1.2, NROW(mt2)))
+
+adj.mat <- cbind(mt1, adj.mat)
+adj.mat <- rbind(adj.mat, cbind(t(org.adj.mat), mt2))
+
+g <- igraph::graph.adjacency(adj.mat, mode = "undirected", weighted = T)
+
+E(g)$color <- ifelse(E(g)$weight == 1, "red", "blue")
+
+graphics.off()
+quartz(width = 20, height = 15)
+
+plot(g, 
+     vertex.size = vertex.size,
+     vertex.size2 = vertex.size2, 
+     vertex.label.cex = vertex.label.cex, 
+     vertex.shape = vertex.shape, 
+     curved = T, vertex.label.color = cls, 
+     asp = 15/20)
+
+dev.print(device = pdf, "hit_graph.pdf")
 
 ```
 
