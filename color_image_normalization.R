@@ -24,14 +24,33 @@ rescale.image <- function(fl.path) {
   return(x)
 }
 
-dir.path <- "../results/manual/toxic_phenotypes"
+dir.path <- "../results/manual/misc/gene"
 
 lst <- list.dirs(dir.path)
 
 for (lsti in lst[2:length(lst)]) {
-  fl.path <- paste0(lsti, "/",  "combined.png")
+  img.list <- list.files(lsti)
+  img.list <- img.list[which(str_detect(img.list, ".tif"))]
   
-  x <- rescale.image(fl.path)
+  img.coll <- foreach (img.fl = img.list) %do% {
+    img <- EBImage::readImage(paste0(lsti, "/", img.fl))
+    img <- EBImage::channel(img, "rgb")
+    q01 <- quantile(img[,,1], 0.01)
+    q99 <- quantile(img[,,1], 0.99)
+    img[img < q01] <- q01
+    img[img > q99] <- q99
+    
+    img <- (img - q01)/q99
+    img
+  }
+  
+  x <- 0 * img.coll[[1]]
+  
+  x[,,1] <- img.coll[[2]][,,1] * 0.7 + img.coll[[3]][,,1] * 0.2 + img.coll[[4]][,,1] * 0.1 + img.coll[[5]][,,1] * 0.1
+  x[,,2] <- img.coll[[2]][,,1] * 0.1 + img.coll[[3]][,,1] * 0.1 + img.coll[[4]][,,1] * 0.2 + img.coll[[5]][,,1] * 0.7
+  x[,,3] <- img.coll[[1]][,,1] * 1
+    
+  fl.path <- paste0(lsti, "/",  "combined.png")
   
   EBImage::writeImage(x, fl.path)
 }
