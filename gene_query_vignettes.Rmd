@@ -49,6 +49,8 @@ gene.compound.cr <- gene.compound.cr %>%
 
 ```{r}
 
+library(ggplot2)
+
 vls <- gene.compound.cr %>% 
   filter(!is.na(Target)) %>%
   arrange(-abs(value)) %>%
@@ -72,6 +74,9 @@ plot(cs, type = "l")
 
 ```{r}
 
+library(grid)
+library(gridExtra)
+
 valid.pair2 <- function(targets, gene) {
   gene %in% (str_split(targets, ", ")[[1]])
 }
@@ -79,8 +84,47 @@ valid.pair2 <- function(targets, gene) {
 valid.pair2 <- Vectorize(valid.pair2)
 
 gene.compound.cr.precise <- gene.compound.cr %>%
-  mutate(valid2 = valid.pair2(Target, Var2)) 
-  #mutate(valid2 = (valid >= 8 | valid.pair2(Target, Var2))) 
+  #mutate(valid2 = valid.pair2(Target, Var2)) 
+  mutate(valid2 = (valid >= 8 | valid.pair2(Target, Var2))) 
+
+
+vls <- gene.compound.cr.precise %>% 
+  arrange(-abs(value)) %>%
+  select(valid2) %>%
+  as.matrix() %>%
+  as.vector()
+
+indx <- which(vls)
+
+zr <- which(vls == 0)
+nzr <- which(vls != 0)
+vls[zr] <- -1/length(zr)
+vls[nzr] <- vls[nzr]/length(nzr)
+cs <- cumsum(vls)
+ 
+g2 <- ggplot(data.frame(x = 1:length(cs), y = cs), aes(x = x, y = y)) + geom_line() + xlab("sorted index of gene-compound connections") + ylab("enrichment")
+
+g <- ggplot() 
+
+for (i in indx) {
+    g <- g + geom_vline(xintercept = i)  
+}
+
+g <- g + xlab("") + theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+g1 <- ggplot_gtable(ggplot_build(g))
+g2 <- ggplot_gtable(ggplot_build(g2)) 
+maxWidth <- unit.pmax(g1$widths[2:3], g2$widths[2:3])
+g1$widths[2:3] <- maxWidth
+g2$widths[2:3] <- maxWidth
+
+graphics.off()
+quartz(width = 12, height = 8)
+grid.arrange(g2, g1, heights = c(1.33, 0.3))
+
+dev.print(device = pdf, "enrichment.pdf")
 
 ```
 
