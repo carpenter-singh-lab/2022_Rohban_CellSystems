@@ -84,8 +84,8 @@ valid.pair2 <- function(targets, gene) {
 valid.pair2 <- Vectorize(valid.pair2)
 
 gene.compound.cr.precise <- gene.compound.cr %>%
-  #mutate(valid2 = valid.pair2(Target, Var2)) 
-  mutate(valid2 = (valid >= 8 | valid.pair2(Target, Var2))) 
+  mutate(valid2 = valid.pair2(Target, Var2)) 
+  #mutate(valid2 = (valid >= 8 | valid.pair2(Target, Var2))) 
 
 
 vls <- gene.compound.cr.precise %>% 
@@ -125,6 +125,27 @@ quartz(width = 12, height = 8)
 grid.arrange(g2, g1, heights = c(1.33, 0.3))
 
 dev.print(device = pdf, "enrichment.pdf")
+
+```
+
+```{r}
+
+v11 <- gene.compound.cr.precise %>% filter(abs(value) >= 0.35) %>% select(valid2) %>% as.matrix() %>% as.vector() %>% sum()
+
+v12 <- gene.compound.cr.precise %>% filter(abs(value) < 0.35) %>% select(valid2) %>% as.matrix() %>% as.vector() %>% sum()
+
+v21 <- gene.compound.cr.precise %>% filter(abs(value) >= 0.35) %>% select(valid2) %>% mutate(valid2 = ! valid2) %>% as.matrix() %>% as.vector() %>% sum()
+
+v22 <- gene.compound.cr.precise %>% filter(abs(value) < 0.35) %>% select(valid2) %>% mutate(valid2 = ! valid2) %>% as.matrix() %>% as.vector() %>% sum()
+
+V <- rbind(c(v11, v12), c(v21, v22))
+
+rownames(V) <- c("validated pairs", "non-validated pairs")
+colnames(V) <- c("abs corr. >= 0.35", "abs corr. < 0.35")
+
+V %>% htmlTable::htmlTable() %>% print
+
+fisher.test(V, alternative = "greater")
 
 ```
 
