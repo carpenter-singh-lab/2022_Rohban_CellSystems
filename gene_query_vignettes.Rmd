@@ -1,7 +1,3 @@
----
-title: "R Notebook"
-output: html_notebook
----
 
 ```{r read data}
 
@@ -83,9 +79,14 @@ valid.pair2 <- function(targets, gene) {
 
 valid.pair2 <- Vectorize(valid.pair2)
 
+valid.sum <- gene.compound.cr %>% 
+  group_by(Var2) %>% 
+  summarise(valid.sum = sum(valid)) %>% 
+  arrange(-valid.sum)
+
 gene.compound.cr.precise <- gene.compound.cr %>%
-  mutate(valid2 = valid.pair2(Target, Var2)) 
-  #mutate(valid2 = (valid >= 8 | valid.pair2(Target, Var2))) 
+  left_join(., valid.sum, by = "Var2") %>%
+  mutate(valid2 = (valid.sum != 0 & valid/valid.sum >= 0.05 | valid.pair2(Target, Var2))) 
 
 
 vls <- gene.compound.cr.precise %>% 
@@ -234,10 +235,12 @@ dev.print(device = pdf, "hit_graph.pdf")
 ```{r}
 
 k <- 30
-N <- 10000
+N <- 1000
 n <- 10
 permute <- F
-
+.gene <- gene.compound.cr %>% select(Var2) %>% unique %>% as.matrix() %>% as.vector()
+gene.compound.cr <- gene.compound.cr.precise
+  
 if (permute) {
   .cr <- gene.compound.cr %>% 
     group_by(Var1, Var2) %>% 
@@ -269,14 +272,15 @@ gene.compound.cr.pr <- gene.compound.cr.pr %>%
   filter(!is.na(Target))
 
 matching.score <- function(gene.x, top.k, N, n) {
-  sg.v <- gene.compound.cr.pr %>% filter(Var2 == gene.x) %>% slice(1:top.k) %>% select(valid) %>% as.matrix() %>% as.vector() 
-  sg <- sum(sg.v)
+  sg.v <- gene.compound.cr.pr %>% filter(Var2 == gene.x) %>% slice(1:top.k) 
+  sg <- sg.v %>% filter(valid2) %>% NROW
   
   cr.rem <- gene.compound.cr.pr %>% filter(Var2 == gene.x) %>% slice((top.k + 1):n())
   
   p.val <- foreach (j = 1:n, .combine = rbind) %do% {
     nl <- foreach (i = 1:N) %dopar% {
-       cr.rem %>% sample_n(length(sg.v)) %>% select(valid) %>% as.matrix() %>% as.vector() %>% sum
+       r <- cr.rem %>% sample_n(NROW(sg.v)) %>% filter(valid2) %>% NROW
+       r
     }
     
     nl <- unlist(nl)
@@ -298,6 +302,8 @@ data.frame(gene = .gene, p.value = p.vals) %>%
   mutate(p.value = p.adjust(p.value, "BH")) %>%
   arrange(p.value) %>%
   htmlTable::htmlTable()
+
+save.image("workspace.RData")
 
 ```
 
