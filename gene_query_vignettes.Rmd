@@ -14,9 +14,11 @@ doParallel::registerDoParallel(cores = 4)
 source("validate_compound_conn.R")
 valid.pair <- Vectorize(valid.pair)
 
+soft.req <- T
+
 load("../input/TA/Initial_analysis_workspace_new.RData")
 gene.compound.cr <- readRDS("../results/master/2017-05-02_9796dc34/cr_melt_cp.rds")
-moa2 <- readr::read_csv("../input/CDP2/MOA_annot2.csv")
+moa2 <- readr::read_csv("../input/CDP2/MOA_annot2_hand_edited.csv")
 
 ```
 
@@ -39,8 +41,8 @@ pthw <- Pf_org$data %>%
 gene.compound.cr <- gene.compound.cr %>%
   left_join(., moa2, by = c("Var1" = "CPD_NAME")) %>%
   left_join(., pthw, by = c("Var2" = "Gene")) %>%
-  mutate(valid = valid.pair(Var2, Target))
-
+  mutate(valid = valid.pair(Var2, Target)) 
+  
 ```
 
 ```{r}
@@ -86,7 +88,7 @@ valid.sum <- gene.compound.cr %>%
 
 gene.compound.cr.precise <- gene.compound.cr %>%
   left_join(., valid.sum, by = "Var2") %>%
-  mutate(valid2 = (valid.sum != 0 & valid/valid.sum >= 0.05 | valid.pair2(Target, Var2))) 
+  mutate(valid2 = (valid.sum != 0 & valid/valid.sum >= 0.05 & soft.req | valid.pair2(Target, Var2))) 
 
 
 vls <- gene.compound.cr.precise %>% 
