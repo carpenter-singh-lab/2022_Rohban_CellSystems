@@ -146,7 +146,7 @@ V <- rbind(c(v11, v12), c(v21, v22))
 rownames(V) <- c("validated pairs", "non-validated pairs")
 colnames(V) <- c("abs corr. >= 0.35", "abs corr. < 0.35")
 
-V %>% htmlTable::htmlTable() %>% print
+V %>% t %>% htmlTable::htmlTable() %>% print
 
 fisher.test(V, alternative = "greater")
 
@@ -234,7 +234,7 @@ dev.print(device = pdf, "hit_graph.pdf")
 
 ```
 
-```{r}
+```{r, drug disc.}
 
 k <- 30
 N <- 1000
@@ -305,7 +305,81 @@ data.frame(gene = .gene, p.value = p.vals) %>%
   arrange(p.value) %>%
   htmlTable::htmlTable()
 
-save.image("workspace.RData")
+save.image("workspace_drugDisc.RData")
 
 ```
 
+```{r, MOA pred}
+
+k <- 2
+N <- 1000
+n <- 10
+permute <- F
+.compound <- gene.compound.cr %>% select(Var1) %>% unique %>% as.matrix() %>% as.vector()
+gene.compound.cr <- gene.compound.cr.precise
+  
+if (permute) {
+  .cr <- gene.compound.cr %>% 
+    group_by(Var1, Var2) %>% 
+    summarise(value = max(value, na.rm = T)) %>%
+    select(Var1, Var2, value) %>%
+    reshape2::acast(Var1 ~ Var2)
+  
+  rn <- rownames(.cr) 
+  cn <- colnames(.cr) 
+  
+  while(T) {
+    cn.pr <- sample(cn, size = length(cn))
+    if (all(cn.pr != cn)) {
+      break
+    }
+  }
+    
+  colnames(.cr) <- cn.pr
+  
+  gene.compound.cr.pr <- .cr %>%
+    reshape2::melt() %>%
+    left_join(., gene.compound.cr %>% select(-value), by = c("Var1", "Var2")) 
+} else {
+  gene.compound.cr.pr <- gene.compound.cr
+}
+
+gene.compound.cr.pr <- gene.compound.cr.pr %>% 
+  arrange(-abs(value)) %>%
+  filter(!is.na(Target))
+
+matching.score <- function(compound.x, top.k, N, n) {
+  sg.v <- gene.compound.cr.pr %>% filter(Var1 == compound.x) %>% slice(1:top.k) 
+  sg <- sg.v %>% filter(valid2) %>% NROW
+  
+  cr.rem <- gene.compound.cr.pr %>% filter(Var1 == compound.x) %>% slice((top.k + 1):n())
+  
+  p.val <- foreach (j = 1:n, .combine = rbind) %do% {
+    nl <- foreach (i = 1:N) %dopar% {
+       r <- cr.rem %>% sample_n(NROW(sg.v)) %>% filter(valid2) %>% NROW
+       r
+    }
+    
+    nl <- unlist(nl)
+    if (max(nl) == 0) {
+      return(1)
+    }
+    return(1 - ecdf(nl)(sg))
+  }
+  
+  mean(p.val)
+}
+
+p.vals <- pblapply(.compound, function(x) matching.score(x, top.k = k, N, n)) %>% unlist 
+
+compound.blacklist <- gene.compound.cr %>% group_by(Var1) %>% summarise(x = sum(valid2)) %>% filter(x == 0) %>% select(Var1) %>% as.matrix() %>% as.vector()
+
+data.frame(compound = .compound, p.value = p.vals) %>%
+  filter(!compound %in% compound.blacklist) %>% 
+  mutate(p.value = p.adjust(p.value, "BH")) %>%
+  arrange(p.value) %>%
+  htmlTable::htmlTable()
+
+save.image("workspace_MOApred.RData")
+
+```
