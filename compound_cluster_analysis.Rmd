@@ -137,6 +137,11 @@ cr.melt %>%
   arrange(-n) %>%
   htmlTable::htmlTable()
 
+rownames(V) <- c("top 1% connections", "the remainder of connections")
+colnames(V) <- c("share a common MOA", "have distinct MOAs")
+
+V %>% htmlTable::htmlTable()
+
 ```
 
 ```{r network view of data}
