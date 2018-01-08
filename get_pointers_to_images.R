@@ -4,7 +4,7 @@ gc()
 library(dplyr)
 library(stringr)
 
-brds <- c("BRD-K54330070-001-05-5")
+brds <- c("BRD-A37704979-001-02-4")
 pert.type <- "compound"
 #brd <- adown
 # find . -name "combined.png" -exec rm -rf {} \;

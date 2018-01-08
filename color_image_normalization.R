@@ -24,7 +24,7 @@ rescale.image <- function(fl.path) {
   return(x)
 }
 
-dir.path <- "../results/manual/misc/gene"
+dir.path <- "../results/manual/misc/compound"
 
 lst <- list.dirs(dir.path)
 
