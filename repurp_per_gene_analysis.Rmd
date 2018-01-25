@@ -19,7 +19,7 @@ use.repurp.annots <- F
 permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
 LUAD <- F
-LUAD.mut <- T
+LUAD.mut <- F
 only.GOF <- F
 
 base.dir <- "2016-07-20_90b7bb86"
@@ -199,41 +199,24 @@ cr.comp %>% dplyr::arrange(value) %>% head(., 200) %>% dplyr::mutate(value = rou
 ```{r Find the correlation matrix, eval=T}
 
 cr.melt.all <- c()
-cmpd.all <- Pf.cmpd$data$Metadata_pert_iname %>% unique()
-cr <- outer(rep(0, length(cmpd.all)), rep(0, NROW(Pf.gene$data)), "*")
-rownames(cr) <- cmpd.all
+Pf.cmpd$data <- Pf.cmpd$data %>%
+  arrange(abs(Metadata_pert_idose - 10)) %>%
+  group_by(Metadata_pert_iname) %>%
+  slice(1) %>%
+  ungroup()
+
+x <- Pf.cmpd$data[,Pf.cmpd$feat_cols]
+y <- Pf.gene$data[,Pf.gene$feat_cols]
+
+cr <- cor(x %>% t, y %>% t, method = corr.type) 
+rownames(cr) <- Pf.cmpd$data$Metadata_pert_iname
 colnames(cr) <- Pf.gene$data$Treatment
 
-for (i in 1:6) {
-  d <- Pf.cmpd$data %>% dplyr::group_by(Metadata_pert_iname) %>% dplyr::slice(i) %>% dplyr::ungroup()
-  
-  x <- d[,Pf.cmpd$feat_cols]
-  y <- Pf.gene$data[,Pf.gene$feat_cols]
-  
-  cri <- cor(x %>% t, y %>% t, method = corr.type) 
-  rownames(cri) <- d$Metadata_pert_iname
-  colnames(cri) <- Pf.gene$data$Treatment
-  
-  crj <- cr * NA
-  crj[rownames(cri), colnames(cri)] <- cri 
-  
-  if (is.null(cr.melt.all)) {
-    cr.melt.all <- crj %>% melt
-  } else {
-    cr.melt <- crj %>% melt
-    cr.melt.all <- cbind(cr.melt.all, cr.melt[,3])
-  }
-}
-
-#v1 <- apply(cr.melt.all, 1, function(x) (quantile(x[3:NCOL(cr.melt.all)] %>% as.numeric(), 0.75, na.rm = T) %>% as.matrix() %>% as.vector))
-#v2 <- apply(cr.melt.all, 1, function(x) (quantile(x[3:NCOL(cr.melt.all)] %>% as.numeric(), 0.25, na.rm = T) %>% as.matrix() %>% as.vector))
-v1 <- apply(cr.melt.all, 1, function(x) (max(x[3:NCOL(cr.melt.all)] %>% as.numeric(), na.rm = T) %>% as.matrix() %>% as.vector))
-v2 <- apply(cr.melt.all, 1, function(x) (min(x[3:NCOL(cr.melt.all)] %>% as.numeric(), na.rm = T) %>% as.matrix() %>% as.vector))
-
-v3 <- apply(cbind(abs(v1), abs(v2)), 1, function(x) max(x, na.rm = T) * c(1, -1)[which.max(x)])
 cr.melt <- melt(cr)
-cr.melt[,3] <- v3
-cr.melt %>% dplyr::group_by(Var1, Var2) %>% dplyr::summarise(value = mean(value)) %>% head
+d <- readRDS("../input/repurp/2016_04_01_a549_48hr_batch1_normalized.rds")
+
+cr.melt <- cr.melt %>% 
+  left_join(d %>% select(Metadata_pert_iname, Metadata_moa) %>% unique, by = c("Var1" = "Metadata_pert_iname")) 
 
 ```
 
