@@ -3,7 +3,7 @@ rm(list = ls())
 library(dplyr)
 library(stringr)
 
-load("../results/master/2017-10-19_83a6e59e/gene_query_vignettes.RData")
+load("../results/master/2017-12-06_9bc9b5ae_good/workspace.RData")
 
 sign.chr <- Vectorize(function(x) ifelse(x > 0, "+", "-"))
 hist.chr <- Vectorize(function(x) {
@@ -43,4 +43,15 @@ data.frame(gene = .gene, p.value = p.vals) %>%
   rename(adjusted.p.value = p.value) %>%
   left_join(., cmpd.annot, by = c("gene" = "Var2")) %>%
   rename(Gene = gene, Gene.Pathway = Pathway, Compound.Name = Name) %>%
+  htmlTable::htmlTable()
+
+data.frame(gene = .gene, p.value = p.vals) %>%
+  filter(!gene %in% gene.blacklist) %>% 
+  left_join(., Pf_org$data %>% 
+              select(Gene, Pathway) %>% 
+              unique, by = c("gene" = "Gene")) %>%
+  mutate(p.value = round(p.adjust(p.value, "BH"), 4)) %>%
+  arrange(p.value) %>%
+  rename(Gene = gene) %>%
+  select(Gene, Pathway, p.value) %>%
   htmlTable::htmlTable()
