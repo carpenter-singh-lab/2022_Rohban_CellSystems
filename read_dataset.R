@@ -32,7 +32,7 @@ read.dataset.single.cell.dmso <- function(data.set.name) {
   return(Pf)
 }
   
-read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10, standardize.well = T) {
+read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10, standardize.well = T, brd.subset = NULL) {
   if (data.set.name == "BBBC022") {
     load("../input/Gustafsdottir/Initial_analysis.RData")
     Pf.full.plate.norm$data %<>% filter(Image_Metadata_BROAD_ID != "" | 
@@ -103,10 +103,21 @@ read.dataset <- function(data.set.name, just.bioactives = T, dose.closest = 10, 
   } else if (data.set.name == "CDRP") {
     if (just.bioactives) {
       Pf <- readRDS("../results/master/2017-06-26_5b0bbf7c/Pf_bio_new.rds")
+      if (!is.null(brd.subset)) {
+        Pf <- Pf %>% filter(Metadata_broad_sample %in% brd.subset)
+      }
     } else {
       Pf.1 <- readRDS("../results/master/2017-06-26_5b0bbf7c/Pf_bio_new.rds")
+      if (!is.null(brd.subset)) {
+        Pf.1 <- Pf.1 %>% filter(Metadata_broad_sample %in% brd.subset)
+      }
+      
       Pf.2 <- readRDS("../results/master/2017-06-26_5b0bbf7c/Pf_DOS_new.rds")
-      Pf <- rbind(Pf.1, Pf.2)
+      if (!is.null(brd.subset)) {
+        Pf.2 <- Pf.2 %>% filter(Metadata_broad_sample %in% brd.subset)
+      }
+      
+      Pf <- Pf.1 %>% dplyr::bind_rows(Pf.2)
     }    
     
     Pf %<>% dplyr::filter(Metadata_broad_sample != "DMSO" | 
