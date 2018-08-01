@@ -5,8 +5,8 @@ library(dplyr)
 library(stringr)
 library(ggplot2)
 
-#res.all <- readRDS("../results/master/2017-05-31_c813eb9f/gene_compound_all.rds") ## bioactives
-res.all <- readRDS("../results/master/2017-09-16_e1d600ab/gene_compound_all.rds") ## all
+res.all <- readRDS("../results/master/2017-05-31_c813eb9f/gene_compound_all.rds") ## bioactives
+#res.all <- readRDS("../results/master/2017-05-17_e971110f/gene_compound_all.rds") ## all
 
 split <- function(x, i) {
   str_split(x, "_")[[1]][i]  

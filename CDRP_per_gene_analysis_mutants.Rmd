@@ -330,17 +330,6 @@ cat(sprintf("Total sig. clusters %d", (sm.avg)/n.run))
 
 ```
 
-```{r}
-
-cr <- cor(Pf.cmpd$data[,Pf.cmpd$feat_cols] %>% t, Pf.gene$data[,Pf.gene$feat_cols] %>% t)
-rownames(cr) <- Pf.cmpd$data$Metadata_broad_sample
-colnames(cr) <- Pf.gene$data$Treatment
-cr.melt <- melt(cr)
-saveRDS(cr.melt, "cr_melt_cp_canon.rds")
-
-
-```
-
 ```{r Find the correlation matrix, eval=T}
 
 cr <- cor(Pf.cmpd$data[,Pf.cmpd$feat_cols] %>% t, Pf.gene$data[,Pf.gene$feat_cols] %>% t)
@@ -353,8 +342,8 @@ saveRDS(cr.melt, "cr_melt_cp.rds")
 
 ```{r, eval = T}
 
-library(cmapR)
-ds <- cmapR::parse.gctx("../results/manual/cmap.compound.score/result_WTCS.LM.COMBINED_n328x22962.gctx")
+source("../l1ktools/R/cmap/io.R")
+ds <- parse.gctx("../results/manual/cmap.compound.score/result_WTCS.LM.COMBINED_n328x22962.gctx", set_annot_rownames = F)
 cmpd.gene.score.cmap <- attr(ds, "mat")
 rn <- rownames(cmpd.gene.score.cmap)
 rn <- sapply(str_split(rn, ":"), "[[", 2)
@@ -394,13 +383,6 @@ cmpd.gene.score.cmap <- cmpd.gene.score.cmap[,intersect(desired.ta, colnames(cmp
 u <- apply(cmpd.gene.score.cmap, 2, function(x) ecdf(x)(x))
 cr.l1000 <- u
 rownames(cr.l1000) <- rownames(cmpd.gene.score.cmap)
-cr.l1000 %>% reshape2::melt() %>% saveRDS(., "cr_melt_l1000.rds")
-
-```
-
-```{r, eval = F}
-
-Pf.trt.strong.collapsed$data %>% select(Treatment, Pathway) %>% unique %>% mutate(Gene = lapply(str_split(Treatment, "_"), function(x) x[1]), Allele_Description = lapply(str_split(Treatment, "_"), function(x) str_sub(x[2], 1, 2))) %>% filter(Allele_Description == "WT") %>% select(Gene, Pathway) %>% unique  %>% mutate(Pathway = str_replace(Pathway, "Canonical ", "")) %>% group_by(Pathway) %>% summarise(`Gene members` = paste0(Gene, collapse = ", ")) %>% htmlTable::htmlTable()
 
 ```
 
