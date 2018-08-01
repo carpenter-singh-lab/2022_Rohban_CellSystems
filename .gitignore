@@ -4,3 +4,8 @@
 .Ruserdata
 *.md
 *.html
+*.rds
+*.txt
+*.csv
+*.bck
+*.png
