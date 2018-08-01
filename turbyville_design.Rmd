@@ -1,0 +1,60 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r message=FALSE}
+library(tidyverse)
+library(platetools)
+library(viridis)
+```
+
+Plate map for the actual plate shipped to Dr. Turbyville is "C-7120-01-CMP-005.txt"
+This file contains mapping of the Broad IDs in a 384 well plate that were sent.
+
+Originally requested layout for that plate is "Broad Plate Map_final_modified_brds.xlsx".
+I had to make some substitutions because few BRDs were not available in requested batch.
+
+The question is, do I need to put multiple poscons into the wells in rows K and L this time 
+around? If not, making this plate would be much easier.
+
+
+```{r}
+first_batch_platemap <- read_tsv("../../docs/turbyville/C-7210-01-CMP-005.txt", col_names = T)
+```
+
+```{r}
+library(platetools)
+raw_map(data = ifelse(is.na(first_batch_platemap$broad_sample), "DMSO", "cpd"),
+        well = first_batch_platemap$well_position,
+        plate = 384) +
+  ggtitle("C-7120-01-CMP-005") +
+  theme_dark() +
+  scale_fill_discrete()
+
+```
+
+```{r}
+mta <- read_csv("../../docs/turbyville/MTA2017412_broad_ids.txt")
+```
+
+```{r}
+
+mta_compounds <- 
+  mta %>% 
+  distinct(broad_sample) %>%
+  mutate(pert_id = str_extract(broad_sample, "(BRD[-N][A-Z0-9]+)"))
+
+first_batch_compounds <-
+  first_batch_platemap %>% 
+  distinct(broad_sample) %>%
+  mutate(pert_id = str_extract(broad_sample, "(BRD[-N][A-Z0-9]+)"))
+
+mta_compounds %>% select(pert_id) %>%
+  setdiff(first_batch_compounds %>% select(pert_id))
+
+first_batch_compounds %>% select(pert_id) %>% 
+  setdiff(mta_compounds %>% select(pert_id))
+
+```
+
