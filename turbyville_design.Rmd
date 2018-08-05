@@ -5,8 +5,11 @@ output: html_notebook
 
 ```{r message=FALSE}
 library(tidyverse)
+library(magrittr)
 library(platetools)
 library(viridis)
+
+knitr::opts_chunk$set(progress = FALSE)
 ```
 
 Plate map for the actual plate shipped to Dr. Turbyville is "C-7120-01-CMP-005.txt"
@@ -67,6 +70,81 @@ first_batch_compounds %>% select(pert_id) %>%
   setdiff(mta_compounds %>% select(pert_id))
 ```
 
+Create a dictionary to get pert_id from compounds names
+
+```{r}
+Pf.cmpd <- readRDS("../results/master/2017-04-20_64917c8b/Pf_annotated.rds")
+Pf.cmpd$data %<>% mutate(CPD_NAME = ifelse(CPD_NAME != "", CPD_NAME, Metadata_broad_sample))
+cpdname_pertid <- 
+  Pf.cmpd$data %>% 
+  ungroup() %>%
+  select(CPD_NAME, Metadata_broad_sample) %>%
+  mutate(pert_id = str_extract(Metadata_broad_sample, "(BRD[-N][A-Z0-9]+)")) %>%
+  select(-Metadata_broad_sample)
+```
+
+
+
+Get full list of compounds from  2017-05-03_b1f643c4 
+https://broadinstitute.atlassian.net/wiki/spaces/IP/pages/114669056/2017-04-20+Final+list+of+gene+compound+connections
+2017-04-20 Final list of gene compound connections
+(for simple correlation/anti-correlation matches)
+
+Search for 
+KRAS_WT.1
+KRAS_G12V
+HRAS_G12V
+
+
+```{r}
+library(rvest)
+```
+
+```{r}
+
+predictions <- 
+  read_html("../results/HEAD/2018-08-05_b1f643c4/predictions.html") %>%
+  html_nodes("table") %>%
+  .[c(41,46,47)]
+
+parse_tables <- function(index) {
+  predictions[[index]] %>% 
+    html_table(fill = TRUE) %>%
+    dplyr::select(Metadata_broad_sample, 
+           rep.corr,
+           score = `Corr.`) %>%
+    mutate(pert_id = str_extract(Metadata_broad_sample, "(BRD[-N][A-Z0-9]+)")) %>%
+    dplyr::select(-Metadata_broad_sample) %>%
+    inner_join(cpdname_pertid) %>%
+    select(-CPD_NAME) %>%
+    left_join(
+      mta_compounds %>% select(pert_id) %>% mutate(is_mta = TRUE)
+      ) %>% 
+    mutate(is_mta = !is.na(is_mta))    
+}
+
+HRAS_G12V <- parse_tables(1)
+KRAS_G12V <- parse_tables(2)
+KRAS_WT_1 <- parse_tables(3)
+
+simple_correlations <-
+  bind_rows(
+    HRAS_G12V,
+    KRAS_G12V,
+    KRAS_WT_1
+  )
+
+```
+
+
+Verify that all the compounds listed in the for each of HRAS_G12V, KRAS_G12V, KRAS_WT_1 (30 each) 
+where in the approved list
+Result has 0 rows if true.
+
+```{r}
+simple_correlations %>%
+  anti_join(mta_compounds %>% select(pert_id))
+```
 
 Get full list of compounds from
 https://broadinstitute.atlassian.net/wiki/spaces/IP/pages/115279646/2017-05-25+Compound+candidates+matching+to+KRAS+WT+but+not+to+KRAS+or+HRAS+mutant
@@ -74,7 +152,7 @@ https://broadinstitute.atlassian.net/wiki/spaces/IP/pages/115279646/2017-05-25+C
 (for differential WT-mutant profiles)
 
 
-```{r}
+```{r message=FALSE}
 format_scores <- function(cr.melt) {
   cr.melt %>%
     filter(Var2 %in% c("KRAS_WT.1", "KRAS_G12V", "HRAS_G12V")) %>%
@@ -94,7 +172,7 @@ format_scores <- function(cr.melt) {
 
 ```
 
-```{r}
+```{r message=FALSE, progress=FALSE}
 differential_all <- format_scores(readRDS("../results/HEAD/2018-08-03_95d88960/cr_melt_cp.rds"))
 
 differential_bioactives <- format_scores(readRDS("../results/HEAD/2018-08-03_c4ea989d/cr_melt_cp.rds"))
@@ -108,19 +186,6 @@ differential_all %<>%
 differential_bioactives %<>% 
   dplyr::rename(CPD_NAME = Var1)
 
-```
-
-Create a dictionary to get pert_id from compounds names
-
-```{r}
-Pf.cmpd <- readRDS("../results/master/2017-04-20_64917c8b/Pf_annotated.rds")
-Pf.cmpd$data %<>% mutate(CPD_NAME = ifelse(CPD_NAME != "", CPD_NAME, Metadata_broad_sample))
-cpdname_pertid <- 
-  Pf.cmpd$data %>% 
-  ungroup() %>%
-  select(CPD_NAME, Metadata_broad_sample) %>%
-  mutate(pert_id = str_extract(Metadata_broad_sample, "(BRD[-N][A-Z0-9]+)")) %>%
-  select(-Metadata_broad_sample)
 ```
 
 Perform lookup of pert_id
@@ -176,42 +241,36 @@ differential_bioactives %<>%
 
 ```
 
-Figure out what was the rule to select compounds (which were then sent for approval)
+Figure out what was the rule to select compounds (which were then sent for approval).
+Before plotting, first remove all the compounds that were selected based on a simple correlation to
+HRAS_G12V, KRAS_G12V, KRAS_WT_1 (30 each) 
 
 ```{r}
 differential_all %>%
+  anti_join(simple_correlations %>% select(pert_id)) %>%
   ggplot(aes(WT_score, MUT_score, color = is_mta))  + geom_point()
 ```
+
 ```{r}
 differential_all %>%
+  anti_join(simple_correlations %>% select(pert_id)) %>%
   ggplot(aes(WT_score, MUT_KRAS_score, color = is_mta))  + geom_point()
 
 ```
 ```{r}
 differential_all %>%
+  anti_join(simple_correlations %>% select(pert_id)) %>%
   ggplot(aes(WT_score, MUT_HRAS_score, color = is_mta))  + geom_point()
 
 ```
 
 ```{r}
 differential_all %>%
+  anti_join(simple_correlations %>% select(pert_id)) %>%
   ggplot() +
   geom_vline(aes(xintercept = WT_score - MUT_score, color = is_mta))
 
 ```
-
-Get full list of compounds from  2017-05-03_b1f643c4 
-https://broadinstitute.atlassian.net/wiki/spaces/IP/pages/114669056/2017-04-20+Final+list+of+gene+compound+connections
-2017-04-20 Final list of gene compound connections
-(for simple correlation/anti-correlation matches)
-
-Search for 
-KRAS_WT.1
-KRAS_G12V
-HRAS_G12V
-
-
-
 
 
 
