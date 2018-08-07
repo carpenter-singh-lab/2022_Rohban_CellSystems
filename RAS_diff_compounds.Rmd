@@ -1,5 +1,5 @@
 ---
-title: "RAS diff. compounds"
+title: "compounds that are correlated to the differential profile of the mutant and wildtype"
 output: html_document
 ---
 
