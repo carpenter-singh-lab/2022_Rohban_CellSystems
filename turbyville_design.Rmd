@@ -70,6 +70,13 @@ first_batch_compounds %>% select(pert_id) %>%
   setdiff(mta_compounds %>% select(pert_id))
 ```
 
+```{r}
+mta_and_first_batch_compounds <-
+  first_batch_compounds %>% select(pert_id) %>% 
+  union(mta_compounds %>% select(pert_id))
+
+```
+
 Create a dictionary to get pert_id from compounds names
 
 ```{r}
@@ -136,139 +143,75 @@ simple_correlations <-
 
 ```
 
+How many unique compounds in this list?
+
+```{r}
+simple_correlations %>% distinct(pert_id) %>% count()
+```
+
+How many of these were in the MTA (+ extra that were sent)?
+
+```{r}
+simple_correlations %>%
+  select(pert_id) %>%
+  intersect(mta_and_first_batch_compounds) %>%
+  count()
+```
+
 
 Verify that all the compounds listed in the for each of HRAS_G12V, KRAS_G12V, KRAS_WT_1 (30 each) 
-where in the approved list
+where in the MTA (+ extra that were sent)
 Result has 0 rows if true.
 
 ```{r}
 simple_correlations %>%
-  anti_join(mta_compounds %>% select(pert_id))
+  anti_join(mta_and_first_batch_compounds %>% select(pert_id))
 ```
-
-Get full list of compounds from
-https://broadinstitute.atlassian.net/wiki/spaces/IP/pages/115279646/2017-05-25+Compound+candidates+matching+to+KRAS+WT+but+not+to+KRAS+or+HRAS+mutant
-2017-05-25 Compound candidates matching to KRAS_WT but not to KRAS or HRAS mutant
-(for differential WT-mutant profiles)
-
-
-```{r message=FALSE}
-format_scores <- function(cr.melt) {
-  cr.melt %>%
-    filter(Var2 %in% c("KRAS_WT.1", "KRAS_G12V", "HRAS_G12V")) %>%
-    group_by(Var1) %>%
-    do(data.frame(WT_score = as.vector(.[which(.[,"Var2"] == "KRAS_WT.1"), "value"]), 
-                  MUT1_score = as.vector(.[which(.[,"Var2"] == "KRAS_G12V"), "value"]), 
-                  MUT2_score = as.vector(.[which(.[,"Var2"] == "HRAS_G12V"), "value"]))) %>%
-    dplyr::rename(WT_score = value, 
-                  MUT_KRAS_score = value.1,
-                  MUT_HRAS_score = value.2) %>% 
-    dplyr::arrange(-WT_score+(MUT_KRAS_score+MUT_HRAS_score)/2) %>%
-    dplyr::mutate(WT_score = round(WT_score, 2), 
-                  MUT_KRAS_score = round(MUT_KRAS_score, 2), 
-                  MUT_HRAS_score = round(MUT_HRAS_score, 2)) %>%
-    dplyr::filter(abs(WT_score) > 0.4)
-}
-
-```
-
-```{r message=FALSE, progress=FALSE}
-differential_all <- format_scores(readRDS("../results/HEAD/2018-08-03_95d88960/cr_melt_cp.rds"))
-
-differential_bioactives <- format_scores(readRDS("../results/HEAD/2018-08-03_c4ea989d/cr_melt_cp.rds"))
-
-```
+Get full list of compounds selected based on differential WT-mutant profiles
 
 ```{r}
-differential_all %<>% 
-  dplyr::rename(CPD_NAME = Var1)
-
-differential_bioactives %<>% 
-  dplyr::rename(CPD_NAME = Var1)
+differential_scores <- 
+  read_csv("../../results/master/2018-08-08_a3c67c03/diff_cmpds.csv") %>%
+  mutate(pert_id = str_extract(`compound ID`, "(BRD[-N][A-Z0-9]+)"))
 
 ```
 
-Perform lookup of pert_id
+Select top k differential profiles
+
 ```{r}
-differential_all %<>% 
-  inner_join(cpdname_pertid)
+k <- 200
 
-differential_bioactives %<>% 
-  inner_join(cpdname_pertid)
+differential_scores_top_k <- 
+  differential_scores %>% 
+  filter(abs(score) > 0.5) %>% 
+  arrange(-abs(score)) %>%
+  slice(1:k) %>% 
+  select(pert_id) 
+
 ```
 
-Is differential_bioactives a subset of differential_all. 
+How many of these were in the MTA (+ extra that were sent)?
+
+```{r}
+differential_scores_top_k %>%
+  select(pert_id) %>%
+  intersect(mta_and_first_batch_compounds) %>%
+  count()
+```
+
+Do compounds selected based on 
+- simple correlations, and
+- differential scores
+explain everything?
+
 Result has 0 rows if true.
 
-```{r}
-differential_bioactives %>% 
-  select(pert_id) %>% 
-  setdiff(differential_all %>% select(pert_id))
-```
-
-```{r eval=FALSE}
-
-differential_bioactives %<>% select(-is_mta)
-
-differential_all %<>% select(-is_mta)
-```
-
-Create MUT_score
+If result has non-zero rows, the compounds listed are the unaccounted ones
 
 ```{r}
-differential_bioactives %<>% dplyr::mutate(MUT_score = (MUT_KRAS_score + MUT_HRAS_score)/2) 
-
-differential_all %<>% dplyr::mutate(MUT_score = (MUT_KRAS_score + MUT_HRAS_score)/2) 
-```
-
-
-Indicate which compounds were approved (`is_mta`)
-
-```{r}
-differential_all %<>% 
-  left_join(
-    mta_compounds %>% select(pert_id) %>% mutate(is_mta = TRUE)
-  ) %>% 
-  mutate(is_mta = !is.na(is_mta)) %>%
-  dplyr::arrange(-WT_score + MUT_score)
-
-differential_bioactives %<>% 
-  left_join(
-    mta_compounds %>% select(pert_id) %>% mutate(is_mta = TRUE)
-  ) %>% 
-  mutate(is_mta = !is.na(is_mta)) %>%
-  dplyr::arrange(-WT_score + MUT_score)
-
-```
-
-Figure out what was the rule to select compounds (which were then sent for approval).
-Before plotting, first remove all the compounds that were selected based on a simple correlation to
-HRAS_G12V, KRAS_G12V, KRAS_WT_1 (30 each) 
-
-```{r}
-differential_all %>%
+mta_and_first_batch_compounds %>%
   anti_join(simple_correlations %>% select(pert_id)) %>%
-  ggplot(aes(WT_score, MUT_score, color = is_mta))  + geom_point()
-```
-
-```{r}
-differential_all %>%
-  anti_join(simple_correlations %>% select(pert_id)) %>%
-  ggplot(aes(WT_score, MUT_KRAS_score, color = is_mta))  + geom_point()
-
-```
-```{r}
-differential_all %>%
-  anti_join(simple_correlations %>% select(pert_id)) %>%
-  ggplot(aes(WT_score, MUT_HRAS_score, color = is_mta))  + geom_point()
-
-```
-
-```{r}
-differential_all %>%
-  anti_join(simple_correlations %>% select(pert_id)) %>%
-  ggplot() +
-  geom_vline(aes(xintercept = WT_score - MUT_score, color = is_mta))
+  anti_join(differential_scores_top_k)
 
 ```
 
