@@ -209,7 +209,8 @@ Result has 0 rows if true.
 If result has non-zero rows, the compounds listed are the unaccounted ones
 
 ```{r}
-mta_and_first_batch_compounds %>%
+mta_compounds %>%
+  select(pert_id) %>%
   anti_join(simple_correlations %>% select(pert_id)) %>%
   anti_join(differential_scores_top_k)
 
