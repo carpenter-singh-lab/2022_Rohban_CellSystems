@@ -265,6 +265,8 @@ cr.all <- cr.n %>%
 cr.all <- cr.all %>% 
   filter(abs(score.comm) < 0.1)
 
+cr.all %>% arrange(-score) %>% readr::write_csv(., "diff_cmpds_all.csv")
+
 ## we've picked top ~ 45 scored compounds to test (see the compounds in MTA)
 cr.all %>% filter(abs(score) > 0.5) %>% arrange(-score) %>% readr::write_csv(., "diff_cmpds.csv")
 
