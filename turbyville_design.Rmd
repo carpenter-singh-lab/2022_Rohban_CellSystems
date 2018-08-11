@@ -1,12 +1,13 @@
 ---
-title: "R Notebook"
+title: "Select an expanded list of compounds for the Turbyville experiment"
 output: html_notebook
 ---
 
 ```{r message=FALSE}
-library(tidyverse)
 library(magrittr)
 library(platetools)
+library(rvest)
+library(tidyverse)
 library(viridis)
 
 knitr::opts_chunk$set(progress = FALSE)
@@ -15,18 +16,16 @@ knitr::opts_chunk$set(progress = FALSE)
 Plate map for the actual plate shipped to Dr. Turbyville is "C-7120-01-CMP-005.txt"
 This file contains mapping of the Broad IDs in a 384 well plate that were sent.
 
-Originally requested layout for that plate is "Broad Plate Map_final_modified_brds.xlsx".
+Originally requested layout for that plate is "Broad Plate Map_final_modified_brds.csv".
 I had to make some substitutions because few BRDs were not available in requested batch.
 
-The question is, do I need to put multiple poscons into the wells in rows K and L this time 
-around? If not, making this plate would be much easier.
 
-
-```{r}
+```{r message=FALSE}
 first_batch_platemap <- read_tsv("../../docs/turbyville/C-7210-01-CMP-005.txt", col_names = T)
 ```
 
 Plot the platemap
+
 ```{r}
 library(platetools)
 raw_map(data = ifelse(is.na(first_batch_platemap$broad_sample), "DMSO", "cpd"),
@@ -37,16 +36,20 @@ raw_map(data = ifelse(is.na(first_batch_platemap$broad_sample), "DMSO", "cpd"),
   scale_fill_discrete()
 
 ```
-```{r}
-mta <- read_csv("../../docs/turbyville/MTA2017412_broad_ids.txt")
-```
+Read list of compounds that were MTA'd
 
-```{r}
+```{r message=FALSE}
+mta <- read_csv("../../docs/turbyville/MTA2017412_broad_ids.txt")
 
 mta_compounds <- 
   mta %>% 
   distinct(broad_sample) %>%
   mutate(pert_id = str_extract(broad_sample, "(BRD[-N][A-Z0-9]+)"))
+```
+
+Get list of compounds that were on the first Turbyville plate
+
+```{r}
 
 first_batch_compounds <-
   first_batch_platemap %>% 
@@ -56,19 +59,21 @@ first_batch_compounds <-
 ```
 
 
-Compounds that were approved but not sent
+Compounds that were MTA'd but not in the first plate
 
 ```{r}
 mta_compounds %>% select(pert_id) %>%
   setdiff(first_batch_compounds %>% select(pert_id))
 ```
 
-Compounds that were sent but not approved
+Compounds that were in the first plate but not MTA'd
 
 ```{r}
 first_batch_compounds %>% select(pert_id) %>% 
   setdiff(mta_compounds %>% select(pert_id))
 ```
+
+Create a full list of compounds - those that were MTA'd + those that were in the first plate
 
 ```{r}
 mta_and_first_batch_compounds <-
@@ -102,12 +107,7 @@ KRAS_WT.1
 KRAS_G12V
 HRAS_G12V
 
-
-```{r}
-library(rvest)
-```
-
-```{r}
+```{r message=FALSE}
 
 predictions <- 
   read_html("../results/HEAD/2018-08-05_b1f643c4/predictions.html") %>%
@@ -121,7 +121,7 @@ parse_tables <- function(index) {
            rep.corr,
            score = `Corr.`) %>%
     mutate(pert_id = str_extract(Metadata_broad_sample, "(BRD[-N][A-Z0-9]+)")) %>%
-    dplyr::select(-Metadata_broad_sample) %>%
+    dplyr::rename(broad_sample = Metadata_broad_sample) %>%
     inner_join(cpdname_pertid) %>%
     select(-CPD_NAME) %>%
     left_join(
@@ -132,13 +132,13 @@ parse_tables <- function(index) {
 
 HRAS_G12V <- parse_tables(1)
 KRAS_G12V <- parse_tables(2)
-KRAS_WT_1 <- parse_tables(3)
+KRAS_WT <- parse_tables(3)
 
 simple_correlations <-
   bind_rows(
     HRAS_G12V,
     KRAS_G12V,
-    KRAS_WT_1
+    KRAS_WT
   )
 
 ```
@@ -149,7 +149,7 @@ How many unique compounds in this list?
 simple_correlations %>% distinct(pert_id) %>% count()
 ```
 
-How many of these were in the MTA (+ extra that were sent)?
+How many of these were MTA'd + first plate?
 
 ```{r}
 simple_correlations %>%
@@ -158,18 +158,170 @@ simple_correlations %>%
   count()
 ```
 
-
-Verify that all the compounds listed in the for each of HRAS_G12V, KRAS_G12V, KRAS_WT_1 (30 each) 
-where in the MTA (+ extra that were sent)
+Verify that all the compounds listed in the for each of HRAS_G12V, KRAS_G12V, KRAS_WT (30 each) 
+where in MTA + first plate
 Result has 0 rows if true.
 
 ```{r}
 simple_correlations %>%
   anti_join(mta_and_first_batch_compounds %>% select(pert_id))
 ```
-Get full list of compounds selected based on differential WT-mutant profiles
+
+Load list of compounds as listed in 
+https://broadinstitute.atlassian.net/wiki/spaces/IP/pages/120356903/2017-08-24+Final+list+of+compounds+connected+to+HRAS+and+KRAS
+
+```{r message=FALSE}
+xCompound_List <- 
+  read_csv("../../results/manual/2017-08-24_Final_list_of_compounds_connected_to HRAS_and_KRAS/Compound_List.csv") %>%
+  select(broad_sample = Broad.ID) %>%
+  arrange(broad_sample)
+
+xKRAS_diff_MUT_WT <- 
+  read_csv("../../results/manual/2017-08-24_Final_list_of_compounds_connected_to HRAS_and_KRAS/KRAS_diff_MUT_WT.csv") %>% 
+  select(broad_sample = `Broad ID`) %>%
+  arrange(broad_sample)
+
+xKRAS_WT <- 
+  read_csv("../../results/manual/2017-08-24_Final_list_of_compounds_connected_to HRAS_and_KRAS/KRAS_WT.csv") %>% 
+  select(broad_sample = `Broad ID`) %>%
+  arrange(broad_sample)
+
+xKRAS_G12V <- 
+  read_csv("../../results/manual/2017-08-24_Final_list_of_compounds_connected_to HRAS_and_KRAS/KRAS_G12V.csv") %>% 
+  select(broad_sample = `Broad ID`) %>%
+  arrange(broad_sample)
+
+xHRAS_G12V <- 
+  read_csv("../../results/manual/2017-08-24_Final_list_of_compounds_connected_to HRAS_and_KRAS/HRAS_G12V.csv") %>% 
+  select(broad_sample = `Broad ID`) %>%
+  arrange(broad_sample)
+```
+
+Is Compound_List the same as MTA'd compounds?
 
 ```{r}
+all_equal(
+  xCompound_List %>% select(broad_sample) %>% arrange(broad_sample),
+  mta_compounds %>% select(broad_sample) %>%  arrange(broad_sample)
+)
+```
+
+How many selected based on simple correlations?
+
+```{r}
+bind_rows(
+   xKRAS_WT,
+   xKRAS_G12V,
+   xHRAS_G12V
+   ) %>%
+  distinct() %>%
+  count()
+```
+
+How many more compounds are in the CSV files compared to those extracted from the html? (simple correlations)
+
+```{r}
+setdiff(
+  bind_rows(
+     xKRAS_WT,
+     xKRAS_G12V,
+     xHRAS_G12V
+     ) %>%
+    select(broad_sample) %>%
+    distinct(),
+  bind_rows(
+     KRAS_WT,
+     KRAS_G12V,
+     HRAS_G12V
+     ) %>%
+    select(broad_sample) %>%
+    distinct()  
+) %>%
+  count()
+
+```
+Check the same thing as above but on a per allele basis
+
+KRAS_WT
+```{r}
+setdiff(
+  xKRAS_WT %>%
+    select(broad_sample) %>%
+    distinct(),
+  KRAS_WT %>%
+    select(broad_sample) %>%
+    distinct()
+  ) %>%
+  count()
+```
+
+KRAS_G12V
+```{r}
+setdiff(
+  xKRAS_G12V %>%
+    select(broad_sample) %>%
+    distinct(),
+  KRAS_G12V %>%
+    select(broad_sample) %>%
+    distinct()
+  ) %>%
+  count()
+```
+
+xHRAS_G12V
+```{r}
+setdiff(
+  xHRAS_G12V %>%
+    select(broad_sample) %>%
+    distinct(),
+  HRAS_G12V %>%
+    select(broad_sample) %>%
+    distinct()
+  ) %>%
+  count()
+```
+
+How many selected based on differential
+
+```{r}
+  distinct(
+    xKRAS_diff_MUT_WT
+    ) %>%
+  count()
+```
+
+How many intersect?
+
+```{r}
+bind_rows(
+   xKRAS_WT,
+   xKRAS_G12V,
+   xHRAS_G12V
+   ) %>%
+  distinct() %>%
+  intersect(xKRAS_diff_MUT_WT) %>%
+  distinct() %>%
+  count()
+```
+
+How many total?
+
+```{r}
+bind_rows(
+   xKRAS_WT,
+   xKRAS_G12V,
+   xHRAS_G12V,
+   xKRAS_diff_MUT_WT) %>%
+  distinct() %>%
+  count()
+
+distinct(xCompound_List) %>%
+  count()
+```
+
+Get full list of compounds selected based on differential WT-mutant profiles
+
+```{r message=FALSE}
 differential_scores <- 
   read_csv("../../results/master/2018-08-08_a3c67c03/diff_cmpds.csv") %>%
   mutate(pert_id = str_extract(`compound ID`, "(BRD[-N][A-Z0-9]+)"))
@@ -179,23 +331,28 @@ differential_scores <-
 Select top k differential profiles
 
 ```{r}
-k <- 200
+k <- 44 # 44 because that's what Mohammad set
 
 differential_scores_top_k <- 
   differential_scores %>% 
   filter(abs(score) > 0.5) %>% 
-  arrange(-abs(score)) %>%
+  arrange(-score) %>%
   slice(1:k) %>% 
   select(pert_id) 
 
 ```
 
-How many of these were in the MTA (+ extra that were sent)?
+How many of these were MTA'd,  and MTA'd + first plate?
 
 ```{r}
 differential_scores_top_k %>%
   select(pert_id) %>%
   intersect(mta_and_first_batch_compounds) %>%
+  count()
+
+differential_scores_top_k %>%
+  select(pert_id) %>%
+  intersect(mta_compounds %>% select(pert_id)) %>%
   count()
 ```
 
@@ -214,6 +371,146 @@ mta_compounds %>%
   anti_join(simple_correlations %>% select(pert_id)) %>%
   anti_join(differential_scores_top_k)
 
+```
+
+Do the same as above, except using `simple_correlations_from_xls`
+
+```{r}
+simple_correlations_from_xls <-
+  bind_rows(
+     xKRAS_WT,
+     xKRAS_G12V,
+     xHRAS_G12V
+     ) %>%
+  select(broad_sample) %>%
+  mutate(pert_id = str_extract(broad_sample, "(BRD[-N][A-Z0-9]+)")) %>%
+  distinct()
+
+
+mta_compounds %>%
+  select(pert_id) %>%
+  anti_join(simple_correlations_from_xls %>% select(pert_id)) %>%
+  anti_join(differential_scores_top_k)
+
+```
+
+Plot the distribution of differential profile scores
+
+```{r}
+
+mta_differential_scores <- 
+  differential_scores %>%
+  rename(broad_sample = `compound ID`) %>%
+  left_join(xKRAS_diff_MUT_WT %>% mutate(is_mta = TRUE)) %>%
+  mutate(is_mta = !is.na(is_mta)) 
+
+mta_differential_scores %>%
+  ggplot(aes(is_mta, score)) + geom_jitter()
+
+mta_differential_scores %>%
+  filter(score > 0.5) %>%
+  ggplot(aes(score, fill = is_mta)) + geom_histogram(binwidth = .01, alpha = 0.5)
+
+```
+
+Verify again that MTA'd compounds is exactly the same as the union of all the compounds in the xls files
+
+```{r}
+
+all_equal(
+  bind_rows(
+    xKRAS_WT,
+    xKRAS_G12V,
+    xHRAS_G12V,
+    xKRAS_diff_MUT_WT) %>%
+    distinct() %>%
+    arrange(broad_sample),
+  mta_compounds %>%
+    select(broad_sample) %>%
+    arrange(broad_sample)
+  )
+```
+
+
+Looks like some compounds that were in the first batch had the same pert_id but different broad_id
+
+```{r}
+
+first_batch_compounds %>%
+  distinct() %>%
+  select(broad_sample) %>% 
+  anti_join( 
+    mta_compounds %>%
+      select(broad_sample) %>%
+      distinct()
+    )
+
+first_batch_compounds %>%
+  distinct() %>%
+  select(pert_id) %>% 
+  anti_join( 
+    mta_compounds %>%
+      select(pert_id) %>%
+      distinct()
+    )
+```
+
+
+```{r}
+
+differential_scores %<>% 
+  select(broad_sample = `compound ID`,
+         pert_id,
+         score)
+```
+
+
+Create a new list of compounds based on differential profiles alone. We have a total of 95 inner wells and 76 edge wells to fill with these.
+
+Create a list of compounds whose profiles are in the direction of mutant to WT. We want to pick 80% of (95 + 76) = 136 of these in total.
+
+Some of these are already in the first batch
+
+```{r}
+differential_scores %>%
+  filter(score > 0.5) %>% 
+  inner_join(first_batch_compounds %>% select(pert_id)) %>%
+  count()
+```
+
+We want to pick 80% of (95 + 76) = 136 of these in total, and 22 (result from the chunk above) have already been selected.
+So we need to pick an additional 136 - 22 = 114
+The bottom 76 / (95 + 76) = 44% = 60 of these should be placed on the edge. 
+
+```{r}
+differential_scores %>%
+  filter(score > 0.5) %>% 
+  anti_join(first_batch_compounds %>% select(pert_id)) %>%
+  arrange(-score) %>%
+  print() %>%
+  write_csv("differential_compounds_going_from_mutant_to_wt_select_114_with_60_on_edge.csv")
+
+```
+
+Create a list of compounds whose profiles are in the direction of WT to mutant. We want to pick 20% of (95 + 76) = 34 of these.
+None of these were in the first batch.
+
+```{r}
+differential_scores %>%
+  filter(score < 0.5) %>% 
+  inner_join(first_batch_compounds %>% select(pert_id)) %>%
+  count()
+```
+
+The bottom 76 / (95 + 76) = 44% = 16 of these should be placed on the edge. 
+
+```{r}
+differential_scores %>%
+  filter(score < 0.5) %>% 
+  anti_join(mta_and_first_batch_compounds %>% select(pert_id)) %>%
+  arrange(score) %>%
+  print() %>%
+  write_csv("differential_compounds_going_from_wt_to_mut_select_34_with_16_on_edge.csv")
 ```
 
 
