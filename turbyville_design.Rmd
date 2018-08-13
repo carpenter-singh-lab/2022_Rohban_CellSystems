@@ -522,27 +522,38 @@ available_compounds <-
   mutate(pert_id = str_extract(broad_sample, "(BRD[-N][A-Z0-9]+)")) %>%
   mutate(is_available = TRUE)
   
+first_batch_compounds %<>%
+  mutate(is_firstbatch = TRUE)
+
 differential_compounds_wt_to_mut <- 
-  read_csv("../../results/master/2018-08-11_df8edeb6/differential_compounds_going_from_wt_to_mut_select_34_with_16_on_edge.csv") %>%
+  differential_scores %>%
+  filter(score < 0.5) %>%
   left_join(available_compounds %>% select(pert_id, is_available)) %>%
-  mutate(is_available = !is.na(is_available))
+  mutate(is_available = !is.na(is_available)) %>%
+  left_join(first_batch_compounds %>% select(pert_id, is_firstbatch)) %>%
+  mutate(is_firstbatch = !is.na(is_firstbatch))
 
 differential_compounds_mut_to_wt <- 
-  read_csv("../../results/master/2018-08-11_df8edeb6/differential_compounds_going_from_mutant_to_wt_select_114_with_60_on_edge.csv") %>%
+  differential_scores %>%
+  filter(score > 0.5) %>%
   left_join(available_compounds %>% select(pert_id, is_available)) %>%
-  mutate(is_available = !is.na(is_available))
+  mutate(is_available = !is.na(is_available)) %>%
+  left_join(first_batch_compounds %>% select(pert_id, is_firstbatch)) %>%
+  mutate(is_firstbatch = !is.na(is_firstbatch))
 
 ggplot(differential_compounds_wt_to_mut, aes(-score)) + 
-  geom_histogram(binwidth = 0.01) + 
+  geom_histogram(binwidth = 0.005) + 
   geom_rug(data = differential_compounds_wt_to_mut %>% filter(is_available),
            color = "red") + 
   ggtitle("WT to Mut", subtitle = "Red rug indicates available compounds.")
 
 ggplot(differential_compounds_mut_to_wt, aes(score)) + 
-  geom_histogram(binwidth = 0.01) + 
+  geom_histogram(binwidth = 0.005) + 
   geom_rug(data = differential_compounds_mut_to_wt %>% filter(is_available),
            color = "red") + 
-  ggtitle("Mutant to WT", subtitle = "Red rug indicates available compounds.")
+  geom_rug(data = differential_compounds_mut_to_wt %>% filter(is_firstbatch),
+           color = "blue") + 
+  ggtitle("Mutant to WT", subtitle = "Red rug indicates available compounds, blue indicates those already in current plate.")
 
 ```
 
