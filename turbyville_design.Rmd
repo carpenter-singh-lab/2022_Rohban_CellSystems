@@ -536,13 +536,13 @@ ggplot(differential_compounds_wt_to_mut, aes(-score)) +
   geom_histogram(binwidth = 0.01) + 
   geom_rug(data = differential_compounds_wt_to_mut %>% filter(is_available),
            color = "red") + 
-  ggtitle("Mutant to WT", subtitle = "Red rug indicates available compounds.")
+  ggtitle("WT to Mut", subtitle = "Red rug indicates available compounds.")
 
 ggplot(differential_compounds_mut_to_wt, aes(score)) + 
   geom_histogram(binwidth = 0.01) + 
   geom_rug(data = differential_compounds_mut_to_wt %>% filter(is_available),
            color = "red") + 
-  ggtitle("WT to Mut", subtitle = "Red rug indicates available compounds.")
+  ggtitle("Mutant to WT", subtitle = "Red rug indicates available compounds.")
 
 ```
 
