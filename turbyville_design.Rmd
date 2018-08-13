@@ -513,5 +513,37 @@ differential_scores %>%
   write_csv("differential_compounds_going_from_wt_to_mut_select_34_with_16_on_edge.csv")
 ```
 
+Read available compounds
+
+```{r}
+available_compounds <- 
+  read_csv("../../results/manual/2018-08-13_available_compounds/available_compounds.csv") %>%
+  distinct(broad_sample) %>%
+  mutate(pert_id = str_extract(broad_sample, "(BRD[-N][A-Z0-9]+)")) %>%
+  mutate(is_available = TRUE)
+  
+differential_compounds_wt_to_mut <- 
+  read_csv("../../results/master/2018-08-11_df8edeb6/differential_compounds_going_from_wt_to_mut_select_34_with_16_on_edge.csv") %>%
+  left_join(available_compounds %>% select(pert_id, is_available)) %>%
+  mutate(is_available = !is.na(is_available))
+
+differential_compounds_mut_to_wt <- 
+  read_csv("../../results/master/2018-08-11_df8edeb6/differential_compounds_going_from_mutant_to_wt_select_114_with_60_on_edge.csv") %>%
+  left_join(available_compounds %>% select(pert_id, is_available)) %>%
+  mutate(is_available = !is.na(is_available))
+
+ggplot(differential_compounds_wt_to_mut, aes(-score)) + 
+  geom_density() + 
+  geom_rug(data = differential_compounds_wt_to_mut %>% filter(is_available),
+           color = "red") + 
+  ggtitle("Mutant to WT", subtitle = "Red rug indicates available compounds.")
+
+ggplot(differential_compounds_mut_to_wt, aes(score)) + 
+  geom_density() + 
+  geom_rug(data = differential_compounds_mut_to_wt %>% filter(is_available),
+           color = "red") + 
+  ggtitle("WT to Mut", subtitle = "Red rug indicates available compounds.")
+
+```
 
 
