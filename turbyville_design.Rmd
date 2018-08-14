@@ -464,6 +464,18 @@ differential_scores %<>%
          score)
 ```
 
+Add chemical annotations
+
+```{r}
+chemical_annotations <- 
+  read_csv("https://raw.githubusercontent.com/gigascience/paper-bray2017/master/chemical_annotations.csv") %>%
+  rename(broad_sample = BROAD_ID) 
+
+differential_scores %<>%
+  inner_join(chemical_annotations, by = c("broad_sample"))
+  
+```
+
 
 Create a new list of compounds based on differential profiles alone. We have a total of 95 inner wells and 76 edge wells to fill with these.
 
@@ -557,4 +569,9 @@ ggplot(differential_compounds_mut_to_wt, aes(score)) +
 
 ```
 
+```{r}
+
+differential_compounds_mut_to_wt %>% 
+  filter(!is_available & !is_firstbatch & score > 0.7) 
+```
 
