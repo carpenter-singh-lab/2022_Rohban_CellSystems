@@ -575,3 +575,26 @@ differential_compounds_mut_to_wt %>%
   filter(!is_available & !is_firstbatch & score > 0.7) 
 ```
 
+Create a list of compounds to make a compound plate
+
+```{r}
+
+compounds_to_order <- 
+  bind_rows(
+    first_batch_platemap %>% filter(!is.na(broad_sample)) %>% select(broad_sample) %>% mutate(tag = "first_batch"),
+    differential_compounds_mut_to_wt %>% filter(is_available) %>% select(broad_sample) %>% mutate(tag = "mut_to_wt_available_only"),
+    differential_compounds_wt_to_mut %>% filter(is_available) %>% select(broad_sample) %>% mutate(tag = "wt_to_mut_available_only"),
+    differential_compounds_mut_to_wt %>% filter(!is_available & !is_firstbatch & score > 0.7) %>% select(broad_sample) %>% mutate(tag = "mut_to_wt_not_available_but_important")
+  ) %>%
+  distinct() 
+
+compounds_to_order %>%
+  count(tag)
+
+compounds_to_order %>%
+  count()
+
+compounds_to_order %>%
+  write_csv("compounds_to_order.csv")
+```
+
