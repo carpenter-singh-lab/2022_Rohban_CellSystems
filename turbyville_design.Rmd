@@ -595,6 +595,10 @@ compounds_to_order %>%
   count()
 
 compounds_to_order %>%
+  distinct(broad_sample) %>%
+  count()
+
+compounds_to_order %>%
   write_csv("compounds_to_order.csv")
 ```
 
