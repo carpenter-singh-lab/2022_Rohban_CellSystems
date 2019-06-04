@@ -56,6 +56,17 @@ first_batch_compounds <-
   distinct(broad_sample) %>%
   mutate(pert_id = str_extract(broad_sample, "(BRD[-N][A-Z0-9]+)"))
 
+unavailable_compounds <-
+  read_csv("../../results/manual/2018-11-02_unavailable_compounds/unavailable_compounds.csv") %>%
+  mutate(is_available = FALSE)
+
+first_batch_compounds %<>%
+  left_join(unavailable_compounds)
+
+first_batch_compounds %<>%
+  mutate(
+    is_available = ifelse(is.na(is_available), TRUE, FALSE)
+  )
 ```
 
 
@@ -115,8 +126,13 @@ predictions <-
   .[c(41,46,47)]
 
 parse_tables <- function(index) {
-  predictions[[index]] %>% 
-    html_table(fill = TRUE) %>%
+  x <- 
+    predictions[[index]] %>% 
+    html_table(fill = TRUE) 
+
+  x <- x[, 2:ncol(x)]  
+  
+  x %>%
     dplyr::select(Metadata_broad_sample, 
            rep.corr,
            score = `Corr.`) %>%
@@ -159,7 +175,7 @@ simple_correlations %>%
 ```
 
 Verify that all the compounds listed in the for each of HRAS_G12V, KRAS_G12V, KRAS_WT (30 each) 
-where in MTA + first plate
+were in MTA + first plate
 Result has 0 rows if true.
 
 ```{r}
@@ -545,6 +561,16 @@ differential_compounds_wt_to_mut <-
   left_join(first_batch_compounds %>% select(pert_id, is_firstbatch)) %>%
   mutate(is_firstbatch = !is.na(is_firstbatch))
 
+differential_compounds_wt_to_mut <-
+  bind_rows(
+    differential_compounds_wt_to_mut %>%
+      filter(is_firstbatch) %>%
+      select(-is_available) %>%
+      inner_join(first_batch_compounds %>% select(pert_id, is_firstbatch, is_available)),
+    differential_compounds_wt_to_mut %>%
+    filter(!is_firstbatch)
+  ) %>% distinct()
+  
 differential_compounds_mut_to_wt <- 
   differential_scores %>%
   filter(score > 0.5) %>%
@@ -552,6 +578,16 @@ differential_compounds_mut_to_wt <-
   mutate(is_available = !is.na(is_available)) %>%
   left_join(first_batch_compounds %>% select(pert_id, is_firstbatch)) %>%
   mutate(is_firstbatch = !is.na(is_firstbatch))
+
+differential_compounds_mut_to_wt <-
+  bind_rows(
+    differential_compounds_mut_to_wt %>%
+      filter(is_firstbatch) %>%
+      select(-is_available) %>%
+      inner_join(first_batch_compounds %>% select(pert_id, is_firstbatch, is_available)),
+    differential_compounds_mut_to_wt %>%
+    filter(!is_firstbatch)
+  ) %>% distinct()
 
 ggplot(differential_compounds_wt_to_mut, aes(-score)) + 
   geom_histogram(binwidth = 0.005) + 
@@ -563,9 +599,7 @@ ggplot(differential_compounds_mut_to_wt, aes(score)) +
   geom_histogram(binwidth = 0.005) + 
   geom_rug(data = differential_compounds_mut_to_wt %>% filter(is_available),
            color = "red") + 
-  geom_rug(data = differential_compounds_mut_to_wt %>% filter(is_firstbatch),
-           color = "blue") + 
-  ggtitle("Mutant to WT", subtitle = "Red rug indicates available compounds, blue indicates those already in current plate.")
+  ggtitle("Mutant to WT", subtitle = "Red rug indicates available compounds.")
 
 ```
 
@@ -581,7 +615,13 @@ Create a list of compounds to make a compound plate
 
 compounds_to_order <- 
   bind_rows(
-    first_batch_platemap %>% filter(!is.na(broad_sample)) %>% select(broad_sample) %>% mutate(tag = "first_batch"),
+    first_batch_compounds %>% 
+      filter(!is.na(broad_sample)) %>% 
+      filter(is_available) %>% 
+      select(broad_sample) %>% 
+      anti_join(differential_compounds_mut_to_wt %>% select(broad_sample)) %>%
+      anti_join(differential_compounds_wt_to_mut %>% select(broad_sample)) %>%
+      mutate(tag = "first_batch"),
     differential_compounds_mut_to_wt %>% filter(is_available) %>% select(broad_sample) %>% mutate(tag = "mut_to_wt_available_only"),
     differential_compounds_wt_to_mut %>% filter(is_available) %>% select(broad_sample) %>% mutate(tag = "wt_to_mut_available_only"),
     differential_compounds_mut_to_wt %>% filter(!is_available & !is_firstbatch & score > 0.7) %>% select(broad_sample) %>% mutate(tag = "mut_to_wt_not_available_but_important")
