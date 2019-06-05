@@ -642,3 +642,64 @@ compounds_to_order %>%
   write_csv("compounds_to_order.csv")
 ```
 
+
+
+```{r}
+
+xKRAS_diff_MUT_WT <- 
+  read_csv("../../results/manual/2017-08-24_Final_list_of_compounds_connected_to HRAS_and_KRAS/KRAS_diff_MUT_WT.csv") %>% 
+  select(broad_sample = `Broad ID`, correlation = `Corr. Sign`) %>%
+  mutate(correlation = ifelse(str_detect(correlation, "Neg."), "Neg.", "Pos.")) %>%
+  mutate(tag = "wt_to_mut") %>%
+  arrange(broad_sample)
+
+xKRAS_WT <- 
+  read_csv("../../results/manual/2017-08-24_Final_list_of_compounds_connected_to HRAS_and_KRAS/KRAS_WT.csv") %>% 
+  select(broad_sample = `Broad ID`, correlation = `Corr. Sign`) %>%
+  mutate(tag = "xKRAS_WT") %>%
+  arrange(broad_sample)
+
+xKRAS_G12V <- 
+  read_csv("../../results/manual/2017-08-24_Final_list_of_compounds_connected_to HRAS_and_KRAS/KRAS_G12V.csv") %>% 
+  select(broad_sample = `Broad ID`, correlation = `Corr. Sign`) %>%
+  mutate(tag = "xKRAS_G12V") %>%
+  arrange(broad_sample)
+
+xHRAS_G12V <- 
+  read_csv("../../results/manual/2017-08-24_Final_list_of_compounds_connected_to HRAS_and_KRAS/HRAS_G12V.csv") %>% 
+  select(broad_sample = `Broad ID`, correlation = `Corr. Sign`) %>%
+  mutate(tag = "HRAS_G12V") %>%
+  arrange(broad_sample)
+
+compounds_to_order <- 
+  read_csv("compounds_to_order.csv") %>%
+  filter(tag != "first_batch") %>%
+  mutate(correlation = ifelse(str_detect(tag, "wt_to_mut"), "Pos.", 
+                              ifelse(str_detect(tag, "mut_to_wt"), "Neg.", "NA"))) %>%
+  mutate(tag = "wt_to_mut")
+
+compound_tag <- 
+bind_rows(
+  xKRAS_diff_MUT_WT,
+  xKRAS_WT,
+  xKRAS_G12V,
+  xHRAS_G12V,
+  compounds_to_order
+) %>%
+  mutate(pert_id = str_extract(broad_sample, "(BRD[-N][A-Z0-9]+)")) %>%
+  select(-broad_sample) %>%
+  distinct()
+  
+new_plate_compounds <-
+  read_csv("../../metadata/C-7210-01-CMP-010-turbyville.csv") %>%
+  select(broad_sample = `Broad Sample`) %>%
+  mutate(pert_id = str_extract(broad_sample, "(BRD[-N][A-Z0-9]+)")) %>%
+  distinct(pert_id) %>%
+  na.omit() %>%
+  left_join(compound_tag) %>%
+  replace_na(list(tag = "unknown", correlation = "unknown"))
+  
+new_plate_compounds %>%
+  write_csv("new_plate_compounds_with_tags.csv")
+```
+
