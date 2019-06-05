@@ -689,7 +689,23 @@ bind_rows(
   mutate(pert_id = str_extract(broad_sample, "(BRD[-N][A-Z0-9]+)")) %>%
   select(-broad_sample) %>%
   distinct()
-  
+
+cell_painting_controls <- 
+  tribble(
+  ~pert_id, ~correlation, ~tag,
+  "BRD-A15435692", "NA", "Cell Painting controls",
+  "BRD-K22848513", "NA", "Cell Painting controls",
+  "BRD-K74305673", "NA", "Cell Painting controls",
+  "BRD-K90789829", "NA", "Cell Painting controls",
+  "BRD-K97309399", "NA", "Cell Painting controls",
+  "BRD-K97963946", "NA", "Cell Painting controls",
+  "BRD-K99475619", "NA", "Cell Painting controls",
+  "BRD-K99792991", "NA", "Cell Painting controls"
+)
+
+compound_tag %<>%
+  bind_rows(cell_painting_controls)
+
 new_plate_compounds <-
   read_csv("../../metadata/C-7210-01-CMP-010-turbyville.csv") %>%
   select(broad_sample = `Broad Sample`) %>%
