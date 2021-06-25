@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title></title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: #990073
+   }
+
+   pre .number {
+     color: #099;
+   }
+
+   pre .comment {
+     color: #998;
+     font-style: italic
+   }
+
+   pre .keyword {
+     color: #900;
+     font-weight: bold
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: #d14;
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+<!-- MathJax scripts -->
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<pre><code class="r">rm(list = ls())
+
+library(dplyr)
+library(stringr)
+library(readr)
+library(magrittr)
+library(reshape2)
+library(htmlTable)
+library(ggplot2)
+library(foreach)
+library(doParallel)
+use.snf &lt;- T
+
+doParallel::registerDoParallel(cores = 3)
+
+Pf &lt;- readRDS(&quot;../results/master/2017-04-20_425d653/Pf_bio_new.rds&quot;)
+
+feat &lt;- Pf %&gt;% 
+          dplyr::select(-dplyr::contains(&quot;Metadata_&quot;)) %&gt;% 
+          colnames()
+
+metadata.ext &lt;- readr::read_csv(&quot;../input/CDP2/cdrp.cpd.meta.csv&quot;)
+</code></pre>
+
+<pre><code>## Parsed with column specification:
+## cols(
+##   idCDP = col_integer(),
+##   BROAD_CPD_ID = col_character(),
+##   CPD_ID = col_integer(),
+##   CPD_NAME = col_character(),
+##   CPD_NAME_TYPE = col_character(),
+##   cpd_type = col_character(),
+##   CBP_SMILES = col_character()
+## )
+</code></pre>
+
+<pre><code class="r">brd.full &lt;- unique(Pf$Metadata_broad_sample)
+brds &lt;- lapply(brd.full, function(x) paste(str_split(x,
+                                                                             &quot;-&quot;)[[1]][1:2], 
+                                                   sep = &quot;-&quot;, collapse = &quot;-&quot;)) %&gt;% unlist()
+brd.mapping &lt;- data.frame(BROAD_CPD_ID = brds, 
+                          Image_Metadata_BROAD_ID = brd.full)
+metadata.ext %&lt;&gt;% 
+  dplyr::select(BROAD_CPD_ID, CPD_NAME) %&gt;% 
+  dplyr::filter(BROAD_CPD_ID %in% brds) %&gt;%
+  dplyr::mutate(CPD_NAME = ifelse(str_detect(CPD_NAME, &quot;BRD-&quot;), &quot;&quot;, CPD_NAME)) %&gt;%
+  dplyr::inner_join(., brd.mapping, by = &quot;BROAD_CPD_ID&quot;) %&gt;%
+  dplyr::select(-BROAD_CPD_ID)
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code class="r">metadata &lt;- data.frame(Metadata_broad_sample = unique(Pf$Metadata_broad_sample))
+metadata %&lt;&gt;% 
+  dplyr::left_join(., metadata.ext, by = c(&quot;Metadata_broad_sample&quot; = &quot;Image_Metadata_BROAD_ID&quot;))
+
+Pf %&lt;&gt;% dplyr::left_join(., metadata, by = &quot;Metadata_broad_sample&quot;)
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code class="r">Pf %&lt;&gt;% dplyr::select(one_of(c(feat, &quot;Metadata_broad_sample&quot;, &quot;CPD_NAME&quot;))) %&gt;%
+  dplyr::group_by(Metadata_broad_sample, CPD_NAME) %&gt;%
+  dplyr::summarise_each(funs(&quot;mean&quot;))
+
+Pf %&lt;&gt;% dplyr::mutate(CPD_NAME = str_to_lower(CPD_NAME))
+Pf %&lt;&gt;% dplyr::group_by(CPD_NAME) %&gt;% dplyr::slice(1) %&gt;% dplyr::ungroup(.)
+
+Pf %&lt;&gt;% dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME, &quot;-&quot;, &quot;&quot;)) %&gt;%
+  dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, &quot; &quot;, &quot;&quot;)) %&gt;%
+  dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, &quot;\\(&quot;, &quot;&quot;)) %&gt;%
+  dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, &quot;\\)&quot;, &quot;&quot;)) 
+
+
+MOA &lt;- read.csv(&quot;../input/moas.txt&quot;, sep = &quot;\t&quot;)
+MOA %&lt;&gt;% dplyr::mutate(Name = str_to_lower(Name)) %&gt;%
+  dplyr::mutate(Name_san = str_replace_all(Name, &quot;-&quot;, &quot;&quot;)) %&gt;%
+  dplyr::mutate(Name_san = str_replace_all(Name_san, &quot; &quot;, &quot;&quot;)) %&gt;%
+  dplyr::mutate(Name_san = str_replace_all(Name_san, &quot;\\(&quot;, &quot;&quot;)) %&gt;%
+  dplyr::mutate(Name_san = str_replace_all(Name_san, &quot;\\)&quot;, &quot;&quot;)) 
+
+Pf %&lt;&gt;% dplyr::left_join(., MOA, by = c(&quot;CPD_NAME_san&quot; = &quot;Name_san&quot;))
+meta.col &lt;- setdiff(colnames(Pf), feat)
+saveRDS(list(data = Pf, feat_cols = feat, factor_cols = meta.col), &quot;Pf_annotated.rds&quot;)
+</code></pre>
+
+<pre><code class="r">cor.thr &lt;- -1
+N &lt;- 10
+ks &lt;- 1:40
+
+Pf %&lt;&gt;% dplyr::filter(!is.na(MOA) &amp; CPD_NAME != &quot;&quot;)
+moas &lt;- Pf[, c(&quot;CPD_NAME&quot;, &quot;MOA&quot;)]
+moas_smooth &lt;- read.csv(&quot;../input/CDP2/moas_smooth.csv&quot;)
+</code></pre>
+
+<pre><code>## Warning in file(file, &quot;rt&quot;): cannot open file &#39;../input/CDP2/
+## moas_smooth.csv&#39;: No such file or directory
+</code></pre>
+
+<pre><code>## Error in file(file, &quot;rt&quot;): cannot open the connection
+</code></pre>
+
+<pre><code class="r">moas &lt;- moas %&gt;% 
+  left_join(., moas_smooth, by = &quot;MOA&quot;)
+</code></pre>
+
+<pre><code>## Error in is.data.frame(y): object &#39;moas_smooth&#39; not found
+</code></pre>
+
+<pre><code class="r">if (use.snf) {
+  afs &lt;- c()
+  for (category in c(&quot;_ER&quot;, &quot;_RNA&quot;, &quot;_DNA&quot;, &quot;_Mito&quot;, &quot;_AGP&quot;, &quot;AreaShape&quot;)) {
+    feat.subset &lt;- feat[which(str_detect(feat, category))]
+    for (category2 in c(&quot;Texture&quot;, &quot;Correlation&quot;, &quot;Intensity&quot;, &quot;RadialDistribution&quot;, &quot;Granularity&quot;, &quot;Neighbors&quot;)) {
+    feat.subset2 &lt;- feat.subset[which(str_detect(feat.subset, category2))]
+    if (length(feat.subset2) == 0) {
+        next
+    }
+    cri &lt;- Pf[,feat.subset2] %&gt;% t %&gt;% cor
+        rownames(cri) &lt;- Pf$CPD_NAME
+        colnames(cri) &lt;- Pf$CPD_NAME
+        af &lt;- SNFtool::affinityMatrix(1 - cri, K = 10, sigma = 0.8)
+        afs &lt;- c(afs, list(af))
+     }
+  }
+
+  df.graph &lt;- SNFtool::SNF(afs, K = 10, t = 20)
+  cr &lt;- df.graph
+  rownames(cr) &lt;- Pf$CPD_NAME
+  colnames(cr) &lt;- Pf$CPD_NAME
+} else {
+  cr &lt;- Pf[,feat] %&gt;% t %&gt;% cor
+  rownames(cr) &lt;- Pf$CPD_NAME
+  colnames(cr) &lt;- Pf$CPD_NAME    
+}
+
+cr.melt &lt;- cr %&gt;% melt %&gt;% dplyr::filter(Var1 != Var2)
+
+cr.melt %&lt;&gt;% dplyr::left_join(., moas, by = c(&quot;Var1&quot; = &quot;CPD_NAME&quot;)) %&gt;%
+  dplyr::left_join(., moas, by = c(&quot;Var2&quot; = &quot;CPD_NAME&quot;))
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code class="r">split &lt;- function(x) {
+  y &lt;- str_split(x, &quot;, &quot;)
+  unlist(y)
+}
+
+split &lt;- Vectorize(split)
+
+consistent &lt;- function(moa1, moa2) {
+  l1 &lt;- split(moa1)
+  l2 &lt;- split(moa2)
+  return((any(l1 %in% l2) | any(l2 %in% l1)))
+}
+
+consistent &lt;- Vectorize(consistent)
+
+is.matching &lt;- function(x) {
+  l1 &lt;- split(x[,&quot;MOA.x&quot;] %&gt;% as.vector()) %&gt;% unlist %&gt;% as.vector()
+  l2 &lt;- split(x[,&quot;MOA.y&quot;] %&gt;% as.vector()) %&gt;% unlist %&gt;% as.vector()
+  return(any(l1 %in% l2) | any(l2 %in% l1) | any(x[,&quot;MOA.x&quot;] == x[,&quot;MOA.y&quot;]))
+}
+
+k &lt;- 1
+
+moas.unique &lt;- Pf$MOA %&gt;% unique
+r &lt;- rep(1, length(moas.unique))
+names(r) &lt;- moas.unique
+R &lt;- outer(r, r)
+R.e &lt;- R %&gt;% 
+  reshape2::melt() %&gt;%
+  dplyr::mutate(match = consistent(Var1, Var2)) %&gt;%
+  select(-value)
+
+cr.arr.grp &lt;- cr.melt %&gt;% 
+  left_join(., R.e, by = c(&quot;MOA.x&quot; = &quot;Var1&quot;, &quot;MOA.y&quot; = &quot;Var2&quot;)) %&gt;%
+  arrange(-value) %&gt;%
+  group_by(Var1)
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factors with different levels, coercing to character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factors with different levels, coercing to character vector
+</code></pre>
+
+<pre><code class="r">evaluate &lt;- function(cr.arr.grp, thr, n, cmpd) {
+  cr.arr.grp &lt;- cr.arr.grp %&gt;% dplyr::filter(Var1 == cmpd)
+  a &lt;- cr.arr.grp %&gt;% 
+    filter(value &gt;= thr)
+  b &lt;- cr.arr.grp %&gt;% 
+    filter(value &lt; thr)
+
+  v11 &lt;- a$match %&gt;% sum
+  v12 &lt;- NROW(a) - v11
+  v21 &lt;- b$match %&gt;% sum
+  v22 &lt;- NROW(b) - v21
+  V &lt;- rbind(c(v11, v12), c(v21, v22))
+  TP &lt;- V[1, 1]/(V[1, 1] + V[2, 1])
+  FP &lt;- V[1, 2]/(V[1, 2] + V[2, 2])
+  return(data.frame(TP = TP, FP = FP))
+}
+
+library(foreach)
+library(doParallel)
+doParallel::registerDoParallel(cores = 63)
+
+roc &lt;- function(cmpd) {
+  D &lt;- c()
+  low.end &lt;- min(cr.arr.grp$value)
+  high.end &lt;- max(cr.arr.grp$value)
+
+  step.size &lt;- (high.end - low.end)/2/100
+
+  D &lt;- foreach (thr = seq(from = low.end, to = high.end, by = step.size), .combine = rbind) %dopar% {
+    d &lt;- evaluate(cr.arr.grp = cr.arr.grp, thr = thr, n = NROW(cr), cmpd = cmpd)
+    cbind(d, data.frame(thr = thr))
+  }
+  m &lt;- NROW(D)
+  D &lt;- D %&gt;% arrange(FP)
+  sum((D$TP[2:m] + D$TP[1:(m-1)])/2 * (D$FP[2:m] - D$FP[1:(m-1)]))
+}
+
+cmpds &lt;- cr.arr.grp$Var1 %&gt;% unique()
+r &lt;- lapply(cmpds, roc)
+
+length(which(r &gt;= 0.6))/length(which(!is.na(r))) %&gt;% print
+</code></pre>
+
+<pre><code>## [1] 377
+</code></pre>
+
+<pre><code>## [1] 0.4562334
+</code></pre>
+
+<pre><code class="r">D &lt;- data.frame(compounds = cmpds, AUC = r %&gt;% unlist)
+D &lt;- D %&gt;% dplyr::filter(! is.na(AUC))
+D %&gt;% mutate(AUC = round(AUC, 2)) %&gt;% arrange(-AUC) %&gt;% 
+  left_join(., moas, by = c(&quot;compounds&quot; = &quot;CPD_NAME&quot;)) %&gt;% select(-MOA.Group) %&gt;% htmlTable::htmlTable()
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Error in eval(expr, envir, enclos): object &#39;MOA.Group&#39; not found
+</code></pre>
+
+</body>
+
+</html>
