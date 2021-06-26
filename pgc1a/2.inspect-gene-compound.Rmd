@@ -87,6 +87,11 @@ set.seed(42)
 connections %>% 
   sample_n(10)
 ```
+```{r}
+connections %>%
+  distinct(BROAD_CPD_ID, cpd_type) %>%
+  count(cpd_type)
+```
 
 The next challenge is to figure out how to get PubChem CID from the Broad ID, because that is what will help us map to the PGC1a screen.
 
