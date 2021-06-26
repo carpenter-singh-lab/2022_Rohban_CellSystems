@@ -76,7 +76,7 @@ connections <-
            ifelse(is.na(BROAD_CPD_ID),
                   str_sub(Var1, 1, 13),
                   BROAD_CPD_ID)) %>%
-  inner_join(cdrp_cpd_metadata %>% select(BROAD_CPD_ID, cpd_type))
+  inner_join(cdrp_cpd_metadata %>% select(BROAD_CPD_ID, cpd_type, CBP_SMILES))
 
 ```
 
@@ -92,12 +92,5 @@ connections %>%
   distinct(BROAD_CPD_ID, cpd_type) %>%
   count(cpd_type)
 ```
-
-The next challenge is to figure out how to get PubChem CID from the Broad ID, because that is what will help us map to the PGC1a screen.
-
-Turns out that is not so simple
-https://www.biostars.org/p/249949/
-
-More to come
 
 

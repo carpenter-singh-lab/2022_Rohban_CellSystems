@@ -41,7 +41,25 @@ screen %>%
 
 screen %>%
   count(PUBCHEM_ACTIVITY_OUTCOME)
+```
 
+Save the CIDs and then query https://pubchem.ncbi.nlm.nih.gov/pc_fetch/pc_fetch.cgi
 
+```{r eval=FALSE}
+screen %>%
+  select(PUBCHEM_CID) %>%
+  na.omit() %>%
+  write_tsv("~/Downloads/pgc1a_screen_cid.txt", col_names = FALSE)
+```
+
+The results were saved in `input/3843044851509932684.txt.gz`
+
+```{r}
+smiles_cid <- read_tsv("input/3843044851509932684.txt.gz", col_names = c("PUBCHEM_CID", "CBP_SMILES"))
+```
+```{r}
+screen %>%
+  inner_join(smiles_cid) %>%
+  write_csv("input/pgc1a_screen.csv.gz")
 ```
 

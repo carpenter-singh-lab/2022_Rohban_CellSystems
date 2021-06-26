@@ -1,0 +1,32 @@
+---
+title: "Combine PGC1a screen and Cell Painting"
+output: html_notebook
+---
+
+```{r message=FALSE}
+library(magrittr)
+library(tidyverse)
+```
+
+
+Load PGC1a screen
+
+```{r}
+screen <- read_csv("input/pgc1a_screen.csv.gz")
+```
+
+Load Cell Painting connections to `PPARGC1A_WT`
+
+```{r}
+connections <- read_csv("input/PPARGC1A_WT_2_compound_connections.csv.gz")
+```
+```{r}
+screen_connections <- inner_join(screen, connections)
+```
+
+Sadly this gets us nowhere
+
+```{r}
+count(screen_connections)
+```
+

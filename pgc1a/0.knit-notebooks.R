@@ -23,3 +23,4 @@ render_notebook <-
 
 render_notebook("1.inspect-pgc1a-screen")
 render_notebook("2.inspect-gene-compound")
+render_notebook("3.combine")
