@@ -22,6 +22,13 @@ screen <- read_csv("https://pubchem.ncbi.nlm.nih.gov/assay/pcget.cgi?query=downl
 ```
 
 ```{r}
+set.seed(42)
+screen %>% 
+  sample_n(10)
+```
+
+
+```{r}
 screen %>%
   ggplot(aes(PUBCHEM_ACTIVITY_SCORE, fill = PUBCHEM_ACTIVITY_OUTCOME)) + 
   geom_histogram(bins = 100) + 
