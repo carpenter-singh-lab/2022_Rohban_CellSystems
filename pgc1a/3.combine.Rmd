@@ -21,6 +21,12 @@ Load Cell Painting connections to `PPARGC1A_WT`
 connections <- read_csv("input/PPARGC1A_WT_2_compound_connections.csv.gz")
 ```
 ```{r}
+set.seed(42)
+screen %>% sample_n(10)
+connections %>% sample_n(10)
+```
+
+```{r}
 screen_connections <- inner_join(screen, connections)
 ```
 
