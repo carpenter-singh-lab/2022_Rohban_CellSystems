@@ -2,10 +2,10 @@
 .Rhistory
 .RData
 .Ruserdata
-*.md
-*.html
-*.rds
-*.txt
-*.csv
-*.bck
-*.png
+# *.md
+# *.html
+# *.rds
+# *.txt
+# *.csv
+# *.bck
+# *.png
