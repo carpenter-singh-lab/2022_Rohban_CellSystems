@@ -9,3 +9,5 @@
 # *.csv
 # *.bck
 # *.png
+archive/large_rds_files/
+untracked_likely_delete/
