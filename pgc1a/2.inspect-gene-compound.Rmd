@@ -1,0 +1,88 @@
+---
+title: "Inspect gene-compound connections"
+output: html_notebook
+---
+
+```{r message=FALSE}
+library(magrittr)
+library(glue)
+library(tidyverse)
+```
+
+
+This file was very likely created using this code
+https://github.com/broadinstitute/2016_08_22_Gene_Compound/blob/f08ccc2b4763376dd00010bed559f3d531b61dd2/archive/CDRP_per_gene_analysis_mutants.Rmd#L335-L339
+
+i.e. it has the Pearson correlation between genes and compounds
+
+```{r}
+connections <- readRDS("../archive/rds_files/cr_melt_cp.rds")
+```
+
+
+```{r}
+set.seed(42)
+connections %>% 
+  sample_n(10)
+```
+
+```{r}
+connections %>%
+  filter(Var2 == "PPARGC1A_WT.2") %>%
+  count(name = "Number of connections with compounds")
+```
+
+```{r}
+connections %>%
+  filter(Var2 == "PPARGC1A_WT.2") %>%
+  ggplot(aes(value)) + geom_histogram(bins = 100) +
+  ggtitle("Distribution of Pearson similarity of compounds to PPARGC1A_WT.2")
+```
+
+We need `PUBCHEM_CID` from the `Var1` column
+
+`Var1` is `CPD_NAME`, which was loaded here
+
+https://github.com/broadinstitute/2016_08_22_Gene_Compound/blob/f08ccc2b4763376dd00010bed559f3d531b61dd2/archive/CDRP_per_gene_analysis_mutants.Rmd#L101
+
+```{r}
+cdrp_cpd_metadata <- 
+  read_csv("../input/CDP2/cdrp.cpd.meta.csv") %>%
+  mutate(CPD_NAME = tolower(CPD_NAME)) 
+```
+```{r}
+connections <-
+  connections %>%
+  left_join(
+    connections %>%
+      select(Var1) %>%
+      inner_join(
+        cdrp_cpd_metadata %>%
+          select(CPD_NAME, BROAD_CPD_ID),
+        by = c("Var1" = "CPD_NAME")
+      ) %>%
+      distinct()
+  ) %>%
+  mutate(BROAD_CPD_ID =
+           ifelse(is.na(BROAD_CPD_ID),
+                  str_sub(Var1, 1, 13),
+                  BROAD_CPD_ID))
+
+```
+
+We now have `BROAD_CPD_ID` for all compounds
+
+```{r}
+set.seed(42)
+connections %>% 
+  sample_n(10)
+```
+
+The next challenge is to figure out how to get PubChem CID from the Broad ID, because that is what will help us map to the PGC1a screen.
+
+Turns out that is not so simple
+https://www.biostars.org/p/249949/
+
+More to come
+
+
