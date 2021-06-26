@@ -21,6 +21,5 @@ render_notebook <-
   }
 
 
-#---- 0.inspect-metadata ----
-
 render_notebook("1.inspect-pgc1a-screen")
+render_notebook("2.inspect-gene-compound")

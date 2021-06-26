@@ -45,11 +45,20 @@ We need `PUBCHEM_CID` from the `Var1` column
 
 https://github.com/broadinstitute/2016_08_22_Gene_Compound/blob/f08ccc2b4763376dd00010bed559f3d531b61dd2/archive/CDRP_per_gene_analysis_mutants.Rmd#L101
 
+Let's load the CDRP metadata 
+
 ```{r}
 cdrp_cpd_metadata <- 
   read_csv("../input/CDP2/cdrp.cpd.meta.csv") %>%
   mutate(CPD_NAME = tolower(CPD_NAME)) 
 ```
+```{r}
+set.seed(42)
+cdrp_cpd_metadata %>% 
+  sample_n(10)
+```
+
+
 ```{r}
 connections <-
   connections %>%
@@ -66,7 +75,8 @@ connections <-
   mutate(BROAD_CPD_ID =
            ifelse(is.na(BROAD_CPD_ID),
                   str_sub(Var1, 1, 13),
-                  BROAD_CPD_ID))
+                  BROAD_CPD_ID)) %>%
+  inner_join(cdrp_cpd_metadata %>% select(BROAD_CPD_ID, cpd_type))
 
 ```
 
