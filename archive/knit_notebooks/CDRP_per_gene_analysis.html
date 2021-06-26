@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title></title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: #990073
+   }
+
+   pre .number {
+     color: #099;
+   }
+
+   pre .comment {
+     color: #998;
+     font-style: italic
+   }
+
+   pre .keyword {
+     color: #900;
+     font-weight: bold
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: #d14;
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<pre><code class="r">rm(list = ls())
+library(dplyr)
+library(stringr)
+library(plyr)
+library(reshape2)
+library(htmlTable)
+library(foreach)
+library(doMC)
+library(magrittr)
+library(readr)
+registerDoMC(cores = 3)
+use.snf &lt;- T
+
+source(&quot;rep.corr.func.R&quot;)
+use.repurp.annots &lt;- F
+permute.moas &lt;- F
+seed.moa &lt;- -8     ## ignore, if permute.moas is False
+LUAD &lt;- F
+LUAD.mut &lt;- F
+just.bioactives &lt;- T
+no.top.matches &lt;- 15
+#cor.thr &lt;- 0.50
+#cor.thr.per &lt;- 0.99
+p.val.thr &lt;- 0.001
+N &lt;- 1000                     ## number of Monte-carlo simulations to estimate expected random matches
+genes.to.remove &lt;- c()        ## remove these genes before making matches
+feat.keyword.keep &lt;- c(&quot;_&quot;)
+
+base.dir &lt;- &quot;2016-07-20_90b7bb86&quot;
+use.feat.selected.in.TA.ORF.in.common &lt;- F
+corr.type &lt;- &quot;pearson&quot;
+
+if (LUAD) {
+  load(&quot;../input/LUAD/LUAD.RData&quot;)
+  Pf.ta &lt;- list(data = Px, factor_cols = &quot;Metadata_x_mutation_status&quot;, feat_cols = setdiff(colnames(Px), &quot;Metadata_x_mutation_status&quot;))
+  Pf.ta.all &lt;- Pf
+  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(str_detect(Metadata_x_mutation_status, &quot;WT&quot;)) %&gt;% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta$factor_cols &lt;- c(Pf.ta$factor_cols, &quot;Treatment&quot;)
+  Pf.ta.all$data &lt;- Pf.ta.all$data %&gt;% dplyr::filter(str_detect(Metadata_x_mutation_status, &quot;WT&quot;)) %&gt;% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta.all$factor_cols &lt;- c(Pf.ta.all$factor_cols, &quot;Treatment&quot;)
+
+  Pf.ta$data$Treatment &lt;- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, &quot;_&quot;)[[1]][1])) %&gt;% unlist
+  Pf.ta.all$data$Treatment &lt;- lapply(Pf.ta.all$data$Treatment, function(x) (str_split(x, &quot;_&quot;)[[1]][1])) %&gt;% unlist
+  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::group_by(Treatment) %&gt;% slice(1) %&gt;% dplyr::ungroup()
+} else if (LUAD.mut) {
+  load(&quot;../input/LUAD/LUAD.RData&quot;)
+  Pf.ta &lt;- list(data = Px, factor_cols = &quot;Metadata_x_mutation_status&quot;, feat_cols = setdiff(colnames(Px), &quot;Metadata_x_mutation_status&quot;))
+  Pf.ta.all &lt;- Pf
+  a &lt;- read.csv(&quot;../input/LUAD/allele_classification.csv&quot;)
+  GOF &lt;- a$Allele[which(a$Benchmark.activity == &quot;GOF&quot; | a$eVIP_prediction %in% c(&quot;GOF&quot;, &quot;Neutral&quot;))]
+  s &lt;- Pf.ta$data$Metadata_x_mutation_status %&gt;% unique
+  s &lt;- s[which(str_detect(s, &quot;_WT&quot;))]
+  GOF &lt;- c(as.character(GOF), as.character(s))
+
+  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Metadata_x_mutation_status %in% GOF) %&gt;% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta$factor_cols &lt;- c(Pf.ta$factor_cols, &quot;Treatment&quot;)
+  Pf.ta.all$data &lt;- Pf.ta.all$data %&gt;% dplyr::filter(str_detect(Metadata_x_mutation_status, &quot;WT&quot;)) %&gt;% dplyr::mutate(Treatment = Metadata_x_mutation_status)
+  Pf.ta.all$factor_cols &lt;- c(Pf.ta.all$factor_cols, &quot;Treatment&quot;)
+
+  Pf.ta$data$Treatment &lt;- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, &quot;_&quot;)[[1]][1])) %&gt;% unlist
+  Pf.ta.all$data$Treatment &lt;- lapply(Pf.ta.all$data$Treatment, function(x) (str_split(x, &quot;_&quot;)[[1]][1])) %&gt;% unlist
+  Pf.ta$data &lt;- dplyr::left_join(Pf.ta$data, uu, by = &quot;Metadata_x_mutation_status&quot;)
+  Pf.ta$factor_cols &lt;- c(Pf.ta$factor_cols, &quot;strn&quot;)
+  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::group_by(Treatment) %&gt;% arrange(-strn) %&gt;% slice(1) %&gt;% dplyr::ungroup()
+  Pf.ta$data %&gt;% dplyr::select(Treatment, Metadata_x_mutation_status, strn) %&gt;% unique %&gt;% knitr::kable()
+} else {
+  load(&quot;../input/TA/Initial_analysis_workspace_new.RData&quot;)
+  Pf.ta &lt;- Pf_org.org.collapsed
+  Pf.ta.all &lt;- Pf_org.org
+  strong.trt &lt;- Pf.trt.strong.collapsed$data$Treatment
+  data.annot &lt;- Pf.strong %&gt;% dplyr::filter(Treatment %in% strong.trt) %&gt;% dplyr::select(one_of(c(&quot;Treatment&quot;, &quot;Pathway&quot;, &quot;Gene&quot;, &quot;AlleleDesc&quot;))) %&gt;% 
+    dplyr::mutate(Pathway = str_replace(Pathway, &quot;Canonical &quot;, &quot;&quot;)) %&gt;% 
+    dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2)) %&gt;%
+    dplyr::filter(AlleleDesc == &quot;WT&quot;) %&gt;% dplyr::group_by(Gene) %&gt;% dplyr::slice(1) %&gt;%
+    dplyr::ungroup() 
+  desired.ta &lt;- data.annot$Treatment
+  Pf.ta.all$data &lt;- Pf.ta.all$data %&gt;% dplyr::filter(Treatment %in% c(as.character(desired.ta), &quot;EMPTY_&quot;)) 
+  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta) 
+
+  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta) 
+  Pf.ta$data$Treatment &lt;- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, &quot;_&quot;)[[1]][1])) %&gt;% unlist 
+}
+
+Pf.gene &lt;- Pf.ta
+Pf.gene.all &lt;- Pf.ta.all
+Pf.gene$data &lt;- Pf.gene$data %&gt;% dplyr::filter(! Treatment %in% genes.to.remove)
+
+
+############
+
+Pf.cmpd &lt;- readRDS(&quot;../results/master/2017-04-20_64917c8b/Pf_annotated.rds&quot;)
+Pf.cmpd$data %&lt;&gt;% mutate(CPD_NAME = ifelse(CPD_NAME != &quot;&quot;, CPD_NAME, Metadata_broad_sample))
+
+source(&quot;rep.corr.func.R&quot;)
+Pf.1 &lt;- readRDS(&quot;../results/master/2017-04-20_425d653/Pf_bio_new.rds&quot;)
+if (!just.bioactives) {
+  Pf.2 &lt;- readRDS(&quot;../results/master/2017-04-20_425d653/Pf_DOS_new.rds&quot;)
+  Pf &lt;- rbind(Pf.1, Pf.2)
+} else {
+  Pf &lt;- Pf.1 
+}
+
+u &lt;- rep.cor(list(data = Pf, feat_cols = Pf.cmpd$feat_cols, factor_cols = Pf.cmpd$factor_cols), grp.var = &quot;Metadata_broad_sample&quot;, feat.var = Pf.cmpd$feat_cols)
+up &lt;- readr::read_csv(&quot;../results/master/2017-04-21_425d6537/Cell_counts.csv&quot;)
+</code></pre>
+
+<pre><code>## Parsed with column specification:
+## cols(
+##   Image_Metadata_Plate = col_integer(),
+##   Image_Metadata_Well = col_character(),
+##   Image_Count_Cells = col_double()
+## )
+</code></pre>
+
+<pre><code class="r">x &lt;- Pf %&gt;% 
+  left_join(., u, by = &quot;Metadata_broad_sample&quot;) %&gt;%
+  left_join(., up, by = c(&quot;Metadata_Plate&quot; = &quot;Image_Metadata_Plate&quot;, &quot;Metadata_Well&quot; = &quot;Image_Metadata_Well&quot;)) %&gt;%
+  select(Metadata_broad_sample, cr, Image_Count_Cells) %&gt;%
+  group_by(Metadata_broad_sample) %&gt;%
+  summarise_each(funs(mean))
+
+Pf.cmpd$data %&lt;&gt;% 
+  right_join(., x, by = &quot;Metadata_broad_sample&quot;) %&gt;%
+  mutate(rep.corr = round(cr, 2), Mean_Cells_Count = round(Image_Count_Cells, 2)) %&gt;%
+  select(-cr, -Image_Count_Cells) 
+
+Pf.cmpd$factor_cols &lt;- c(Pf.cmpd$factor_cols, &quot;rep.corr&quot;, &quot;Mean_Cells_Count&quot;)
+Pf.cmpd$data$Mean_Cells_Count &lt;- round(scale(Pf.cmpd$data$Mean_Cells_Count), 2)
+Pf.cmpd$data &lt;- Pf.cmpd$data %&gt;% dplyr::group_by(CPD_NAME) %&gt;% slice(1) %&gt;% ungroup
+</code></pre>
+
+<pre><code class="r">f1 &lt;- Pf.cmpd$feat_cols
+f2 &lt;- Pf.gene$feat_cols
+f &lt;- intersect(f1, f2)
+fs &lt;- c()
+
+for (ft.k in feat.keyword.keep) {
+  f.t &lt;- f[which(str_detect(f, ft.k))]  
+  fs &lt;- c(fs, f.t)
+}
+f &lt;- unique(fs)
+
+Pf.cmpd$feat_cols &lt;- f
+Pf.gene$feat_cols &lt;- f
+
+Pf.cmpd$data &lt;- Pf.cmpd$data[,c(Pf.cmpd$factor_cols, Pf.cmpd$feat_cols)]
+Pf.gene$data &lt;- Pf.gene$data[,c(Pf.gene$factor_cols, Pf.gene$feat_cols)]
+
+if (use.feat.selected.in.TA.ORF.in.common) {
+  feats &lt;- Pf_org$feat_cols
+  feats &lt;- intersect(feats, Pf.cmpd$feat_cols)
+  Pf.cmpd$feat_cols &lt;- feats
+  Pf.cmpd$data &lt;- Pf.cmpd$data[,c(feats, Pf.cmpd$factor_cols)]
+  Pf.gene$feat_cols &lt;- feats
+  Pf.gene$data &lt;- Pf.gene$data[,c(feats, Pf.gene$factor_cols)]
+}
+
+print(length(Pf.cmpd$feat_cols))
+</code></pre>
+
+<pre><code>## [1] 605
+</code></pre>
+
+<pre><code class="r">print(NROW(Pf.cmpd$data))
+</code></pre>
+
+<pre><code>## [1] 1161
+</code></pre>
+
+<pre><code class="r">print(length(Pf.gene$feat_cols))
+</code></pre>
+
+<pre><code>## [1] 605
+</code></pre>
+
+<pre><code class="r">print(NROW(Pf.gene$data))
+</code></pre>
+
+<pre><code>## [1] 69
+</code></pre>
+
+<pre><code class="r">#f &lt;- caret::findCorrelation(cor(Pf.cmpd$data[,Pf.cmpd$feat_cols]), 0.8)
+#f &lt;- setdiff(1:length(Pf.cmpd$feat_cols), f)
+if (use.snf) {
+  afs &lt;- c()
+  feat &lt;- Pf.cmpd$feat_cols
+  for (category in c(&quot;_ER&quot;, &quot;_RNA&quot;, &quot;_DNA&quot;, &quot;_Mito&quot;, &quot;_AGP&quot;, &quot;AreaShape&quot;)) {
+    feat.subset &lt;- feat[which(str_detect(feat, category))]
+    x &lt;- Pf.cmpd$data[,Pf.cmpd$feat_cols]
+    y &lt;- Pf.gene$data[,Pf.cmpd$feat_cols]
+    D &lt;- rbind(x, y)
+
+    cri &lt;- D[,feat.subset] %&gt;% t %&gt;% cor
+    rownames(cri) &lt;- c(Pf.cmpd$data$CPD_NAME, Pf.gene$data$Treatment)
+    colnames(cri) &lt;- c(Pf.cmpd$data$CPD_NAME, Pf.gene$data$Treatment)
+    af &lt;- SNFtool::affinityMatrix(1 - cri, K = 10, sigma = 0.8)
+    afs &lt;- c(afs, list(af))
+  }
+
+  df.graph &lt;- SNFtool::SNF(afs, K = 10, t = 20)
+  cr &lt;- df.graph
+  rownames(cr) &lt;- c(Pf.cmpd$data$CPD_NAME, Pf.gene$data$Treatment)
+  colnames(cr) &lt;- c(Pf.cmpd$data$CPD_NAME, Pf.gene$data$Treatment)
+  cr &lt;- cr[Pf.cmpd$data$CPD_NAME, Pf.gene$data$Treatment]
+
+} else {
+  f &lt;- 1:length(Pf.cmpd$feat_cols)
+  x &lt;- Pf.cmpd$data[,Pf.cmpd$feat_cols[f]] %&gt;% t
+  y &lt;- Pf.gene$data[,Pf.cmpd$feat_cols[f]] %&gt;% t
+
+  cr &lt;- cor(x, y)
+
+  rownames(cr) &lt;- Pf.cmpd$data$CPD_NAME
+  colnames(cr) &lt;- Pf.gene$data$Treatment
+}
+
+#cr &lt;- diag(apply(abs(cr), 1, sum)^-1) %*% cr 
+rownames(cr) &lt;- Pf.cmpd$data$CPD_NAME
+colnames(cr) &lt;- Pf.gene$data$Treatment
+
+cr.melt &lt;- melt(cr)
+saveRDS(cr.melt, &quot;cr_melt_cp.rds&quot;)
+cor.thr &lt;- quantile(cr.melt$value, cor.thr.per)
+</code></pre>
+
+<pre><code class="r">if (!LUAD &amp;&amp; !LUAD.mut) {
+source(&quot;../l1ktools/R/cmap/io.R&quot;)
+ds &lt;- parse.gctx(&quot;../results/manual/cmap.compound.score/result_WTCS.LM.COMBINED_n328x22962.gctx&quot;, set_annot_rownames = F)
+cmpd.gene.score.cmap &lt;- attr(ds, &quot;mat&quot;)
+rn &lt;- rownames(cmpd.gene.score.cmap)
+rn &lt;- sapply(str_split(rn, &quot;:&quot;), &quot;[[&quot;, 2)
+rownames(cmpd.gene.score.cmap) &lt;- rn
+rn.cmap &lt;- rn
+
+cn &lt;- colnames(cmpd.gene.score.cmap)
+cn &lt;- sapply(str_split(cn, &quot;:&quot;), &quot;[[&quot;, 2)
+colnames(cmpd.gene.score.cmap) &lt;- cn
+
+
+meta.ta.cmap &lt;- read.csv(&quot;../input/TA-OE-L1000-B1/TA.OE005_U2OS_72H_COMPZ.MODZ_SCORE_LM_n323x978.gctx.gct.csv&quot;) %&gt;% t
+colnames(meta.ta.cmap) &lt;- meta.ta.cmap[1,]
+meta.ta.cmap &lt;- meta.ta.cmap[-1,]
+meta.ta.cmap &lt;- meta.ta.cmap %&gt;% as.data.frame()
+genes.ta.cmap &lt;- meta.ta.cmap$x_genesymbol_mutation
+ids.ta.cmap &lt;- meta.ta.cmap$pert_id
+meta.ta.cmap[, &quot;det_well&quot;] &lt;- tolower(meta.ta.cmap$det_well)
+treatment.meta &lt;- Pf_org$data %&gt;% 
+  dplyr::filter(Type == &quot;Treated&quot;) %&gt;%
+  dplyr::select(Well, Treatment) %&gt;%
+  unique %&gt;% 
+  dplyr::left_join(., meta.ta.cmap, by = c(&quot;Well&quot; = &quot;det_well&quot;))
+
+treatment.meta &lt;- treatment.meta %&gt;% dplyr::filter(!Treatment %in% c(&quot;CYLD_WT&quot;, &quot;ERG_truncated&quot;))
+
+treatment.to.id &lt;- data.frame(treatment.meta$pert_id)
+rownames(treatment.to.id) &lt;- treatment.meta$Treatment
+id.to.treatment &lt;- data.frame(treatment.meta$Treatment)
+ix &lt;- which(is.na(treatment.meta$pert_id))
+treatment.meta$pert_id &lt;- treatment.meta$pert_id %&gt;% as.character()
+treatment.meta$pert_id[ix] &lt;- 1:length(ix)
+rownames(id.to.treatment) &lt;- treatment.meta$pert_id
+
+colnames(cmpd.gene.score.cmap) &lt;- id.to.treatment[cn, ]
+cmpd.gene.score.cmap &lt;- cmpd.gene.score.cmap[,intersect(desired.ta, colnames(cmpd.gene.score.cmap))]
+colnames(cmpd.gene.score.cmap) &lt;- lapply(colnames(cmpd.gene.score.cmap), function(x) str_split(x, &quot;_&quot;)[[1]][1]) %&gt;% unlist
+u &lt;- apply(cmpd.gene.score.cmap, 2, function(x) ecdf(x)(x))
+cr.l1000 &lt;- u
+rownames(cr.l1000) &lt;- rownames(cmpd.gene.score.cmap)
+} else {
+  cr.l1000 &lt;- NULL
+}
+</code></pre>
+
+<pre><code>## reading ../results/manual/cmap.compound.score/result_WTCS.LM.COMBINED_n328x22962.gctx
+</code></pre>
+
+<pre><code>## Warning in doTryCatch(return(expr), name, parentenv, handler): NAs
+## introduced by coercion
+
+## Warning in doTryCatch(return(expr), name, parentenv, handler): NAs
+## introduced by coercion
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code class="r">moas &lt;- read.csv(&quot;../input/moas.txt&quot;, sep = &quot;\t&quot;)
+
+get.interacting.proteins &lt;- function(protein.name) {
+  dr &lt;- &quot;../results/manual/ppis&quot;
+  if (!dir.exists(dr)) {
+    system(sprintf(&quot;mkdir -p %s&quot;, dr))
+  }
+  f.name &lt;- sprintf(&quot;%s/%s.rds&quot;, dr, protein.name)
+  if (file.exists(f.name)) {
+    return(readRDS(f.name))
+  }
+
+  tbl &lt;- read.table(sprintf(&quot;http://webservice.thebiogrid.org/interactions/?searchNames=true&amp;geneList=%s&amp;taxId=9606&amp;includeHeader=true&amp;accesskey=ca950b072394ce1897811022f7757222&quot;, protein.name), sep=&quot;\t&quot;, header = FALSE, fill = T)
+  tbl &lt;- tbl[, c(8, 9, 12, 13, 14)] 
+  colnames(tbl) &lt;- c(&quot;Protein.1&quot;, &quot;Protein.2&quot;, &quot;Method&quot;, &quot;Type&quot;, &quot;Evidence&quot;)
+  saveRDS(tbl, f.name)
+  return(tbl)
+}
+
+get.all.interacting.proteins &lt;- function(protein.name) {
+  res &lt;- c()
+  for (p in protein.name) {
+    ppi &lt;- tryCatch(get.interacting.proteins(p), error = function(e) {})
+    res &lt;- rbind(res, ppi)
+  }
+  return(res)
+}
+
+ V &lt;- matrix(0, 2, 2)
+
+shuffle.cr.melt &lt;- function(cr.melt, var) {
+  #reshape2::  
+}
+
+sample.tot &lt;- function(Pf.cmpd, Pf.gene, cr.melt, verbose = F, cor.thr = 0.5, how.many = 5) {
+  gn.list &lt;- c()
+  gn.map &lt;- Pf.gene$data$Treatment %&gt;% as.matrix() %&gt;% as.vector()
+  names(gn.map) &lt;- gn.map
+
+  all.targ &lt;- lapply(Pf.cmpd$data$Target %&gt;% unique, function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .) %&gt;% unique
+  path &lt;- sprintf(&quot;../results/manual/ppis&quot;)
+  if (!dir.exists(path)) {
+    system(sprintf(&quot;mkdir -p %s&quot;, path))
+  }
+  if (file.exists(sprintf(&quot;%s/all.rds&quot;, path))) {
+    ppi.all &lt;- readRDS(sprintf(&quot;%s/all.rds&quot;, path))
+  } else {
+    ppi.all &lt;- tryCatch(get.all.interacting.proteins(all.targ), error = function(e) {})
+    saveRDS(ppi.all, sprintf(&quot;%s/all.rds&quot;, path))
+  }
+
+  pb &lt;- progress::progress_bar$new(total = length(Pf.gene$data$Treatment))
+  for (gene in Pf.gene$data$Treatment) {
+    if (verbose) {
+      pb$tick()  
+    }
+    gn &lt;- gn.map[gene] %&gt;% as.matrix() %&gt;% as.vector()
+
+    u.res &lt;- cr.melt %&gt;% 
+      dplyr::filter(Var2 == gn) %&gt;%
+      dplyr::arrange(-value) %&gt;%
+      dplyr::mutate(value = round(value, 5)) %&gt;% dplyr::filter((value) &gt; cor.thr) 
+      up.reg &lt;- u.res %&gt;% head(., how.many) %&gt;% dplyr::filter(value &gt; 0) %&gt;% dplyr::select(Var1) %&gt;% as.matrix() %&gt;% as.vector()
+      down.reg &lt;- u.res %&gt;% tail(., how.many) %&gt;% dplyr::filter(value &lt; 0) %&gt;% dplyr::select(Var1) %&gt;% as.matrix() %&gt;% as.vector()
+
+    reg &lt;- c(up.reg, down.reg) %&gt;% unique
+    reg &lt;- setdiff(reg, &quot;&quot;)
+    u.res.lim &lt;- u.res %&gt;% dplyr::filter(Var1 %in% reg) %&gt;% dplyr::mutate(CPD_NAME = Var1) %&gt;% dplyr::mutate(Corr. = value) %&gt;% dplyr::select(one_of(c(&quot;CPD_NAME&quot;, &quot;Corr.&quot;)))
+
+    rest &lt;- setdiff(Pf.cmpd$data$CPD_NAME %&gt;% unique, reg)
+    v &lt;- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% reg], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .) 
+    if (length(v) == 0) {
+      next
+    }
+    u &lt;- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% rest], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .) 
+
+    main.targ &lt;- data.frame(gene = v) %&gt;% dplyr::group_by(gene) %&gt;% tally() %&gt;% dplyr::filter(gene != &quot;&quot;) %&gt;% dplyr::arrange(-n) %&gt;% dplyr::select(gene) %&gt;% as.matrix() %&gt;% as.vector()
+    rest.targ &lt;- data.frame(gene = u) %&gt;% dplyr::group_by(gene) %&gt;% tally() %&gt;% dplyr::filter(gene != &quot;&quot;) %&gt;% dplyr::arrange(-n) %&gt;% dplyr::select(gene) %&gt;% as.matrix() %&gt;% as.vector()
+
+    ppi &lt;- ppi.all %&gt;% dplyr::filter(Protein.1 %in% main.targ | Protein.2 %in% main.targ)
+    ppi2 &lt;- ppi.all %&gt;% dplyr::filter(Protein.1 %in% rest.targ | Protein.2 %in% rest.targ)
+
+    id &lt;- ppi %&gt;% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %&gt;% unique %&gt;% NROW
+    id0 &lt;- ppi2 %&gt;% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %&gt;% unique %&gt;% NROW
+    Vi &lt;- rbind(c(id, NROW(ppi %&gt;% unique) - id), c(id0, NROW(ppi2 %&gt;% unique) - id0))
+    V &lt;- V + Vi
+
+    fsh &lt;- fisher.test(Vi, alternative = &quot;greater&quot;)
+    if (fsh$p.value &lt; p.val.thr/length(Pf.gene$data$Treatment)) {
+      gn.list &lt;- c(gn.list, gene)
+      if (verbose) {
+        cat(gene)
+        cat(&quot;&lt;br&gt;&quot;)
+        colnames(Vi) &lt;- c(&quot;gene in relevant ppi&quot;, &quot;otherwise&quot;)
+        rownames(Vi) &lt;- c(&quot;compound matches&quot;, &quot;rest of compounds&quot;)
+        Vi %&gt;% htmlTable::htmlTable() %&gt;% cat
+        cat(&quot;&lt;br&gt;&quot;)
+        fsh %&gt;% print
+        cat(&quot;&lt;br&gt;&quot;)
+        Pf.cmpd$data %&gt;% dplyr::filter(CPD_NAME %in% reg) %&gt;% dplyr::select(one_of(c(&quot;CPD_NAME&quot;, &quot;MOA&quot;, &quot;Target&quot;, &quot;rep.corr&quot;, &quot;Mean_Cells_Count&quot;))) %&gt;% dplyr::inner_join(., u.res.lim, by = &quot;CPD_NAME&quot;) %&gt;% arrange(Corr.) %&gt;% htmlTable::htmlTable() %&gt;% cat
+        (ppi %&gt;% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %&gt;% unique %&gt;% head(., 20)) %&gt;% htmlTable::htmlTable() %&gt;% cat
+        cat(&quot;&lt;br&gt; &lt;hr&gt;&quot;)
+      }
+    } 
+
+    if (verbose) {
+      cr.l1000.melt &lt;- cr.l1000 %&gt;% reshape2::melt(.) %&gt;% dplyr::filter(Var2 == gene)
+      cat(gene, file = &quot;predictions.html&quot;, append = T)
+      cat(&quot;&lt;br&gt;&quot;, file = &quot;predictions.html&quot;, append = T)
+      Pf.cmpd$data %&gt;% dplyr::filter(CPD_NAME %in% reg) %&gt;% dplyr::select(one_of(c(&quot;Metadata_broad_sample&quot;, &quot;CPD_NAME&quot;, &quot;MOA&quot;, &quot;Target&quot;, &quot;rep.corr&quot;, &quot;Mean_Cells_Count&quot;))) %&gt;% dplyr::inner_join(., u.res.lim, by = &quot;CPD_NAME&quot;) %&gt;% dplyr::left_join(., cr.l1000.melt, by = c(&quot;Metadata_broad_sample&quot; = &quot;Var1&quot;)) %&gt;% arrange(Corr.) %&gt;% dplyr::mutate(value = round(value, 3)) %&gt;% dplyr::rename(l1000.score = value) %&gt;% dplyr::select(-Var2) %&gt;% htmlTable::htmlTable() %&gt;% cat(., file = &quot;predictions.html&quot;, append = T)
+      cat(&quot;&lt;br&gt; &lt;hr&gt;&quot;, file = &quot;predictions.html&quot;, append = T)
+    }
+  }
+
+  return(list(genes = gn.list, V = V))
+}
+</code></pre>
+
+<pre><code class="r">system(&quot;rm predictions.html&quot;)
+if (LUAD || LUAD.mut) {
+  res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, cr.melt = cr.melt, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)  
+} else {
+  res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, cr.melt = cr.melt, verbose = T, cor.thr = cor.thr, how.many = no.top.matches)
+}
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<p>CDKN1A<br><table class='gmisc_table' style='border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;' >
+<thead>
+<tr>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey;'> </th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>gene in relevant ppi</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>otherwise</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style='text-align: left;'>compound matches</td>
+<td style='text-align: center;'>79</td>
+<td style='text-align: center;'>3754</td>
+</tr>
+<tr>
+<td style='border-bottom: 2px solid grey; text-align: left;'>rest of compounds</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>93</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>33873</td>
+</tr>
+</tbody>
+</table><br>
+    Fisher&#39;s Exact Test for Count Data</p>
+
+<p>data:  Vi
+p-value &lt; 2.2e-16
+alternative hypothesis: true odds ratio is greater than 1
+95 percent confidence interval:
+ 5.87571     Inf
+sample estimates:
+odds ratio 
+  7.662897 </p>
+
+<p><br></p>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<p><table class='gmisc_table' style='border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;' >
+<thead>
+<tr>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey;'> </th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>CPD_NAME</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>MOA</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Target</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>rep.corr</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Mean_Cells_Count</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Corr.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style='text-align: left;'>1</td>
+<td style='text-align: center;'>hhbpdde</td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'>0.63</td>
+<td style='text-align: center;'>-1.16</td>
+<td style='text-align: center;'>0.00493</td>
+</tr>
+<tr>
+<td style='text-align: left;'>2</td>
+<td style='text-align: center;'>BRD-K55677650-003-01-1</td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'>0.31</td>
+<td style='text-align: center;'>0.08</td>
+<td style='text-align: center;'>0.00521</td>
+</tr>
+<tr>
+<td style='text-align: left;'>3</td>
+<td style='text-align: center;'>BRD-K78496197-001-01-3</td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'>0.53</td>
+<td style='text-align: center;'>-1.46</td>
+<td style='text-align: center;'>0.00541</td>
+</tr>
+<tr>
+<td style='text-align: left;'>4</td>
+<td style='text-align: center;'>BRD-K50841342-001-01-6</td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'>0.58</td>
+<td style='text-align: center;'>-1.4</td>
+<td style='text-align: center;'>0.00612</td>
+</tr>
+<tr>
+<td style='text-align: left;'>5</td>
+<td style='text-align: center;'>bml-259</td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'>0.5</td>
+<td style='text-align: center;'>-0.6</td>
+<td style='text-align: center;'>0.00625</td>
+</tr>
+<tr>
+<td style='text-align: left;'>6</td>
+<td style='text-align: center;'>roscovitine</td>
+<td style='text-align: center;'>CDK inhibitor</td>
+<td style='text-align: center;'>CDK1, CDK2, CDK5, CDK7, CDK9</td>
+<td style='text-align: center;'>0.25</td>
+<td style='text-align: center;'>0.27</td>
+<td style='text-align: center;'>0.00628</td>
+</tr>
+<tr>
+<td style='text-align: left;'>7</td>
+<td style='text-align: center;'>thiotepa</td>
+<td style='text-align: center;'>cytochrome P450 inhibitor</td>
+<td style='text-align: center;'>CYP2B6, CYP3A4</td>
+<td style='text-align: center;'>0.62</td>
+<td style='text-align: center;'>-0.42</td>
+<td style='text-align: center;'>0.00647</td>
+</tr>
+<tr>
+<td style='text-align: left;'>8</td>
+<td style='text-align: center;'>obacunol</td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'>0.24</td>
+<td style='text-align: center;'>0.14</td>
+<td style='text-align: center;'>0.00657</td>
+</tr>
+<tr>
+<td style='text-align: left;'>9</td>
+<td style='text-align: center;'>ancitabine</td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'></td>
+<td style='text-align: center;'>0.59</td>
+<td style='text-align: center;'>-1.94</td>
+<td style='text-align: center;'>0.00661</td>
+</tr>
+<tr>
+<td style='text-align: left;'>10</td>
+<td style='text-align: center;'>purvalanol a</td>
+<td style='text-align: center;'>CDK inhibitor</td>
+<td style='text-align: center;'>CCND1, CCNE1, CDK1, CDK2, CDK4, CDK5, CSNK1G3, RPS6KA1, SRC</td>
+<td style='text-align: center;'>0.56</td>
+<td style='text-align: center;'>-1.48</td>
+<td style='text-align: center;'>0.00668</td>
+</tr>
+<tr>
+<td style='text-align: left;'>11</td>
+<td style='text-align: center;'>methotrexate</td>
+<td style='text-align: center;'>dihydrofolate reductase inhibitor</td>
+<td style='text-align: center;'>AOX1, DHFR, FOLR1, TYMS</td>
+<td style='text-align: center;'>0.63</td>
+<td style='text-align: center;'>-0.78</td>
+<td style='text-align: center;'>0.00671</td>
+</tr>
+<tr>
+<td style='text-align: left;'>12</td>
+<td style='text-align: center;'>trifluridine</td>
+<td style='text-align: center;'>DNA directed DNA polymerase inhibitor, thymidylate synthase inhibitor</td>
+<td style='text-align: center;'>TYMS</td>
+<td style='text-align: center;'>0.6</td>
+<td style='text-align: center;'>-0.62</td>
+<td style='text-align: center;'>0.00671</td>
+</tr>
+<tr>
+<td style='text-align: left;'>13</td>
+<td style='text-align: center;'>resveratrol</td>
+<td style='text-align: center;'>cytochrome P450 inhibitor, SIRT activator</td>
+<td style='text-align: center;'>APOA1, BACE1, CSNK2A1, MAOA, NQO2, PTGS1, PTGS2, SCN5A, SIRT1, TXNRD1, TXNRD2, XDH</td>
+<td style='text-align: center;'>0.7</td>
+<td style='text-align: center;'>-0.56</td>
+<td style='text-align: center;'>0.0068</td>
+</tr>
+<tr>
+<td style='text-align: left;'>14</td>
+<td style='text-align: center;'>etoposide</td>
+<td style='text-align: center;'>topoisomerase inhibitor</td>
+<td style='text-align: center;'>CYP2E1, CYP3A5, TOP2A, TOP2B</td>
+<td style='text-align: center;'>0.74</td>
+<td style='text-align: center;'>-2.13</td>
+<td style='text-align: center;'>0.00711</td>
+</tr>
+<tr>
+<td style='border-bottom: 2px solid grey; text-align: left;'>15</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>acetazolamide</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>carbonic anhydrase inhibitor</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>AQP1, CA1, CA12, CA13, CA14, CA2, CA3, CA4, CA6, CA7</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>0.64</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>-0.81</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>0.00765</td>
+</tr>
+</tbody>
+</table><table class='gmisc_table' style='border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;' >
+<thead>
+<tr>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey;'> </th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Protein.1</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Protein.2</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Method</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Type</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style='text-align: left;'>1</td>
+<td style='text-align: center;'>CDK1</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Amador V (2007)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>2</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>CDK1</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Ando T (2001)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>3</td>
+<td style='text-align: center;'>CDK1</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Lin ML (2011)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>4</td>
+<td style='text-align: center;'>CDK1</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>Affinity Capture-MS</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Varjosalo M (2013)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>5</td>
+<td style='text-align: center;'>CDK1</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>Affinity Capture-MS</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Huttlin EL (2015)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>6</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>CDK1</td>
+<td style='text-align: center;'>Affinity Capture-MS</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Hein MY (2015)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>7</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>CDK2</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Ono T (2000)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>8</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>CDK2</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>McKenzie PP (2003)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>9</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>CDK2</td>
+<td style='text-align: center;'>Reconstituted Complex</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>McKenzie PP (2003)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>10</td>
+<td style='text-align: center;'>CDK2</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Law BK (2002)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>11</td>
+<td style='text-align: center;'>CDK2</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>Two-hybrid</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Harper JW (1993)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>12</td>
+<td style='text-align: center;'>CDK2</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>Reconstituted Complex</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Harper JW (1993)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>13</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>CDK2</td>
+<td style='text-align: center;'>Reconstituted Complex</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Lacy ER (2005)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>14</td>
+<td style='text-align: center;'>CDK2</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Akagi M (1996)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>15</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>CDK2</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Zhao J (1998)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>16</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>CDK2</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Zhang Y (1999)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>17</td>
+<td style='text-align: center;'>CDK2</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Poon RY (1998)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>18</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>CDK2</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Gorospe M (1996)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>19</td>
+<td style='text-align: center;'>CDK2</td>
+<td style='text-align: center;'>CDKN1A</td>
+<td style='text-align: center;'>Affinity Capture-MS</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Varjosalo M (2013)</td>
+</tr>
+<tr>
+<td style='border-bottom: 2px solid grey; text-align: left;'>21</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>CDKN1A</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>CDK2</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>Affinity Capture-MS</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>physical</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>Fogeron ML (2013)</td>
+</tr>
+</tbody>
+</table><br> <hr></p>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+
+## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<p>KRAS<br><table class='gmisc_table' style='border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;' >
+<thead>
+<tr>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey;'> </th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>gene in relevant ppi</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>otherwise</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style='text-align: left;'>compound matches</td>
+<td style='text-align: center;'>9</td>
+<td style='text-align: center;'>818</td>
+</tr>
+<tr>
+<td style='border-bottom: 2px solid grey; text-align: left;'>rest of compounds</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>37</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>34504</td>
+</tr>
+</tbody>
+</table><br>
+    Fisher&#39;s Exact Test for Count Data</p>
+
+<p>data:  Vi
+p-value = 1.016e-06
+alternative hypothesis: true odds ratio is greater than 1
+95 percent confidence interval:
+ 4.988131      Inf
+sample estimates:
+odds ratio 
+  10.25744 </p>
+
+<p><br></p>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<p><table class='gmisc_table' style='border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;' >
+<thead>
+<tr>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey;'> </th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>CPD_NAME</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>MOA</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Target</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>rep.corr</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Mean_Cells_Count</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Corr.</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style='text-align: left;'>1</td>
+<td style='text-align: center;'>zm336372</td>
+<td style='text-align: center;'>RAF inhibitor</td>
+<td style='text-align: center;'>BRAF, LCK, MAPK14, RAF1</td>
+<td style='text-align: center;'>0.21</td>
+<td style='text-align: center;'>-0.12</td>
+<td style='text-align: center;'>0.00334</td>
+</tr>
+<tr>
+<td style='border-bottom: 2px solid grey; text-align: left;'>2</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>BRD-K95851186-001-02-9</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'></td>
+<td style='border-bottom: 2px solid grey; text-align: center;'></td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>0.18</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>0.83</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>0.00359</td>
+</tr>
+</tbody>
+</table><table class='gmisc_table' style='border-collapse: collapse; margin-top: 1em; margin-bottom: 1em;' >
+<thead>
+<tr>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey;'> </th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Protein.1</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Protein.2</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Method</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Type</th>
+<th style='border-bottom: 1px solid grey; border-top: 2px solid grey; text-align: center;'>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style='text-align: left;'>1</td>
+<td style='text-align: center;'>KRAS</td>
+<td style='text-align: center;'>RAF1</td>
+<td style='text-align: center;'>Two-hybrid</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Li W (2000)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>2</td>
+<td style='text-align: center;'>RAF1</td>
+<td style='text-align: center;'>KRAS</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Kiyono M (2000)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>3</td>
+<td style='text-align: center;'>RAF1</td>
+<td style='text-align: center;'>KRAS</td>
+<td style='text-align: center;'>Reconstituted Complex</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Sui X (2009)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>4</td>
+<td style='text-align: center;'>RAF1</td>
+<td style='text-align: center;'>KRAS</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Lito P (2012)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>9</td>
+<td style='text-align: center;'>KRAS</td>
+<td style='text-align: center;'>RAF1</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Rajalingam K (2005)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>10</td>
+<td style='text-align: center;'>KRAS</td>
+<td style='text-align: center;'>RAF1</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Zhu J (2005)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>11</td>
+<td style='text-align: center;'>RAF1</td>
+<td style='text-align: center;'>KRAS</td>
+<td style='text-align: center;'>Affinity Capture-Western</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>Blaukat A (2000)</td>
+</tr>
+<tr>
+<td style='text-align: left;'>12</td>
+<td style='text-align: center;'>RAF1</td>
+<td style='text-align: center;'>KRAS</td>
+<td style='text-align: center;'>Affinity Capture-MS</td>
+<td style='text-align: center;'>physical</td>
+<td style='text-align: center;'>So J (2015)</td>
+</tr>
+<tr>
+<td style='border-bottom: 2px solid grey; text-align: left;'>13</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>RAF1</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>KRAS</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>Affinity Capture-Western</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>physical</td>
+<td style='border-bottom: 2px solid grey; text-align: center;'>Ji H (2016)</td>
+</tr>
+</tbody>
+</table><br> <hr></p>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+
+## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in inner_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## character vector and factor, coercing into character vector
+</code></pre>
+
+<pre><code>## Warning in left_join_impl(x, y, by$x, by$y, suffix$x, suffix$y): joining
+## factor and character vector, coercing into character vector
+</code></pre>
+
+<pre><code class="r">f &lt;- fisher.test(res$V, alternative = &quot;greater&quot;)
+</code></pre>
+
+<pre><code class="r">print(f)
+</code></pre>
+
+<pre><code>## 
+##  Fisher&#39;s Exact Test for Count Data
+## 
+## data:  res$V
+## p-value = 6.029e-07
+## alternative hypothesis: true odds ratio is greater than 1
+## 95 percent confidence interval:
+##  1.461032      Inf
+## sample estimates:
+## odds ratio 
+##   1.755288
+</code></pre>
+
+<pre><code class="r">print(res)
+</code></pre>
+
+<pre><code>## $genes
+## [1] &quot;CDKN1A&quot; &quot;KRAS&quot;  
+## 
+## $V
+##      [,1]   [,2]
+## [1,]   95  27927
+## [2,] 1394 719305
+</code></pre>
+
+<pre><code class="r">library(ggplot2)
+Pf.cmpd$data %&gt;% ggplot2::ggplot(., aes(x = Mean_Cells_Count, rep.corr)) + ggplot2::geom_point()
+</code></pre>
+
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfgAAAH4CAMAAACR9g9NAAAC/VBMVEUAAAABAQECAgIEBAQFBQUGBgYHBwcICAgJCQkKCgoLCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMUFBQVFRUWFhYXFxcYGBgZGRkaGhobGxscHBwdHR0eHh4fHx8gICAhISEiIiIjIyMkJCQlJSUmJiYnJycoKCgpKSkqKiorKyssLCwtLS0uLi4vLy8wMDAxMTEyMjIzMzM0NDQ1NTU2NjY3Nzc4ODg5OTk6Ojo7Ozs8PDw9PT0+Pj4/Pz9AQEBBQUFCQkJDQ0NERERFRUVGRkZHR0dISEhJSUlKSkpLS0tMTExNTU1OTk5PT09QUFBRUVFSUlJTU1NUVFRVVVVWVlZXV1dYWFhZWVlaWlpbW1tcXFxdXV1eXl5fX19gYGBhYWFiYmJjY2NkZGRlZWVmZmZnZ2doaGhpaWlqampra2tsbGxtbW1ubm5vb29wcHBxcXFycnJzc3N0dHR1dXV2dnZ3d3d4eHh5eXl6enp7e3t8fHx9fX1+fn5/f3+AgICBgYGCgoKDg4OEhISFhYWGhoaHh4eIiIiJiYmKioqLi4uMjIyNjY2Ojo6Pj4+QkJCRkZGSkpKTk5OUlJSVlZWWlpaXl5eYmJiZmZmampqbm5ucnJydnZ2enp6fn5+goKChoaGioqKjo6OkpKSlpaWmpqanp6eoqKipqamqqqqrq6usrKytra2urq6vr6+wsLCxsbGysrKzs7O0tLS1tbW2tra3t7e4uLi5ubm6urq7u7u8vLy9vb2+vr6/v7/AwMDBwcHCwsLDw8PExMTFxcXGxsbHx8fIyMjJycnKysrLy8vMzMzNzc3Ozs7Pz8/Q0NDR0dHS0tLT09PU1NTV1dXW1tbX19fY2NjZ2dna2trb29vc3Nzd3d3e3t7f39/g4ODh4eHi4uLj4+Pk5OTl5eXm5ubn5+fo6Ojp6enq6urr6+vs7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT19fX29vb39/f4+Pj5+fn6+vr7+/v8/Pz9/f3+/v7///+4uCQdAAAACXBIWXMAAAsSAAALEgHS3X78AAAgAElEQVR4nO29B3hU17U2vL//vyX33nxJ7MSO7cRxt+Mk14l7MCCNhAAVikQTGEwTHYPo1SDRe5PoRYiOwIjebBBIVAOiC0RRH0kzx1i2jAU4oHm+vdY+fc6ZOTOaQUI67/OATlmzZ81+Z85ee+9ViMNEnQSpbgVMVA9M4usoTOLrKEzi6yiMEn+X4qef73qAe54IP/jJXy3f90T6pwoPhCvue6KHR2r4t6M9Ip6juIP/G0WFJ8IPyzwQvnvHA+F7dz0QLiv3QLj8gQfCHnXHnUp/tYwdbRLvBJN4k3j3MIn3kT6GYRLvdcsm8dowiTeJdw+TeB/pYxgm8V63bBKvDZN4k3j3MIn3kT6GYRLvdcsm8dowiTeJdw+TeB/pYxgm8V63bBKvDZN4k3j3MIn3kT6GYRLvdcsm8dowiX84e2QS/XM/flBipUm8Nmol8SeSHZMKHY5DGxzTb3hD/Nbo4cWe6mMYJvFet+yW+NUnHJvSHI5jyx7F53tB/B5CSAtP9TEMk3ivW3ZLfEK249BOh+NBj27j6aO+k6VNJcBRaRDjKPHkvlFpT1r2GP5r+YlUmrb8kyviV51wbD7scKw7ULnyqMNRWlTyHcX3ju8MYjkQb1QY8LDcA+GfyjwQvl/hgfAPdz0QvvuzB8Lf3fNA9vtKf7X83aPy7751Rfzx9Y5pRQ7H4hOOLbu9eNTbe5OgDE+fQIZhPuq9btm9VT83PtmRNc02csiEe94Yd97oYxgm8V63bM7jtWESbxLvHibxPtLHMEzivW7ZJF4bJvEm8e5hEu8jfQzDJN7rlk3itWESbxLvHibxPtLHMEzivW7ZJF4bJvEm8e5hEu8jfQzDJN7rlk3itWESbxLvHibxPtLHMEzivW7ZJF4bJvEm8e5hEu8jfQzDJN7rlk3itWESbxLvHibxPtLHMEzivW7ZJF4bJvEm8e5hEu8jfQzDJN7rlk3itWESbxLvHibxPtLHMEzivW7ZJF4bJvEm8e5hEu8jfQzDJN7rlk3itWESbxLvHibxevqcaxuyRv/+rtBmRxT6GIZJvNctPx7iAwghh/VuX4I0OXlyfQzDJN7rlh8L8VlA7RS922vh7gG5PoZhEu91y4+FeBtQu1Pv9jdw94ZcH8Mwife65cfzqP+6WehM/furQsO3KvQxDJN4r1s2rXptmMR7Q3zh8iV5slOTeAVqL/ElQYQEWKugj2GYxHvdsj+I/wqste1V0McwTOK9btkfxJ8E4g9VQR/DMIn3umW/jPGxhPSqij6GYRLvdcv+seqvX6uSPoZhEu91yzVjOlcgFbEwiZejdhNf2o6QGXJ9DMMk3uuWawLxq8EYzJfpYxgm8V63XBOInw/EX5XpYxgm8V63XBOIv0p5j5DrYxgm8V63XBOI5y5PThAX+kzi5ajlxKv1MQyTeK9bNonXhkm8Sbx7mMT7SB/DMIn3umWTeG2YxJvEu4dJvI/0MQyTeK9bNolX40j8es4kvu4RD3XPR5jEa+AuxU/4v1H87InwowoPhB/85IHwvx4YkeoOGwd371bc96Dl+w89EPaoO/zb0d97RPy3FN/h/0ZR4Ynww+89EP7pjgfC934yIjWQ8m759tvvyz1o+cefPRD2qDu+q/RXy9jR5qNewnULOoqaj/q6RjzH5do5k/i6SDzCJN4k3j1M4n2kj2GYxHvdskm8NkziTeLdwyTeR/oYhkm81y2bxGvDJN4k3j1M4n2kj2GYxHvdskm8NkziTeLdwyTeR/oYhkm81y2bxGvDJN4k3j1M4n2kj2GYxHvdskm8NkziTeLdwyTeR/oYhkm81y2bxGvDJN4vxOem5bjSxzAMEs/eziRegeogPo0QctCFPoZhjPgj7O1M4hWoDuJbyJPeaOhjGMaIb8neziRegeogPowy0cSFPoZhjHj+7UziFagO4qEKzSoX+hiGMeLX0bdbaRKvQrUYd98knnalj2EYNO7OJJ7iTOJVMKdzmjCJN4l3D5N4H+ljGCbxXrdsEq8Nk3iTePcwifeRPoZhEu91yybx2jCJr7HEZ48ffrpKxF8fN+KMrrBJfE0lvrQBIeRmFYgvrk8byNITNomvqcRjcbtVVSA+nbCVXG2YxNdU4m8Db19XgfgbxMXmsEl8jSWeW0rI0CqN8QsJGakrbBJfY4kHmFa91y0/buIvpZe618cwXBOfk5YrP9UgviT9ks5ry8qL068YVcMk3q0+owkJ1HW3E/UxDJfE76Jj+F7ZuTPxtwIIGav94rL8hoRMMKiGSbw7faxgUM1xq49huCQ+TOXg5Uz8dFCnWH0VUTYN7rl5OgkwiXenTyH05gwXor4kPpS+V7js3Jn4KaCOVX0VUTYJ7pUYU8Mk3q0+fWlvZrvVxzBcEr+ZvtdW2bkz8depxADtF5fdpPeGGFTDJN69PnvX5urKifoYhmvj7mzSOfmphnGXs2afzmvLym+tOWBUDZN4H+ljGOZ0zuuWfU98RgjprBwbn1zi04JJjM29sEk8IIQOjtOrpo9h+Jt4MPAS3AubxAOgs2Kqpo9h+Jl4O9G3/uQwiQe0pZ21oWr6GIa/f/EQ65XqXtgkHpA3JnptFfUxDH8Tf3tU9CYDwibxPtLHMEyr3uuWTeK1YRJvEu8eJvE+0scwTOK9btkkXhsm8Sbx7mES7yN9DMMk3uuW3RL/cPbIJPqnMmnYnEr3xOfu+MYH+hiGj4lfP/WmcOia+Pydp+SntZL4E8mOSYUOx4V5jvlX3RJ/kRAyuer6GIZvia9HtRcydbgkPosKfiE7r5XErz7h2JTmcCR/5XjwwOFYu2BVBcU9R4UmxsDittPVf2kLa6PyvgfCP9/zQPhfP7u+/x0oH8mf3H/gQhK9c36Szh889EANj7pDr6Or3jJ09A+uiE/IdhzaSf/MGbXAPfGjn2TivwXlm/MnLomfgDXmpfNaSfyqE47Nhx2O5ZsrV+9z+6i/TDtkdtWfQIbh20d9MNX+LH/s8lEPLltTZOe18lF/fL1jWpHDcWS3Y8se98Zd3o4zPtDHMHxs3G2cels4dGPc7VBk7aqVxD+cG5/syJr284whE++5J943+hiGOZ3zuuUaOY9fQcgozZvpjUmrPNl5LSF+PSEDtWXrFvEYCLtX62ZjemOE7Lx2EF8Mn1d7379uEY+h70u0bsKNaNl57SD+qn6YSd0ivjSAdsRlrZs96Y01svPaQTxOJ85oytYt4rms2J4ZmjeLp3RTuHXVEuJvDIk5pC1bx4g3jFpCvD5qN/Fp0Z1OF8dFTrMJ+hiGQPz2Nj3cB7PXBOJLJkVO/tGDlms18bDlQT6n/yYJ+hgGT3wGfbHFrXBNIB7WtOM9aLlWEw9lC8iH9F9jQR/D4ImfCi1cdSdcE4iHMKOmHrRcq4k/DrRB3Ziegj6GwRO/xVASg5pAfCeqaHcPWq7VxHOzCFl1NYJE3hT0MQxhjB9OAt0HvNQE4q83Jy0KPWi5dhPvpI9hmFa91y3XDeJPJl00iVehLhC/jI6sB0zilagLxDeixLc1iVeiLhAfjHs7JvEK1AXi11Pi003ilagLxHO30vJN406FOkE8wiReAd8Tv5WQbopUUdr6zCJkoo4+hlHSggQfNyrsH+LPNyHvE9Lbbrzp2ko8Zgxa5lafCyB2QlsfwxhO2wgzKuwf4lsTxFr3kgJqK/EFRBVgpK3PXhBL0dbHMNpDI0aF/UN8CCN+qvGmayvxXHPaD8fc6lPUkIpppDf1iPhNRNc/1Rn+IT6eEX/GeNO1lvi8KUOUjkTa+lweM+q8jj6GcXdL7EKDGab9RbxtReySqWOOetB0rSW+6voYhmnVe92yr4jPHR45Q8+yRX22teumETqvrY9h1DTiT3Vpt92tdO0i/lPNcElJH/C2qGek4MOTTDxGRpx2LVvbiIePHOVCnwVGLaAnmXiMBEl0J127iI+iH3mcC32+0q8C4qyPYdQw4rHySpo76dpF/OVIEqPHK+ozOzB4t1F9DKOGEc/tDAqc71a6dhHvU30Mo6YRbwgm8br6GEYdIv7wQvchIybxmniiiYcFQp34Ou9aNonXRk0jHszGbr5s2SReGzWNeAslvr8vWzaJ10ZNI34tIfX1CiB71bJJvDZqGvFc9pEin7bsW+ILNSv0qvUpcLWh5jHxrotTy+Az4q1qCqpMfEmB/CyP91+i/fSETOd6EjLLrT6l7QhZ5Vofw7h7J70BsVwzJuwr4uOcis5WlfjFhHQUndXyQwmBnZ7SaEJWPBnEbwfT86bzdaU+y1yHtnpIfLgQZesePiI+E/Q/orhUReKtCt+t8bxX0Ur4a3siiEdKTzlfV+qDGYBvO0vJ9DGMu3fA86mFMWEfEX8A9N+suFRF4q9BizOFsz488Rj0n/NEEA8fwKJRilWpzzdUqplrfQzj7h1IMbHamLCPiLc6+4xV9VHflLYoeiPt5WfsZ+nfiCfjUc9d/mJ6nsZllT5nRs93sU3nIfH29cM0UyFqwFdj/K3J8dnKK1UlvnDOmEzp7OiI5TgSnh0zz/qEEO8rfQyjDk3nfN2yb4ifGdxd+BHk9beMUz3ulfpsbRLJx0CsCWl7TlMfw6jhxBcOtIxxnrrWIuLBAI3kj7s6O5kr9DkjemQcogcBmvoYRg0nvhf9hOOdrtYi4mNkcQ1wGOFCnyUggD95NFuztPQxjBpOPMTlN3G6WouInyPkKuNYSJEq57hCn6NANy5U7cCJqpY+hlHDiYdAn1inq7WIeNuQ8DbCaJ31aXgf1ZKmUp9FoeG72NHM0GZfa+pjGDWc+OxO4T0LnK7WIuJ9rY9h1HDitVFribdtSEAvof3z0r3UxzCA+G3zz7oXBKiJt65apL+AqCD+2DzXawUm8YhoOrLRB/80+medd/oYBiV+AH0b5wFDCyribcGE1NNlXk58Cn2LCa5aNokHoHN5HMs41Mw7fQyDEg/v1tuQsIr4E/DKJD1hOfGtqGCQq5ZN4gE26NB5HBdG/3T0Th/D4IkfaUhYRTwWBNGNdJMT311zViaDSTxiISFhVoydaZDpnT6GQYnfTIhFYytYA+oxfgwhnXQzmMiJv9hApzaSAJN4hpyL2J/WzGIv9TEMMO4KzhuJxeQ0rPpsF5nOFcZdSabr4C+TeB/pow0Nvy6t6Vyu3q/YyHRO9KpixGu4dWl5epnE+0gfLYAn0nT1RWfis4MI2ardggHihxLSlx0B8UcJaagKej5ASMAFp5fVDeK/o/ge/zeKe54IPyzXvo51LApVFyvK1GLDYOdHu4X7Fe7eG3wfyGE8LL/73XfN6FlbpUQT8JJwet3dn921LIcn3fF9pb9a/u5R+XffekT8jxR38X+jeOCJ8KMK7euL0aFPdfH+XbUYbIgR7RZ+dqvHEXjxDjz86d6PP4JjTIRSAohv5fS6ew/dtSyHJ93h344uexIe9VnOu35aj/r9VGyQdgvuH/VWC324s8V1eNTPo22tVEpMJlrFQOvGox71qQbj7vLkBCfbWsO4S4/XyzVoYIzPmzntFjtC4y41zmkWlxJ30PlltYP4kfdrJvFaMDdpvG7ZmfiwvY+b+I3BTfYo9DGKeY1anLgcbRljLJGse+LTwoOWw99zUZZpdY/4T/+7QYsWLR4j8ZkKR3sPiN8JFnwE/W+hIXG3xGPSKkhVCJ4zGtlWdVE7iM9APEbi10B/H5DrYxCQLABhrJKbW+LP8rsMJfB3uGE1agvxj32MN3/x+qjdY3xKk4h9Cn2MYlHjNqeudLJM9NUYf7RFI4zKyYwOmmuO8f4n3kkfwzCteq9b9v0YnxL3FcddnJSIWyo3p846GL/FWci+ekKG8oowZ655xGdOXKKz/3dz2qx8jtsQf0wi/vrUuVhCVFoRcEJNJb5y74ihuyu9Jn4CjI+X+AiLPGZ8DXaS+lztMDVHcIepccSfI1C7TAv5DQixFI+Sf5Rb4Ghuo+aChZAGzg62iJpK/LiPEhd+OM5r4sEwipqJC+uskIAs2EKCk8MUhDuHC/oYxuMgPl4MBFADfPHI1/BfV+FSEpyd5DO46tiHNZX4135yOH58xWvigcHuy/k4qX2M90AnKSeHKUhw0E7QxzAeB/HzQVfNZz1Gyp+zyHcHtsGlLD5Q7Cvtpmsy8Xe9J55yHXCxuDVOiDE5yitaG+SbCWmkcJg6QkjDbwR9DONxEG9tTsgibaFehIyASWWQWBnc3oWPlhtGSB+dpmsq8V98uGDBB94/6nkfFSHBUZGVy/1JQ8jmFEifI+ljGI/Hqs/X9e0qgm0je67cqi/kd5KcMiSJqKnEV+4a6o1xd3tPodM1b/WRIdtlZiMt4ouZg5z9otJJ6uZl30/nsvmQT1fTuVuXhaMbvIufR8TfNepR6GnLGtuyPz68a9PnXYf4MYT8Si8teRWIp0PFZy6WZzSIP1GfkJ10PhEiSytDQW3vKE+eJUaI70/NfQz6dEH8OEIi2DNgECFtUNqT7lhDR0AXLqEqVI345b8tz/3tCk+Jf5oaM3/xlT4iMOhBYwNcgAbxEKHamONmK00ymGZpeFDowwDxuNSM8Z/6xOeDzAo4ugxHaOx40h3ak2E9VI34l4scjuIXvSH+ZV/pI+IgfPBt+sIaxLegr2jET8KkweeSSIBBGCA+HdrcCEf6xGfz+z4cdwqOcEHYU+INZnPzsGVn4t/42eG477FVD/3tqhiRR/qIKKEPbIsLn3YN4r+kiiRw3EXVpl0UMVYZRYAB4m2hdAKD3y0Xj/p29H0xS4w9gpAGaNF60h1jCRRAN4qqET+20Zr1IcM8JZ6bHa3j1VylMd66fImuzchpG3fH5uH8OSthk9w4KF2dWOpr4654xeJ8PHBBvG1NIj9tLVm1iM1kPDLu0uZnupcSUEWrPrVfr42PPCbel/oYhrlJ43XL2s6W/yqpZuIXh0bsMiAsJ/58u/BYXDy4FB0+QCuZsjfEH2oeOkNfKCk0bAv89Yb4ax3De7vPR/24ib/mwuUW9fEz8Ud118eVkBMP0bnT4ADiILQq03tBPJZE142oRY8dGMC9Ib6tIS+fx038ox+rl3hMjXXMrayCeHhJR+GgnYawF8Rfh7Ym6cmsh7vgQuIN8UTYlXKJx0n8vQWtWsy9V73ES8nwXENOPPyEFsMBzOQXaAh786gPUG8fy4FTc8hq6w3xEHQ/2a3s4yS+a7N9+5t1q17iIf2lgR+8gvibMUEsseLtnkGTtFb7vCH+XNuQZH2h3aHNsK6kN8Tn97eMdb8a+ziJf5HO43/2eAHHp/oYhmnVe92yM/H1ix0O60f+JX597Br6/8mhk50NOJfEJ8VupL/C4fFC1nCjxJcuGLRPh3j70thUjctAfErsSt19gs2xsvQ55Q9kOvG4OPILnUQdXhC/e1CiRjr4KrXsTHy/5/r0+X3LMWP8SPxcArHusNYdpqmPHiBkMfEK/S+YJ8Qo8ZBzdbc28UOJkJxLAUr8CnpnrE6Di4g8EVZ5gUwnhpvgf6Jde8dz4mE1sp8B6aoRv5iHH4mHYOMQbrowG3LSRw/g3RO6EP1e2AWjxMNLemgTD7daO1+mxEegltoIU9wrR48rRbo9jBI54vQ6gOfEfwaNGZCuGvEPl4yz7fXe2dKIPrCAHcX805xMd1fEw4ZAhy2CLc0ZJx7co8ZqE99U+9dEiQe72ykwm0cneq+5eFaOLmaK/X8I1ybaG6qeEz+UbTy5RdWIj239nv39L/xKfGZD8LOydSBkqaY+ejhVnwRcsHfn97s448TvIqRJnjbxhwmxOD12kPirgaS+3gbJxQDS4IR4Vn5fphOPzwmZov1az4m/3YitF7hD1Yh//V6A48cX/Eq84GelVYDOtVWPr5OyIBm26m25+la9ZuE6tOpdlbST36NWvXNmpiK9dQhvrHrdjE5et+xM/Ks/BjjsL/uD+II0vRgDlT4MuWluawn6dDp3K42fY9xOy/fHdO4cX5jDFT0X05XW++Oczi2o/+rI12b6gXgoP6U1c3LWB5Hm2vkG4UviU+n7YY6r3fTguO+JH0hIpDvXqwnUZFTs3DzWtfqTE8Yf1efde+I7EamcgWt9EC1c2FYCfEl8Y2GtH8y9dj4nHn2AtsCRPj1YeTBRfqVWhElD7QqXuYBFfRChBr4nviQ+iL5fKziAWKAWPif+NJCKy7/69OSCjGIbuFaESUMpkrmG9EFAYjsXNWgRviQeclztgANYKNjqc+INuV59SlRVempHmPT5pOPG9GE4k/SNO2GfGnfHk/hqjyeTMv1g3Nm2bmDDtyt6dq1VGrRPUpi0D/QxDHOTxuuWfZfn7lATS7yH+hT3JC0vwsFIEiqEy2sRf74F6cNvYX7VOFC2i+1T4s81J/3FyZQG8QmWYJyUbHz7qb9u4a+V9iWNm5BmIYGKbCy0pX5aW67jLE3TnLojux35LF9PpyeAeLsYMGBcn4mElYJOkq1FaxEfQYQExlgFYYd4w6fEw/r7HOHEmXh0o8/nvXKEnD0ziAC5+0CYtq/5JvYxVd0B47pzjTIeTwDxGKui/ZPX1SeaJ3yYbNVei3i4/RkeYa9LS6E+JR6aFl3xnYlfCvczWLVnQg6xi11E4perWurm/AZfsF0GVXdoVyXk8QQQj1tnaZ7pAwXnO9O/e2RTdi3i4UfBb39DpRtpAd2nxEfLN2idiT/PfztZlg9+mSVZJP6iqiWNxKqQLaGpU3fEEt1V/SeD+KyebXRCKvT1SYgajsuk61r3uyHTR438oVGL+cMrPdrIVv98SnzuoKhl4onGGH+gXRcMbjgZ9nKzM8LFJVEDY6Mm9ohWJEHIHRzlvPtEkdK693Wn7rCOi5yu62XxJBDvQ30Mw7TqvW7Z58SXLI7dqKOPbVXsare7TEriL48ZdV46Wx+7VGksuyTenhSbxN6udAno5J74G/HDYK/VumDQNkr89kHzeLtjU+xito+YEpuo3oUDndTEW+cOogbo/iEzNEMD3NIDil+PG36Kk4hfG7vMre/Vl4OWeBId6GviB9Iha4nykvBJxxOnCuPa+ogo+IS+RNzSW0BPhiqEXRIfLw6eMIwuck+8vSGVO88qoaeUp4gWJXj5D4ADmH2oEpwk0EtD1MR3hGV5cMVoqfU2bomHxGGv0H+XROIhJ5i7GmvridHcrgy+Jr6RwjcFUSG7pefLpNBHBFrQYvIoSJAUrBB2SXyI+Hbwxs3cE48B7wuYUd6lvJs4x2wpHLWTTTt5wEwzWE08zg+GwP9aXnduiQ/h7cVFIvGhTp/cGZ2clXMJXxMPPfG58pLwSaHfPjWij4gL8GFET5ee/LRfgkviwbbugEcQVNXPPfHgMgkbx7BPN758HBH8nT4XJh3Apco9FEqhtFATD1OP+Hl6RLglPponfrdIPHiBRbl51WhiZPNTgq+JP2UhYSp/C+GTXmxEGl8xoo+EWfIwuOymJPiMQtgl8ZdChLc7HUTCbhoY41cRMpD+ORJAWhSXF7YkgYfx8q0wEnQSDnIjiEUV53EDdFIT/3UAiSwqiebzZajhlnhQfCbLhMETf70JCT7n+kVcfnMSfNRd0zKYVr0mTKveIPG3d+v7Scn0ubJX0/As3iuufzxW4kv2szlDutqp8uyh76UT696r2bsLTn0tn5Hk7YZwCdtXZ+Ck/IFtkdMahu3AWRQ6rl7VcktPwW7R+1NFfMk+56J3nrQsh2+Ih732ve71oU9uovGwz24gPdEfJ/G3AjBkwk6NjzaKeSadBoSIU7GLwuJcU+lLC4twW7nCRszcL+d+R8jflW3nB+FrtnamdqXSxHNHTwZ92Rr+WEn8jYZ6q+LGWlbAN8SHERd+UpI+0BUjnAVg/kJskj6GUUXiMaSjmDsEfw7IrufABWGtkBssLstKy7CRuMCOmVtvUOLB8Z0o03EvZC+pD/99qbjjjp6ORPKiVxIPkUTa2VWNtayAb4gHP7Vw9/qA4kOcBcbJZj6Pk/gp8L5WlpNW/ryC+CfIoMQQKxIvhcu1QBMaiyBep8TD4oWwb8NjAXvJJ4oJKcIdPe11iY9nX1RdVAPxm5y+15r6AMMayXwgHG6YTB/DqCLxsNdHH9Wl9HkVqvghwRxeLJZyRuA9UFqI20XAgS63IdtkKi/6DSGvKtu+xV6zmj4bGintGnf0fC173CiJh5L3rrLeVYdxdyZJf7oh0+dQskbUCv2JrfGmGFHVjbucNRigUpqyWbXSsnOjbIX0enLa8aRLqevljs+ZSeCKXbAOfQPKH9wcOkm9pJq/dhcI2bZsVP1G3U/nksSlC5Vxd2vNflcv9CnxD2ePTMKD7BmuiPepPoZhTue8btkt8SeSHZMK6d/K0d4QPws8Zf1BfHoj0rXUifjZymKwVOh5aQFITnxWM/IsiXHa91jGh8BtC9QLkD7emHSCX/DlCBIlDgblD+wDiUV3VqOC2B0pAeQLbRGqeBd8BlHiVxjxTVa1bATuiF99wrEpjf5NXw3E3866WUbxg6PMENCZ/OZ9Y8IMj340JAbL7/PKKn5QXPwGrWylEDW6+LMH96Q7HfDOIlWj6N9zrqwMjdCdmu8LEd7T6V9Yfu4vXPzp53XwCkOKl5UJ3VEKr9mvKQKr9XPg4IdKTIp6xrOWDeFRedkdV8QnZDsO7XQ4HsQXA/F9mnd9CHA8NAQISyInK40JMzgeGRKDhgc9rFQKb4erJ5RC1Ajjz+TCYXhnhKpRmEGT3Q8f4qJ9ou779uEbaCZcfFSJ84PvDWn+UOgONP+W6b7LQDxyHMcvoWctGwLt6LuuiF91wrH5sMOx+ZzNi0c91P4mBf541LfCWZLqUc/eTikkTSPkj3rcOnOK5EOvKmp92gOJbG9IAcGrCiZw4hZz+QNY0NF1nFNBdE+AlFraoQMQdLQZDu5U5vNTRk9aNgR3j/rj6x3TihyO2eNHdtrt+Rif3rXXWb+M8Tljojc4G3fpXXueVQg1C/tMnF7LiS+ZERnebrNTq9/06AdtlUcAACAASURBVIabMFcHfnbI6SYib2w7XFUrntZWSktDjbvtHYZozlc0IHbH5c87HdAWyR0TvR4P6Bh/pke3DG0p/ZaNwK1VPzc+2ZE1zeHw5hfvpT6GYVr1Xrfsz925vDExu7zSxzCMEH8gZgTbJvaS+PSeg1RP2pO9B1yWn98a1XcZCuWMjNmnJyQBuyO569Ri7mLHdzrrCPHwjPjvJ3dbb1jYj8SD5wqkhaxW4sE4aopH3hEPviCBinkf2P4B8sW4xmxdz4Y7Fuk6QhKgO9CJqxBeVs+ln5xnxPem7Rlm3n/EY3FmyNNbrcRPwhklHHlHfCJOp+S3VsMV2V5rNr+iewajnMdrC8kA3YFOXKwqn7YQD8+Ih+Y6GhX24y8e9ICtjmolHhnAX6x3xEOtcqKolXZYZWeX8sTnYRTZSm0hGaA7YFbRhO33urTYPSMeFhnGGBX2I/G0z7rC3ke1Em/vI+yOeTnGD5PvyiHGqyoQbiLkAxTaSkgvm46QBOiO3CjS+BgWsdQR4uEZ8d+EkDa68ZdqmK5XmjCt+lpH/NHd1JzKTr1ED4v34AB7bJeyVMTl1GxviL+aisks8nacdi1tEq+rj2F4QXx3QhrkgL/+Ki4/EG2hzwn5RL74AlbBHs+JhwCMLcw5f5xLaZN4XX0Mw3Pib+AyPKzlNuJWwvHlIvh/mkwOtnYiPScegh7C+JBvl4FiJvG6+hiG58TfBl6WQDWLxszgz8IcY7NkcmAbt/aceIjzicBapm4CWkzidfUxDC8e9QMIsRQcwU0QK/1t90KqGsp9w+GZfdhz4iEv4h7mHuWicBVnEu9CH8PwxrhL310Mxh0slZbswcTix3YpV8+8NO6yUrHydd4ON8m6TOJ19TEMczrndcu+JH6GsnI3YAKs3aE+tq6EvKtb0AmBRcdSXBK/N5h5PvG4mxVBPiYaPlRa+LEbCdqjaKmoh9o32PYu7+/LE7+JkH7UUjvRhETe5nRAW+pWbG1Pgr/Sk+DOh5MIMXm9L4kfo8j8Xk3EoxuyokwDKxx4FfXB3EGBrjTh17xdblqAgCyf1N2O7DWaiUfUWKQwu+Ckk5MFjjY5LH4x4nE1di2z2HUzU6FxONnlpwPHis+EEx8Sf0DciPC4ZR8Sj35WyrKM6Ir2Feozlrgzd9MZieddiGC2MxkDd5uw1xhaoB4JkoL7PK6r13dah8dQePB7YMTjd3EK41YvTBlbGtjb5acLIbIQZh8Sv0JQ1/OWfUg8bk4pazFBxzUsQn2O4E/MlSbF4IpEQlwO222IIubl7lRGvHbxFxXg8SNVn4GWFhJ14NdWeuW3cMA/6mHH9STH9Scuqs+jTvCt14/9h2/9dOHEh8TDFCJACgmorjE+s28/dZjM6d6fX+L12dP03TGuq+heGdimzaASl2N8wdjucke5u98mdp05MsaYY/O9fd3HSlsY2NLemFGqIN9Ff6mHoxVP/M1hMTByl0zrqtqoUejU8yCdBHaP0/90tvldF4lDii/H+OO9YmWFb0yrXhOmVa+A34lfHDVad6vQNi0yTjLSz3aO/tpL4te0+lynvJ8EBfGFI6ISdCU5JH5J1BA6/qd36Ojkb7v9k9e6yd9OTXze4KgJHdtL6SmW0pau9myzDY5zer3xsTKI0hWeYOKTXA1+kMxWjALEtdPLXhEP4fnNXYuqiO/iZi5QVp5MJdoz8041HByDa81kF9TE80lshJ0fqEHXHsLl4asABj7RceF1xhNMfGdX5i4Y5WJBNZz7rfKK+EFyg10PCuLhBdEuhMvKu6LisH6rTmUzDWmVhVlqZb2iEPL9dePPsSA5HrjevpPhCSYeftRN9W72lHc/RpYc9Yr4RHdTRYCCeEjOpVc/FFBWDjPzJtxZaPmS8t5W9cxUTTzzviTCvjy0hJfAkR/DujQS3WrjCSbe2o00O6V382Y7EiVZpesCyWzvxnhbf9LksDthBfFnIkhnV3OMsnJrdxJ2EjJbBCxX3xxDyAfyt1MTfyKUBDeQMisUdyehJ3cHkdFwkv6xOkujKzzBxHujj2GYVr3XLfuP+EyxpAzoU7IpxdCCuor40pRNsrH0QpLq2eEd8QXrdtL/v06+oS2HijPiM1arUzWdTLq4Y12hcAaJEb5JyvSA+LNJ59T0nE6SLVaWbE6R2yqnt4pprg6ukSYSReu3a/l61Ajid0hDGdWnmJpxzQwxryDeRofiJiLzzGFKDq+Ih9RGXeBxTTRzh0GWkzWMePCCVSZCw3RHpCG/zAupUCCL5R7DxIOtuFN5CdxBdgsnJU0JiZD6CZZk+RwYI2S2RkGgkLNTiRpBfHNpebqC9053OwoL+ohA73Sxo8BhSpkL1yvicbMGQ+E18wKzvEZIfDB+ReTg08zyE8HFvLXe0jDxoaqJIMcsQTHZMZRsINIuX4i4yoy7FMKWRJKGxQmoEcS3VBCP2YgNJdxUEI/7NuJWahuirqbtFfFQF4PclHekApES8RZ6GKO4GcyY5qMmlvPERxomHvyzVAsOQLy4AbRf+QOBKUA7PMKtID5KhxWn16hRXiOIP0jEvW6qj412Z3tDFZEVxNvbCwVZAWn8jEiCV8QXBkPK2umE1L+mJfYVKo7Er5TNyRg2INFC/VdIcBhFz9MMEw/+WarVmy2ERRgibPSpFi3100bp5zKFkAbCipCVDpy9NVqvEcRzeWmC6wLqc9Jt9UBJHxlOn1Q0qUqP7J1xZ8sAa+rqUZ2df1Sc35Y9Uqi6eSstPzNDZAZaup2W54Fxl5OWq6aHNiA7O6n4puVkisvdV9KlxW37MY2kcTWF+CroYxjmdM7rlp9w4s83IsEGHyUC8VOF5JoziTzBeya0NEHIuDpV3EOw95IZmJkw6EbkfCrYB1Y6gr36LgmXZmD92MwjkZAeeiOb1B0T4e1OBJGQS8PZeq4TnIg/HUQa6bqq1CHi2xH3GfwFMOIvE35MZZ5eYvFC2FhBfx6Yv12RjOsvUSxAEiKkrbhkO5+37sTpwW48LcXsSXp7cGJ3YEWMo7B4DFMgzcmlE/FgM7fX+4R1iPgmTjM8fTDiMWMxlJfDFFeSCzy09CHhzUecRrJVCD4ZsSRESD38H0b/UTzxoj8d+kKRm1ijboGOHmJ3oAm/CR4i78ORVtJKJ+JhgqebZakOEQ/1P6a7l0Mw4q3g4AU2Ygnw9ytxNQxamgTViMB5rFgQYt5NYpUf9gvH0KuX4Zx3E5QWYHB5IJyzA5t6SU7E7rDC2+XE0f/gzTXzZzgRD3nVdB0J6hDxd9bFrnEvxsCP8TfGjmSU3Or9Uj3ZEvD62GQue8woNj2+MX6MsEBybniP/vOF1cP1A2MG7eVOhf+pJbO2j7QPmpMwaJ9k3J2PCRhHnwW58cOU/sYySN1B3+4Kx62K3cxdHjVWM2mWs3G3OnaD7iesS8R7IGxa9Qr4hPiEVrE6Ox6SPsmte6lWGTe1icm8NShqnpM+hkGJvxHr2odKwo7oGNns91r/Vsu4NZJO1vjIcdYjHdvzmeeA+KKxkRNg7mybFjlSmmqf6dZWnaAdiJcJ5ce+8c58+rdkUuTAnq1Xbm3b/YxcmnVH/qjIqTAZmBs1WCtU43TXduCpjsSntIlxV4lI3rJB+IJ4GPRaaLYu6QN7HxbFZTCz6sP6u6I+oafEtyDqnRsdgMH2iTTFgtIKE2Q60QkV6S0thQLxMDWDPXTw4e4svK4UTANVKSogfpokhB43K4RQAjQH5ftTFaLQZOZC0tZZWUwcdZoRn6ZU3AUeO/Exkt2rqw/shhGF1+VUoVsU3vaeEi8zvVxjqsQqx699o3nORwKAufwBnDOHKSBeKJDYXP7xzsGJKp00EN9CEsIP1VWYAyDkC20VolA4K5St0XWn4HIiIx4LqLhOh6do2SB8QTxUwAx1o896p0+4Az+72iz3lPhQZx60gRuE0i8Ptls+l+kEv/b2EkdA/GcE6hSySVsb4XXoEnpQ2TQQP1oSwlxms1m+Wx7yWgUVotBwZqWrtusAmK0hjRGPawPuHAplLRuEL4i39SPNdI1YQZ8xlqaq7bnJgSEHM5uTPooP5Snx5yJIf2MuHrOCQmSEnQwjQ+xjLU2EIJzcDiT61gZLID9sAPE325GOMGxbu5LW0l7YnuBAeRoFABBPhVrxQtfol7E3/VD5nUhosGX4zMBgRcQH645rrUmXImoH9CIttFZudgYFgu2DY/zUwBCXhSlULRuEadVrwrTqjRNfkrQwV+Ny9RJftGyp4FOpIt6+LiH7WsImHauJJx6E6J8j8/p22MVasm9OyFKK7u0br/25EcUrF6Nls3WBUFNR6g7r8iXC7l9mpwFaBYh1iT+/QJVz/UbC2oxFrsPQlfAZ8fZmhDTQ7IFqJL6YDuVB/JKYivhP2ejbTfuFPPEgdI15vBDWEhiyimczFoPT3Siy0cd+QCGrYcZvuIrdUdqYTirY1xK8uF/UeLke8ZChd5j8Ah9j7jpdogI+Ix490DVDC6uRePT84RdUlcTnCHaXesedgRGPQjNx6kdYS2jbjZdL4g1dh2lc1N3EJhF8xT2xO3DbgK0JYNiJhoeSHvED1aYyv11kdN+C8yHxuKjtnPufq1biMTibd3lREl8kkKn1hBWIR6GFGH1BWEvo+6aYhqA3lm5oDP4cdrKvB195SOyOE3CR2X39pfmEAnrEj1QTv4wpqBu64gzfjfFDCGmtOeuozjG+O86oEapH/URCmjTSzVDFP+qpUFgRlgAk/8lamk1/VopcClBrsaF+xCaltL0NPTyD+MVNqTt6EdKJ2Rj5z2sn1NAj/rqFEEWch5V9Ofdoi2vBh1b9VZ2FxWq16i+KA7Laqs8+zdlP6q00C1Z9Ng7M1oxz60v4lm6eVNmD+ftP3XOhwGX2Q845Lkw6Zd1xSfKpSFWtBjLoGne242pz6nR28TnX+QeU8P10zqmeuPBJ8zTm207CSHyx9sDrBPfEy1pC4u06BnhBiVIXcTpnLeK1LL5tVUjbc0sKKOvwjCv/MQfu5Sg/TMHtW+wrUogL/nlWXhWN30FJQZGVP1DekIi333Kfl9q5ZVRcuzN9TTwdVS0q71WmT15Tp1gC7kIgaXBSeQn0mUVIT9cfkYdb4umDuYdwDMRTYy9Eo9B9aTQh8Q2IRZqoCcRPI6TvNQupf4S2JDja2DoSsgTNxk9bYkkIqI4+9uy7hPxT2lu14TLgfspYF9hBx0DLPnjHmR70z4f64CsIiVaMliLxUNQgzGVeKI2WYUBIm6t2Eefha+KhPEcvLX1gy8KiEobZkmp3h+qDPu/bOQNwRzwG4AoTXiAeLDGNOuaCg7z4JRGIR8cKWIZntQtZioRkOLQIBh+xX2d2FfzXV2wAhSAMAGwAUiDMCjgN4q3s5nmuBP4odpxE4vH91SuGaqhb7iMorlXv2dfEQ9e2VF5i+vRUG6IcCyxRhkiAPlif0lAGM3fEY+lJYfMPiIfzLs5yk3kOpVgHnnjMgfAREdyt2HdoJlHAikJsh6eV2AAvxNcTv8DOMBDDifhr7OYB9o2fIr8lEo8Sw9SvVEHdcitBca3pva+Jh4lGspY+sNeg3kaDTUmVdynVxwb1/jSDHdRwR7yiJSC+N3EuM8ixFH1vEvkyBE98Cfhggdvd8Ab0vw/ZMAtOkk36CLy34krAheoj3P2TAt/RkxL2eC7RP8Ecq2mKI4Hzox6D5+tb2eNSsekhEt8XRNwl91K3vBa+LPBoytIQ9jXx9g1x6iRUvD5p8UlOs72dcVs09MmbM8XQNqT7MT5vrtQSEG9bHa+ZhuTMpMSijXLFhTE+d/bUq9zeuI32vMnNxwgjeOakhELb6rHDJmeenLiEWm7F05t/cZP7skNn+V5K5gBLZBKYsxcmzy/gSpaPGTaVhd46E1+4YNSImeDiV5QwSTkzEom3rWzd57ibD+vc8r64Dfb8uVM0wuzMTRodmJs0VSa+dEyjgXSSsvl/fx9x0b20j4jfGx7BNiwORoQLP0Nn4lOaRElzivzP670TvAwPr3RstKScmxYUI5vlH49ssmV+cGfFCLQ7rBnWNkHXq/GWfnknIj/4oGUGd6P9c29RG6VktCWWTqU2Nm6VMcgyQtySr+C2NQWh7h+/+ewHWin6rEMtw+hzf3VIu0x94qnQUIWVn9ioo2q+svLPz7XRr3vqd+LBfbgn7iqo7ThdfQxDj3isLgzPzmxxZNUg/iTcFFdsWYoizHMENucOSL4rJcLkLW+F0wTGZsC6gOB69Rlv7WEx4504j+nD++8TMkp4WcVZSUgz6BVSOQ3B4E2LPvGDiSxhGMdiL5UeHTjh1PeI85j4Cop7+L8x4FpiBWamJt+6F6+8b7zpip/vaV9Hb5uv6AHGLOxmF//1s0oK17cvCWeMh3H0qBx5Qn8yUfaCYMv9JL0eg2yO0IMHDysqWhERSCz5ogJMtSYVi/irTYWX/StZEiJkm7P2TfF1M/DrodvRTEgCrt6XyyWw1CKp0APt6B/8+osHx6XObLfEZfJq2RfRMPR+8ZeEH/o12Y/K6RePO2fi45Jt026BQ/C/S4FpmDS9E/Z05B5mGC8Dq/Twi4+nx+2YTEEz+D8FU2F3Y1E5RJZ7ueKkJKQZOAUWfD+WI+Fb3V88eIL2lZ2DBa/cosGk0uF6r/f/o97av3nX2xy3/C+/D3JTl0vUxzB0x/iU0DAWFbctLExYvXAe41eGRkg2/s3OgW+EzsTDc1Fh08rto8KjZc/hryJCk+LCWyt42hQajksyQHzJwPDPbnwd8e4/Ig5wV8Kff2MG/eR9w7vTYXdpaLN9MeF9xIXTCm51KAi1a/Dis3/XCrAr6BHek1pFC0JbHNd/1Bf0RCEJk8NaqabAc958LlTfrDKtek2YVn3ViU9fZMxVUNLHMIB428YEl5P+rIR1bPlAJD57co/1iv2igmVL+R2QnEUr2bOfEp/afgJ//9g8hfGdsxiEdsynD7CvO44s2TX/3IMbC5Oo1W5bn3AV3m5fv5FneKE5MxIVhvWheYcrZDpp4rj0dk8y8TD4GI1r5LwgHjZDXLj4wkDMFlIF4tHklxddhuDFBrijmVOPkCCkpKwcAhk/xPuQqmqCJM6EoCzwXth6eYr+AzOvCcex+Gnyv/x/TEhhuIOltwpLk+sHd8PbxfPHTzLxYMQEe6aPYVDinX2hlMCVVJzgCsTj4rm8AgqaUWgSwJeUJTgrK/8LHON9MNiDJHEsu4GGYVcLb7hhiYXMfKICH0wrc/tvjPYh6qRb46a17O2eZOLBWg7zTB/DoMTbVF2rBs6mcPFEID4Z2ZB5UxwT6YY4L5ZHrKz8n/BrxvvdiSImHQMcLkI26tgonuFItO+FeuIiUEjhiAh5DdqwbVh5jIUCMI8UMnU8ycRnNpBldTKmj2HAo572YqgLzxPwSZqPRwLxpdD7y+Qyn7OIGY6zd2bRckD8md8I+dAuNlDUQ4EN9lGQKSMw++bvCKHtB+a3w8EggX7FwwmBBZh/duCF6ENd5tUH37FMrpi+RhkqKscl2ds9ycRzxdfdORCo9TEMtOpzLrqMKLRf4h+qklV/6ZjKD+f6deHoKm+KUePOuk8wy0oylZ8AhQrOU2PAdvAKV3j+uwfcFfS6A1Xo21lPnC0VhLKVlqc10wr0XNJ90OPbiV/kGk/81Qs2rui6RvNKfUqlXrDq7Lu6IP6a0xdIbzpXpLVE7WY6d+mC/Psjm87dkE+XbZe5ArHxPD77GkznZN/uK8VUKPO2XMh+mW/8cinfHVf0zfqr9BFhZZ2pSbz46ayqHn/sxN+EOl7Ugo3U/mmL+tDRMZDPCryEkGaaD2hd4gsjnCtB6RA/l5DWzkOoS+KvfEgUeWtF4m2fYjgzjwOEvMbcZjmMk2QuO+UPrC1Eb4erYPFRIT4FIQodJaQhJN+4FEif4hW8kKr8gYBbIYRsXEhIC+hMLeKpcRqFn24RLyTisRM/UrBmFmq+hagPLIUytyx9k0yX+BkqkwygTTwa+sucLrskHkPjZclGReLRc0r0nuZDKyB5EluxxcG4/AHOFNhvWPTQwLRZTKgZYaG0aLdV8EI6W1ZjhJdDvgcN4jF0HryK0JZUZFh67MT3FnSdovkWoj4gwgpS4NK35iRMl3jsENUjRZt49GBy9pd3STwmMpOy3knE4+6SGOrAJzFOhOOjcLQejsofQIoFwoaE9iLxKaIQm8WxmVqjCkFIW5N+wssncprEY3QP1LtHP74J8luPnXjYQSR/J3pVIkV9YJ9yGzvUXXbRJR5yBagLFuo86mF25ex14pL4VOE3xkMkPpvId2Z45zwcW0voZK0+WonlD86JX2luu0DcxwWiEAQ4wTCFazMVvJBOeUzY1OnXjv+2aT3qYVkBl+AFIRGP37jL6Bm9uWThJJ2Ui5I+G+OETZHSJRO1wy/0jbszE5epHfN1iC9OnKSxOeHauDvUreMO2alk3GVNmS97zqTE7Zk/mV+Ky581lXlqUOMuc+JiwVo7FDcqbs+MFmNvyYS2x7EYl6/iUlh3HIrbyOng2IQke8miiUipFvG0o9lWUcniicqoqxo2nTM3aZSonZs0Bb0sPVQhH7m9LH2pAT/T0vLxbcsqUNjbEpPPiM9qbxlh4+yjLLjjujLozfder9erQOM1ZeX2UQ3f+CQ63KKVU8s23NLhGre3SfAGOo/71DKCD6E61cIyRyGX8cpTr/3u6WFcXowFt2VLYi2f3ahIDQnZavADMuLp27XH2a99tCUyyjKklJtjaQGzhO2N//L3ZpIPpoL4rSEhGv7EEnxMPKSV6aO8BKbsUAwlUcdT6OljGMaIH8gmE0A8LNrNw5jiFlJeys81XlNWvkAYqzXc4iB0JgqtrHNosLGlQQ6W7BWBIH9gLezsQf8bxDFvjfZolGl4XGmBEQ9RPLipk8DamwYWSSAf7iGb6siJvyLaIjrwMfFg9jZyvtRYI+uVvj6GYYx4XichoKKjUASR70bNeVVZeReBeI200ugljybtamySldLEb8IXcjnhmwUaQOg6psZCd7Atxj4gI15MjdWVtddmHPyfw9JHyeiVEw8+eC7Dkcxf/JP+i29YI37xBbGBA9Rj/MDAIXSMXxDU9oyBj+qPMT428HNhjO9siaNjfJylMwSXJIf87b2//jNWZ4yPb/CXel1aBmvFctnGWbpe4/ZHNKFT9exuljh+jD/dJihRIXfszafe/v3vxnB5/QMH4Rg/KrDHjYpdYaGGIgM5cYzHt6Owx1vatbeMLeUSg9pA9pVdYe+820qqeawY47eHhumsDTKYVr0mTKu+SsTTSeyhics86XAN4tPi1+sJe0X8zamzNG0Ne3J8Bh58GbefEn924qhxzPg+NmG1fKk4b+Y0NkUvmA2frtS2csqVrGGRCTCPzx3ffPAXo+JSl048x53u14YPpUuPX2NbOYHFbmyO463wLXF7ZvKT/dsfP9cNVwToFP3wlPlFuzp24zeyKfF5s6apKvEI0JnHn5241Eg6RH8SX8IcEXQSS+nrowA4R2gWiOO8Iz6PtheklfhmAGHL67ApsLYMF9nJVI7lKOoniRVbCGkgLMqBrRjD2wLRHGf9hIjAOtTD4RUHCFvXhD2g8fQvfp34NUBc3vsFHMEaIHPsQNct9p27U4lvp20Ua6/cfUNc1G2XwZ/Ep/F9oOtsoqOPAp0Ek1YD3hC/GdrTipwkzAbESUBE2XjUHAz+vkoF0JgXl+HlKGDBKzzQHQtf14O/AuYdhKtj5tMQ4fvBV6qAjZ/bspez9Kh3Kr8W3s4JOmv1X8BlAx4Q/iQ+k/8QhlIvy/RRAOYJetMBb4jHbtaq3gXXIWkCBFB9WjYXNQePq9FK4iGkWtp4k6OUBYrxgAkEU3wYfwU8KIF43MvlS41DSxiKBXmLrLKXsw3fO5UYcaPKncugszsHUwBiIMmrX8f4kYS87EG1dEEfBa5Z9OejXo3xPXWGDvpsDob9V/pob3iuzBYuEHyrEWSqkzBMmLDSb8RLhCxPJiQMimDCfnwsY+0t+sy4ASkicO3sBh0ThtMvETzM6TMhGPePDsg27f9B+LI287HFAe8Q8gHbZKJj/HDt4oIclsvR2I8vijCWVcK/Vr21iMsvrapVn6v7xPDOqi/SeRDaBIesHLTq80uF6FNV1iZrkXQAyY9sJQ+4wlvMbLDetubZcrhSGJXzbgmK009gE3Kk5QjdkcMV3+Zbyj3DH5QUYKokMY0SWPVWXY/CEtXYz7ecbyjVtW+Jt13Id3aC88F0Llfbr84w8dn7rNy98gt5qstXRA8L3gkuG6bL1sxiSvzlm3jAXeNXQW4IFcVvSv5jWdml56l1Vl6cQYXy9lw7fh7VtGayb0Fx5u3j6Zc4+/n0k/x3DdzpKrjrGTd4oaxs676rmTIb6Aa/ssP6sPjCfVROx6ynuCrP10Y7+pa4HX3DzRqRT4nPDiRkGbWKQxRfxaoTTx+BQRrJqgwT34+QX2eUNFIVcCppKWRCKmzCnEgw4yC4Tx+3tSAEFm2PduaHW/qAj8JfEn3AN2dM2T8l5A+wajsUxmQWFWspwM32+rAfxQdINwLHNJbw6ww9/LICArIHg9DJaEL+A26KOe4GUasOHi/TCGlcgObjfs4arhs4UNqGmYw8KiAmPZx9xwbrpZsU4FPiRwumiSI/U5WJx0ywWt49RomH1388TW1nYmQEOi4mMEsYbbN9UFiiXTL/QSzwXzofdgtb6JhIazW+fg8TaXgR//yOnc1lBhxMqNrILT/MMgtfpWDMyEQgp45g2YvFSTDKdwvvXjUXHUrCWLZS7QkdLshLLicVaOij0xkajHolDxE+JT5W+CRV8whSA9OAaTmseEL8O7izIf8RYI+iTwNW/8hjqUu3AR0thNLwEFZBDvATFEhahWvgzK9yCy+DdUTIb9jJZDZTg6X1Zk7Ew8y7EUaME5jx1xNuChkNMN9XMn0CsZbAvmzM8hNrrPe3pAAAIABJREFUZ7ZIhlvSZncFOp2hx/430vdTBz4lHtLyDulOVI5PVX/Ug2+i1gzMKPGQlioZsiwr9mNg2swys8GtTvQLRimzWCHJ1VbYgYE0Z2stlCrIYwmFaXC0gUUWZhoUBSJrY+2Q+8HSl3F4mdUuhHlIipx4nHfBKDLrB3hZGEwXNwfwN4WfJrTUAAyRLtgSlHNZgc5f0dqfK48+NyKkh1gFug5mK1rShW+Nu/MLtnH2jQlKn3kfGHcpCVe0Lhs27ia138Pdu7Fgi/Lq7YWr+SfA9YQN0H+scsDX845xZQWJybbD89K5wqXLcdAsSVrIrIzS1YmCrVWweMXJ+XTw/i65W6KVWxk9tFc8WoIH57GNk4x583pHT7l5Na7d56xQLXdy3n6uomhBt2UlKJS/aOXW9gPmSWlsS1YtQrbsGxKgpfT54J92I2Gt3rw8d1GSbBGygrOtTeCtvZKkRS7KJ3DmJo0OzE2aWkB8bgzpekuP+CsdwvtaOfvI8FbSWHk8Mmx8eVyTVxt2ur4jPNTZQ18QqvfsL99smYHETw5rwcIxpjV9rUF7NuHL7xHeIjzsi/mhoZHhneAHbBsWHtG8wetNp8iEAAebhc62fvT7PzknHReJv9AuPHZVaJhorlk/+yV5XZ1GxSReCXD776pHPFjOY7FmtBQJDUMvs1PBy0JdXlAmBGgAxGPYBVxlVcdZrilZ+TE2Ss+XX5ASUuHaKzT3jNObiMSH8y8SjDx0aHpbJW0Sr4TM9coZBC08jGIQrKQSwermsVzrdSXibSslHndGYEydyK6hiKzgILvUk6ivIHDq9az8ighlLlsiuQPhTsBvVdIm8UpA9dCBesRDbrqZOKWPEK9BoBRLFoaOd1rzCTGaCsJvyh/AthxmfziI19i2qFRilLDU4UnyC9LeqR0mHRAm8UenNxGJ5xNqEWEZCyegH6mkTeKVsA63DLbqEZ/bB5yxuLnypJVXPm20pHxx8N/rDchPb9FUx0mZCrV79td/+/QyjvErGkWzETcp5O//7M3oKRll6RHdaOHGxlF9LcwfbVZwx27/fLfRSpkQ4EzrkHVci6ffPuP0JiLxt2KCpuwJa3ZYuGEb9ev//FBttpvEa8K06hUwiZeQO2HYWY7bHJvEE29bNGjjuBHwSy6ZO5ivL87lTejd+wtl8SFGvH1p7Lq43r3H3+ZKFwxabmmYRhtIHASJ8PYOihm4gcsa3eb95rel7rBOH5J+emiPzxMSPu8xVJxSZA6Plx4FG2L7D3J28r09nuk0b/B+saWj3OEhM7+XZAqnDD3h9EIFTOJF2GGR/QpstkxkxA8ULWkY6/lexpIPgQrfLUa84G9hKeVdbq6g8842Vs6YzML/X5C6Q5YElYjxprCGGCRYmczDW13PpdTCdOoq2now91hNFDGlsJjoIhcYZxIvA7rUJEAG2hBGPM/JKnbUD4X4pLaKmgGMeJFDwQ9nFF7qzKqsswoW4FDPd4dY+I5hJruKewRn+HabimahHFiubiV7P/QIQccd2PSRMjLjVtJkzhVM4kWAGyZJAR+/5ox43j1qD+tktvGUL/AnAyNerEeZbWF/V2KdluH8nmUYu1gidIddSTzvpoTrAEIWFQzad9qdwozcu5lOcWJLmGNPlCnhvxwuYBIvIYGQHvaLjYjlJCP+K0L+QsgADrfYm/NxF1BOBRMTSGDEpzUkmBtvNuzF/J6Q+lg7Kvw2lwvP3eDzyH+s1B3rKVudBd678qvx9t5iXA59BMEXJ8JpyX0222zaQXXKF1pql9+Kz9XHsIo++F074pjEy1CK+zEQ88Jb9YX8JXZRELKqvLMFqx6kraXsqDBf9rJC/FtcfBvoFbvDTi9abfS/QpvMGcwq58taqVU0zkknaImeyTva5q74oM+Jv5WmDkmqycQXpN2ilvQxO1eYdoO7nLKemsJ5abcZ8flwcO44Zz2Q6uT7dHW5sFCek5ZX/iDlSzqxX34F0tkKtlj6TLAGr6afPH5wyFaOy9py6MRp64ENO89+Y7UfP1eYdjYtPzPj+Mmvt51Ly+d2bCxJvyLpxCYN1oOpt2A6Z0vXyG0OuJR+4hToy6YBRUco1xfSSzN08lOo4Gvit8mMEx41mHjwlf5yMH1mghczGuPtIJRyLxAPaeV3DKCDM5hlqspta/CRDgBv7RNvEPJnmA0stb5ArTi4bIM11Ubi6vx7C/HPM/h//TCiwluE/EJ0WwKdIJzixsfMvrA2VcXgCsDMqB2PEjbhAO+ddeNw7XeUlrQaviYeFsY/U16qwcTDGIu7LdK6OsTHhALx7YV7AFV97j/RS8/iEZCIBjt44DyPeycQrcEy4WSpGXYNNs534d8O1/9DOV3XK363ANw6wjlWkLoh35C+c6YEXxMP/dZGeakGEw+2MDpANRB7H5ytGgHxkfwJ+zooX/ccEbZI4Iv+V5D4Jf33DER/4NNhA77qlGfEs6G7Hf924MIJOwF6rleFkr7wPekua8hIELaviZ9DnFL31WDiITBvVnP69P1S+AbUB3+nJUA8DFoLqEH+LlyerXwd/LJZeXL4Pa59mn4NYPM39uqvCXkOfrgF79PTlzneH4v8NlZGC3lPzfiv8X++ni76Z3G8A958Tt/1qisIWJIJy6gFIX7xbALYWktaDZ8bd8eSquwfYBhVN+7OJx3jbNvWF3IXk9K5PSMGJlu5c0mnmHGXmXSCs23dUJQ1J85pS35nf8En4lTSufI7I8cUcl/2T+W4m8PimMlftLDVZPoN2Lc6aXVcPTr7OjhmwaqUy3MHTF6z+Vrhhi/PJ61NytyelJQ0bxw9sH4x4vwacW32QhJ7u+vzxh0D4y537U7tkJI9SUmbi7mzSWy99/Lqbzj7zrVZ67YbClkzp3OaMDdpDBBvH0Iau6o+UsOIX2CxyDLIc+l/ow95peShpiT2ezoDa02icWJ1PZzaLV2eeqqrTOZ0BOlmjXuRVaj4xW+i6AOiJemYaLEsvtGOtM6idj085p8lwQGvPg1O98GBltElPUl4xt5QMnwUCUmKJP9O/v+n6av/9jvyP/XHcbkdSCTLzne9LTjpvzS5LwlLr9wa/OZrljWo0wAb0+kGuBg03sfta6wqM1xxOBSFZMgIJz21YsJ9Qjz6F7jo8ZpFPBb/kiWHscD5YIUkXFnJVkwxiqaTMBbLnOJgGtBNNkyvFN3owWDswFdIUAIW7YOcLyO2wY4Qq1fymXQ18D77ewN1WswygsawShp4aY1c74oGTEgG+HQzNbvDB8S7S2hVs4jH+BnZAwo7VpH4CudJw9k+HE7jGgk8jFO+7CMZcT3FTZp3WXuDnMn9p/MlEdPQq45TvB1FDvvzNeo0SNAJY0MwtGOsXPEfeSFOqWYPze7wAfGQ8aGpZuMMNYv4LNXXFHdHlygkI9hXA0oJYVWgUQINso1OSEE2RcbQQTH/wQiCld53OJML/lJt+LipF1X3jkPB+X7Y9GjpatRDtpJQiDrtYnO8OAz5aYx7SIraHxW8kAywY7uJ04IvjLtNrfvoF6+tacRzadGd5Ck2czr9+neqhbEb/VpvpMZdcVzkVFw4Lxn/9v/OWffqq/Lnav7QqEXcrgbPvvTxa8+8+YeXF1I7fnTkvGOfdkgvnRI5AYbVNe8/81qDlvGdgv/x7Ev1mo2OabONW9EqNuda/9YpW9v0vDAm5Ln//s37f3/2lZiPnn+rzQ7OPjPyCzaRL5nYrN5LzwbsS2o1MLfyYveQ4M++oTr1bw0beCXxqFNK697XuWu9Wyuj4ypuMiH5p4ttpU7yz8Md8Q9nj0yif+5NHT7xgR7xblDDiDcE06o/keyYVOhwpKU61n31BBN/I37YBYn41EHzVckR9gyeJdsHuzVxBH0orI9dWnp93Igz7NrFMaNlCxS2ZbHr2MGK2OQfgHh7UuzisQ07n+JSYhOLOe7syG7NXnqpy9Qh4LK1ITYxPrDD2uFx2eDf1TAqquHom0v6dRmCgVXWWUFt1vT4xz/b91vitJEqEL82dtmNiUMhKVdxwqAtF0aPuUTfLgnn61sGJQrx9VDK8IuR5zjbythkt3N5d8SvPuHYlOZwXOcc259g4tGDWXSjhfxHnRX3YQWvrXRqoadnIHZ6EMS2Qy5E5qUhecOByzaGpYJlOweIn8APy7B02VtIM8tG/wTxuIFN8O54Cf9P44T65Qjl5IITiYc2Xya4+yX45sNKPpQygClVL166gqXdyoZ709RNqeGO+IRsx6Gd9G/l0aE/Ohx9mnd9CHA89ACVngg7HnnSslFhdEVaKZxhRQ3FffSX+5dwhqvgC2GtHnMabIJrWBT6K/EFkCGpuXAQAZ9Q2HLDSIyHWyU2v3gYJZ1cL1OYdBPoC2WnTZ0UZx3dnL+fKEnD1l0ovfWZ7LNUPoSCCeRL0CncXZfQjr7rivhVJxybDzscj+bMpbw7bmfdLKP4wVHmAe57IvzoRw+EK34wKIiZBvYLZ5DKrLHiPnpCimdYMWcrxGbjHOsQXENfu3OiCHDZEw4g+0H3n+lBB54R+BtWdlRiM7Gsr3RS9J2C+GX0hbKAm5ZqvX+oxD9CKr0tZWXC9wvyIXegt4bj2zHcL8MA+XRYSejsrkselZfdcUX88fWOaUUOR3qycAGfQE/aox5ckYaKY3xhCxJ4WHHbSvnbJ52uAeemG01J8JmFYoqsaSzdIY9zwaQpzmTOB5Mmt+BRfykEZ/CDciOI5ZhQU+h/KDsl0BLsy/wdd1P4qPm5sJLzGSyzHf0Hn9OQBH+jVpt/1F9vQoLnsHrxGYEkgk7jZ1wOISGQhQDeLoOXrkDvsTHchUakidsNOrdW/dz4ZEfWtEU9Bww49AQTz5lWvQq+36Q5u0PlHlg9xOfuUPmVGyH+4D6whjO33y67s23GQs2guRMLttFZenbqlVM7eR+zb/Z+B293MPXAwpSCvYe5ExOO0gn37EUclzYhZWdBybYFJ69O770iv2QPOmVn7izYMX9/6gXa0oztO/etnbkqm7Pvowb+1dTr3KE5VIOs1AM7cg/stwPxJ3fu3me/vf1gajb39V4bd3rCpu3oZnEzVSy7c3nJjE04JclJdbWcooLPiQe/AWUpoGohHjISzVdccU+8PZqOnTb0bT+NaU4SnWVgtTSgCPOakvrYz5BUKesSP/T+hhmEkwqfJeQNfNzXExdqA3DLfTTb1+FDsBkONiOkfSpvU7TaxV+NsnF3MDgyGE/p6B6+FI9OsSK1yUyjjXDpwxtsEDFexdfnxIMayvXiaiEel8oVV9wTj5ULduMn4C0uJxFWMXplJLuNbu1wMGaIwmYjz+Jq+q+IE65ana/xLlP1hTPRG2i/2vmeBVOT7mzfiN9gYGvAk9m+kX5ZejX8QvwAxZVqIX6gF8Rj0uUdnPQjcyYepwdkaQt2G7ZIkJsRCg8bQp4ZpUP8pSLnazznYg4s8WAvq8gpbxf/78yKoyiIj2fxHy0N953PiYd83GcUV6qF+G+IOobIPfGQ1bBpMRYeOYLT8enOMoOBmTz+aYzZTCAM/sJZiRzIUD4s97eEvIgeeOR94cY/MSZ+gHAqm8Ztp8ctYdsQtmTCN/NXw0u4O+hxyZI00MEnhAXgURMCtmn4DdgVeO0qS36223Df+d64O71BlYSyeoy7nA2qamcGjDv77u0wwTqz/lbZt+vGTXeaXQHSJ6+HRKfrLh3byO/xndhyB95uz7o901bnfbmPyxh8iE4Q42dTW3Hw+o351vVTMi6PjZ6fV7wVI26/2Zy3aeLOdZm0pfGbN+9YMn7Bdc62fY+du7wui9s7YYedu7Juz4acXTtsYNylb/xyu+3W+j3rrnN7U0u5U4OT16NzSPY60fQ8P3vcKrQzb65zVYRGBdP1ShPmdK4uEZ8SILpalI0nAVs4Fjnxe0Ley8T8Q31bkmZsxf9yBDW0etnyXiP/h/wHC4T9ENdRhhDLzuONSadiW08SJNZDONuURLNNoOTfkv8iEwqjydP4onnQUpQQJclca55Cl94pEEgJxM8gZPYfyXOzAslIrFTdRJ63WAFlR08gAbplTDmTeBmKmEGFwDy1VqlmREtWVpoIqWswOJUsEZJRIcBbB+dWYG5NxdgZoWnwkGBRr79FUbGoHTkNLQkF24S3s7HawiSHEp9B1FDHTYtQdDS4x7jyizKJF4E7HPzcH9KSkkyxNB2lUFgvZ7Y0c48a8paCEU7MekVIN7ACxYB1OG4rHsmdtjZCS4L/kvB2VzhuOfxNp8SvdiJeFdUjQdHR+MU7qf9pTeJF2MB6PsOOIYCtvp2zCgz1hJBn8p9ESHTObPPdA+SEQBwDZCi2wI94LbheiYm0IFSLGeF/RFHx+0GyYd4pbALwb/c0xxIwfGKlxF/hBf+v+JJ4vQ+g6Gj4Gn+i7WCLMImXcCm2h1D9pexwj8EwWcvs+L/turzwh9FWjlv61/f3zO86m69BMKNDRPctHPf5G7/61XtD20e2rP/uMFyp3hUz7Fre+G5rqMXQfYwYw1Y4qRvvAXUl+I2Pen7NLf8s9J2XPmnZ5xhtqWuC6BJ9vuP//uO1T6BeMJfWa+B5HOOP9hpwuuNbkWcHx+z9stGfXvxwrm7cu7Kjv+4Zq1FMXYRJvCZMq94PxG/tPl4r3F/SxzB8RvyBmBHKCNOy8t0xY25N7abwW+fsifXqy/JcftOnVfsxedytUX2/4rhVDT5qCc8Ajiud1TEyhnfBP/TC0+gBXfBF923pPaM6xBVxFZn9+p5L7jq1OHtwjy9e+n3Ix58sRj+p5fXrJSocprZ1H1eExO9o/F7zzkuFe7eGx+Bz6Xbjt4UsKbSlI5Pfthio2Szh8RMPSaB08q9z1UQ8pCsKU1wpA2P6VSLuhDBgRPoi4ewGjrgtMfnNSbZ9gnnqmUd9Gsr8Oz+4C5kp6aRAWH/vEyyO2nM5vkqGfKkQJhbRQPwBSQgQyhttoB3Ly2PnW/qTB71RDcRDILd+KbpqIR7zlypy15UJ+UgVX1FcZRXKSbCpGx/YMIXftoFKYWzxfDSIoAfWPxSZjljFQiVCOTbjwzp3AnC34RHHx0szIQp0soHFaPj7N7wkVsDTf5A64/ETDxXxgrQluWoiHkKjlUX6ylbxfTlafrUrXBkonJ1gErhht2kwO5nB8QmGMXSZTcwhT4TIcTD/oBDTYAHAWxIX9uXVWHFGCb/4hZIQBe7bwMoMrACxPRlx48eD3qgG4os7kOAD2pJcNRFv74s1gGQo+74bCVrYmLRSjJtZQfRHKRkDsB8VtBP2wftzOU1hn709eG2fgWd/DPsetSLkefi7P4h0BPe44K+5ijmETIoijY+vofcI+S9CGsG+/k36oAiSl/Yo6UiCDgLxpR0hgr6Z4GSRwkfcLHqavMIXH6Etxb5Bnlb6H7iBadVrwrTqq0a8be9X9mok/pvEFCnrl2HiL6dmc3f2zz2SnXqJfoL9B+zc1dSsdQNSSribC4YcBYn8jYsOpF6nD68vF+ylQqcOieEZJXsPcddSD2xnG5SXl07fuGvXTnwNd2hv3s49SSsOLNtclDth8PQZM9bmcNZdKaOmHNi+d8euXTtOpA1JEOyMM4nTt+7aveP0nbRJGMVxfeVKfuPtyrJkyRixH9hvo293hbMf3GerScRb6eMr0l5txMfTZ+v7ohuaUeJhjXQ7byevLKE2dLNN7OQjrEc8grl1UezJ/Rj/0g9Znyej0MKXqsOiYOJqaxdOZtcTli8HcKgBUYF9R4TgDMyYmMKyo7Ct9vWSEB0DqEEYCvbjuhaENC6uQcSjUZtRbcRj34kzJKPEw+K54AYVjF0uuMSgH97vBNdp0lIoTkcxh712rXihHyePd77OyTw1JAQ7XeksKS7g77y5iIZcY0mIr2heT1AwtQYRj0m/TlQv8WLaIqPENxEopgiBFXrRCQ6JfJY5XFK0Wi6xw5fz3iheGMjJa5PcEEuqK9DE6Up3SXEB77Fad8ydLlQS4l3FQDm+iGnNIR6eRZ9W3xgPE8d/iu5ARokHZ9Wv+P3WTZCosC3LO04CcPOMTqH5wLhDhewbQWkJ5M3rYkoly4xxnpNVHOzP4VTwaf70XWHD5YRFTTwu02OsHAI2bfYxRyvmQJsqCdEhvg0dSeGrmRpN37a0BhEPxl11WvVnErdIUbGeGndHs1Mv087df5BO41KvrRuwpVQy7jZQ444aD8XbFuynQqcl465072FqbR0UjbsZG3fv2iUYd/k794Fxl2LNnTB0xsyZ1Lgr3rV19NSD2/ft2LV758mjQ8RShmcSZ2zbtWfHN3eOTMKindmrVvG2ytVla6T5pB2c76+lXuUDAmoQ8QhzOqdAnZjOaeljbUUs+kmyeOJdCwnwPfEl7egDuelcQoYUNqVG0xlQJZJYvlKJXUdzCv1ng9K4cnR+/fLAm/h4hgKFrN7UBr44BZkretq++A79r1fei+T/kGfZqvCvqY03FTPnbGefPJI8Rf4/GLyvPEt+/TZpV8jlR5BgXMoXhRBQ1Hg4fzwGvHsbU6HOWlvwuaGkUYbq2uMnHst56wrzxLsWEuB74ueKoy0kucGigLCQr15ilue7asRcd4R5HCz689lGSbF6COfxofZlbHqyePoK+xMnT4oj6xS2/s9S3qRJ97WW72C1P1R1rYZu0rgWEuB74geLHViPkcpxvTS+g6EKKlR5jo6JJvxFHeL/oH0ZF5t6i6f8bL+blG5NFAJgqgayEI+TpftDND5VtMZHqKHbsq6FBPieeJy+4X4sVgIayrFE7J+qxGbLmOjCb5KEt2fnASWc3YJHQRy/Z/eKimH29XpaPH8D/2+OTaeKV/klnxRctXmVv9hcUgJ3eficiETUW2sbBEae3qprNdURw6WQAD8Yd9u7t+w09/qQXhncRsuH09HLKaV7vLrcg33RJx+3jFna5p2mHSZaufLr7V5/e0BO4ci3f/PHxrEQmZ49qG3wO71vcvljOkS1aTv42pz3f/PLZ17/8IXnB03+tHXMPi7u7Rde73B1UNs2rTq0+PiTxZcG9F4aM5oPMk7p3jL6zV/82wvJ3IC3mk3pBsnK1nWbfHNM+1YyIUDOgHdapvPHJ3sNSOg289aYmB2cFsDvQ3XJtOo1YVr1hohf3mqwU8mcKugDSGoVe9u1JOct8bvaxlziD1dEBTabXHrs0w5qmzej8SutJVfFoiFv/O3DVxozoZMd333uL2n8ncX/eGuEFYhf0WpQDpfZtd2+pJd++cfX/xHfsf3RxL+/0aBpYNvef3rh9f/5v+Gpbz7/Ybfjb/3br8ZRIWq8jw0PaPL2L59p2P/S52+8+fzL/Vv3HhER0MTSKKTr2L8+8+ePXw3Ytxry3HEpL/4ygMVyHWnf6RR3s/4fW7Z4/oWPQmNzuPNd201p89bz9fpFTejUHmLvh0XBkL80anBuVs82qqIaaviCeBiD2um/hTfEw6KX+5Bfr4iHZLaBzG5kK6yY+UhZO/IaXKovGpeCTz0IMZvqKXYDjar+lHjYx2lbIlSI0MUv+L+ZnJQXR53jUo6oStQELTocx/MlT/7Wpcq3u461LVbifkE07AIc5VzBF8Rjv+i/hTfEK+p668Ir4tEwYwV7WO4wnGQrfx/reXp4CH0LQnvZIfvJd4XDRpR4NP2NF6RYyLmXQTxi80tYrsWiF3tl904rRTdgm59KpSomuuwOXxAPPoi64R3eEQ+r1cFuhb0iHidfbI0V800QSFylqhWOKa6JuBArpBsDoavskFmeOOluRYmfAV2Qb5BNML2j3AtBF1SyCCpYr8WvVdbvxXuNCpSyp9BtLw6C7jCISyeHrQBfEF8cQ0KP67+FN8SX9iZN092IejvGxxHLNnZU0oM8T9pkLw0IWKwSTiTkr9JDIDMQ/KpeY0KrAuhMjA+9t35GCbhIiS/pSZoe4zZbyORuhPw7HUsakrkdIJHBC+RN8h+UhT/E/IYQy0T6rP+gIUTOXGhO3/q/yb+RxmvqQ4jOn0mAhV75IyENYeuHCk/uQ5qkV3L9/os8x5y8E0hgErfj9+T5N0CbphlcioUy/N/kdx+R4AYkgeMuhZOuVmTjxO4gd7WoTKteE6ZVX0eJt3+5xaZza8e6QqhXc5o+6TYxITXxJ5OkCYFt60bVDFrojiOrBdfKg2uo1XhtzgTcbs2B4jSHk7NSNpfIiU8fj35ZF5IkIR6ZSWdULRuCSbwWrI0x/5UWOtGHMaZCSQbHMhRSEQ/+GcIGkz2SjgXKhMl8d4BhxHJ2QIL7SziCr2C2++fxOGiHlkjE4zbQJVxYFIT4O7DSt0HRsjGYxGsBlmmJpo2B0ytMftRYFFIRD5aVUHoPS4qrssqzP3CjHxygo/wYnMaE8ME6PPZKxOP5GKw7IAjxq4lg0TVRtGwMJvFawO1Up5pjACzijenOGotCKuJhDi3sM+APWTlVlBGPsRm4yzYeA66DMf+FiP0S8VioYjx6bFIhqGYhzDlgxtFU0bIxmMRroZQy21H7Vn/6m8MEh1tLW/BCKuJhwi0unlCzv5lyi5zvDthgZ6sJdP7VIBs39DZy3C1K8di5mNistU0iHkLzPsjG8HsqdDtAqkYDrr+pipaNwSReE2Vnz+jdysyw8yWnuRNMSG3c3UqTxd+cOaF6vdAd148IWz9X0qn9V7Sf1awuSb9EB5Sj1tNgxUnGXfaXX4ORmJ8mCfHITRPcCk3iNWFO5xQwideESbxJvHuYxPtIH8Mwife6ZZN4bZjEm8S7h0m8j/QxDJN4r1s2ideGSbxJvHuYxPtIH8Mwife6ZZN4bZjEm8S7h0m8j/QxDJN4r1s2ideGSbxJvHvUDeJ/pLiL/xvFA0+EH1V4IHz/rgfCP3uix0/3PBC+99ADYY+6w78dXeYR8d9RfI//G8U9T4QflnsgXFHmgfD9Cg+Ey+96IHz3Zw+EPeqO7yv91fJ3j8q/+9Z81DvBfNRr4k6IB8KeodPwHb0LAAADeUlEQVRVf7U8e72/Wv56uL9a5pr4q2VHxyz+wBPiv/3YH6ogoi76q+XJSf5qed/n/mrZVs9fLTsiL/MHnhD/fRd/qIIYdtNfLa/c6a+Wj0/3V8t3uvqrZceQW/yBJ8SbqEUwia+j8IT4H74YmlDpHzXuTR0+8YF/mnZMuueXZh/OHpnkl4YdflNZ3s2eEP/lYcfE235RyJGW6lj3lV9aLh/azD+9eCLZManQLy37TWV5N3tC/O3yysklflHIcZ1zbPcP8ZUPxvqnF1efcGxK80vLflNZ3s0ejfH3+o5/5A99KCqPDv3RT02P908vJmQ7DvlrxuAnleXdbJj4fVMzfqqsXHbMD9rQph/NmesP3mnLfuvFVSccmw/7pWX/ES/rZk9+8YsuOJKO+EMfhyM92T/tAvzUi8fXO6YV+aVl/xEv62ZPiC8dMWTaz77XBrCo54ABh/zTtL968eHceL99W/1FvKybzXl8HYVJfB2FSXwdhUl8HYVJfB2FSXwdRW0n/jJJoP+fIkm6Et/3fempAMEPJK1VWiv9u3LcS/CVitWDWk/80/Xp/4N/m6Qr0XJg+cOlf+TXJ5yIV9yVo+xN3ylZHaj1xL/3fqGj8q2OSY6E116Pffiw38vPdX6Y0aHjq4E/MIFzbz50OCqnWdl9IP67pi++KmwYCXcrx73+xvjKfZ0dju672Kvb/Ge36vpMPkHtJ376HMfJtr2STtYvr2i95GLYz/96Kyvjf24/DNjKBFby/LH7QPyCTpUH+zmUd3d/cPenj/bxxOOrzV98zcbl93I+cgza2itpwqsBAe+NcxRtG/0/5zMaORwD1zKB5ejfdu8Buw/En3h98CHB30S4O3SBw5E4giceX20SX7Nx+T3Hh7f/XNErafxIh8Nuy/jzkush5zNaSMSffoM+zB0fbWf3cYy/t7V9uEN5F4hfNBSIj97FXm0SX7NBiZ/Vor2jV9KR1+w/vr930mBH8VNn5cRXNu1X/vPyF8rZfSB+1Oc/F/zykfLurg/u3v1w9+F//KvkGYH4V6vvQ/kCdYD4ArKdEu+Y8acXxlbe/vv7nQYGyIl3cN2e/63lvIPdB+KL6j3zsrjvxt+tHPvKy+Mq74W+2KwHT/zDDzpU00fyDWo78SZ0UHeJvz0Qccabu7UAdZf4Og6T+DoKk/g6CpP4OgqT+DqK/wfzqhcmes6CKgAAAABJRU5ErkJggg==" alt="plot of chunk unnamed-chunk-5"/></p>
+
+<pre><code class="r">cor(Pf.cmpd$data[,c(&quot;Mean_Cells_Count&quot;, &quot;rep.corr&quot;)])
+</code></pre>
+
+<pre><code>##                  Mean_Cells_Count   rep.corr
+## Mean_Cells_Count        1.0000000 -0.4938911
+## rep.corr               -0.4938911  1.0000000
+</code></pre>
+
+<pre><code class="r">nl &lt;- c()
+pb &lt;- progress::progress_bar$new(total = N)
+
+library(foreach)
+library(doMC)
+doMC::registerDoMC(cores = 62)
+
+nl &lt;- foreach (i = 1:N) %dopar% {
+  cr.tmp &lt;- cr.melt %&gt;% 
+    tidyr::spread(Var2, value) %&gt;% 
+    tibble::remove_rownames(.) %&gt;% 
+    tibble::column_to_rownames(var = &quot;Var1&quot;) 
+  rn &lt;- rownames(cr.tmp)
+  cl &lt;- colnames(cr.tmp)
+  rownames(cr.tmp) &lt;- rn#[permute::shuffle(length(rn))]
+  colnames(cr.tmp) &lt;- cl[permute::shuffle(length(cl))]
+  cr.melt.shfl &lt;- cr.tmp %&gt;% 
+    tibble::rownames_to_column(var = &quot;Var1&quot;) %&gt;%
+    tidyr::gather(Var2, value, -Var1)
+  res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, cr.melt.shfl, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)
+  length(res$genes)
+}
+
+nl &lt;- unlist(nl)
+
+print(mean(nl))
+</code></pre>
+
+<pre><code>## [1] 0.364
+</code></pre>
+
+<pre><code class="r">print(quantile(nl, 0.95))
+</code></pre>
+
+<pre><code>## 95% 
+##   1
+</code></pre>
+
+<pre><code class="r">max(nl)
+</code></pre>
+
+<pre><code>## [1] 3
+</code></pre>
+
+<pre><code class="r">print(length(res$genes)/mean(nl))
+</code></pre>
+
+<pre><code>## [1] 5.494505
+</code></pre>
+
+<pre><code class="r">saveRDS(length(res$genes)/mean(nl), &quot;tmp.rds&quot;)
+</code></pre>
+
+</body>
+
+</html>

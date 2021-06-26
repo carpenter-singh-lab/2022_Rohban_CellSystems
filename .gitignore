@@ -2,10 +2,12 @@
 .Rhistory
 .RData
 .Ruserdata
-*.md
-*.html
-*.rds
-*.txt
-*.csv
-*.bck
-*.png
+# *.md
+# *.html
+# *.rds
+# *.txt
+# *.csv
+# *.bck
+# *.png
+archive/large_rds_files/
+untracked_likely_delete/
