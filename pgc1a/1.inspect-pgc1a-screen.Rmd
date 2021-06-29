@@ -62,4 +62,19 @@ screen %>%
   inner_join(smiles_cid) %>%
   write_csv("input/pgc1a_screen.csv.gz")
 ```
+See this
+https://github.com/broadinstitute/2016_08_22_Gene_Compound/issues/6#issuecomment-870740194
 
+```{r}
+screen_internal <- read_csv("input/puma_assay_data_CBIP_2139-01.csv.gz")
+```
+Compare the distributions
+
+```{r}
+screen %>% ggplot(aes(PUBCHEM_ACTIVITY_SCORE)) + geom_histogram(bins = 100)
+screen_internal %>% ggplot(aes(RESULT_VALUE)) + geom_histogram(bins = 100)
+```
+The PUMA version of the readouts are  normalized from -1 to 1
+
+> We prepared assay performance profiles following a double sigmoid normalization procedure to ensure that all readouts are scaled in the same range
+> https://www.biorxiv.org/content/10.1101/2020.12.15.422887v1.full

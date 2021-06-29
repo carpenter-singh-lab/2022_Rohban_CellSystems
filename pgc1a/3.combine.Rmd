@@ -5,6 +5,7 @@ output: html_notebook
 
 ```{r message=FALSE}
 library(magrittr)
+library(glue)
 library(tidyverse)
 ```
 
@@ -35,4 +36,41 @@ Sadly this gets us nowhere
 ```{r}
 count(screen_connections)
 ```
+Let's try with the PUMA version
+
+```{r}
+screen_internal <- read_csv("input/puma_assay_data_CBIP_2139-01.csv.gz")
+```
+
+```{r}
+screen_internal_connections <- 
+  inner_join(screen_internal, 
+             connections,
+             by = c("BRD_ID" = "BROAD_CPD_ID")
+             ) %>%
+  rename(pgc1a_assay_value = RESULT_VALUE,
+         morphology_based_value = value)
+```
+
+
+```{r}
+screen_internal_connections %>%
+  ggplot(aes(pgc1a_assay_value,
+             morphology_based_value)) + geom_point(alpha = 0.1) +
+  ggtitle(
+    glue("Correlation between morphology and functional readout"),
+    subtitle = glue('Spearman = {spearman}',
+                    spearman =
+                      round(
+                        with(
+                          screen_internal_connections,
+                          cor(pgc1a_assay_value,
+                              morphology_based_value,
+                              method = "spearman")
+                        ), 2
+                      ))
+  )
+```
+
+
 

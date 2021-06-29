@@ -92,5 +92,11 @@ connections %>%
   distinct(BROAD_CPD_ID, cpd_type) %>%
   count(cpd_type)
 ```
+```{r}
+connections %>%
+  filter(Var2 == "PPARGC1A_WT.2") %>%
+  select(BROAD_CPD_ID, CBP_SMILES, value) %>%
+  write_csv("input/PPARGC1A_WT_2_compound_connections.csv.gz")
+```
 
 
