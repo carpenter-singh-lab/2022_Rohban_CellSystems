@@ -1,0 +1,83 @@
+---
+title: "Inspect PGC1a screen"
+output: html_notebook
+---
+
+```{r message=FALSE}
+library(magrittr)
+library(tidyverse)
+```
+
+
+Trail that led me to the data
+
+1. [Paper](https://www.cell.com/cell/fulltext/S0092-8674(17)30249-0#secsectitle0075)
+2. [Project page](https://pubchem.ncbi.nlm.nih.gov/bioassay/651721)
+3. [Dataset within the project](https://pubchem.ncbi.nlm.nih.gov/bioassay/651723#section=Data-Table)
+
+The "Download data table" and you get this URL below
+
+```{r}
+screen <- read_csv("https://pubchem.ncbi.nlm.nih.gov/assay/pcget.cgi?query=download&record_type=datatable&actvty=all&response_type=save&aid=651723")
+```
+
+```{r}
+set.seed(42)
+screen %>% 
+  sample_n(10)
+```
+
+
+```{r}
+screen %>%
+  ggplot(aes(PUBCHEM_ACTIVITY_SCORE, fill = PUBCHEM_ACTIVITY_OUTCOME)) + 
+  geom_histogram(bins = 100) + 
+  theme(legend.position = "bottom")
+
+screen %>%
+  ggplot(aes(PUBCHEM_ACTIVITY_OUTCOME, PUBCHEM_ACTIVITY_SCORE, )) + 
+  geom_boxplot()
+
+
+screen %>%
+  count(PUBCHEM_ACTIVITY_OUTCOME)
+```
+
+Save the CIDs and then query https://pubchem.ncbi.nlm.nih.gov/pc_fetch/pc_fetch.cgi
+
+```{r eval=FALSE}
+screen %>%
+  select(PUBCHEM_CID) %>%
+  na.omit() %>%
+  write_tsv("~/Downloads/pgc1a_screen_cid.txt", col_names = FALSE)
+```
+
+The results were saved in `input/3843044851509932684.txt.gz`
+
+```{r}
+smiles_cid <- read_tsv("input/3843044851509932684.txt.gz", col_names = c("PUBCHEM_CID", "CBP_SMILES"))
+```
+```{r}
+screen %>%
+  inner_join(smiles_cid) %>%
+  write_csv("input/pgc1a_screen.csv.gz")
+```
+I also looked up assay data from the [PUMA paper](https://www.biorxiv.org/content/10.1101/2020.12.15.422887v1), saved here:
+https://imaging-platform.s3.us-east-1.amazonaws.com/projects/2018_01_09_PUMA_CBTS/workspace/analysis/puma_data/assays_with_many_compounds.csv
+
+`CBIP_2139-01` is this assay, which I then saved in `input/`
+
+```{r}
+screen_internal <- read_csv("input/puma_assay_data_CBIP_2139-01.csv.gz")
+```
+Compare the distributions of the two different versions of the screen.
+`screen_internal` has fewer because it was already filtered for those that were present in the CDRP dataset.
+
+```{r}
+screen %>% ggplot(aes(PUBCHEM_ACTIVITY_SCORE)) + geom_histogram(bins = 100)
+screen_internal %>% ggplot(aes(RESULT_VALUE)) + geom_histogram(bins = 100)
+```
+`screen_internal` is normalized from -1 to 1
+
+> We prepared assay performance profiles following a double sigmoid normalization procedure to ensure that all readouts are scaled in the same range
+> https://www.biorxiv.org/content/10.1101/2020.12.15.422887v1.full

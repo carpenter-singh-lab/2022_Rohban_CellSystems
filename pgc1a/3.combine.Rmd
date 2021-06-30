@@ -1,0 +1,157 @@
+---
+title: "Combine PGC1a screen and Cell Painting"
+output: html_notebook
+---
+
+```{r message=FALSE}
+library(magrittr)
+library(glue)
+library(tidyverse)
+```
+
+
+Load PGC1a screen
+
+```{r}
+screen <- read_csv("input/pgc1a_screen.csv.gz")
+```
+
+Load Cell Painting connections to `PPARGC1A_WT`
+
+```{r}
+connections <- read_csv("input/PPARGC1A_WT_2_compound_connections.csv.gz")
+```
+```{r}
+set.seed(42)
+screen %>% sample_n(10)
+connections %>% sample_n(10)
+```
+
+```{r}
+screen_connections <- inner_join(screen, connections)
+```
+
+Sadly this gets us nowhere
+
+```{r}
+count(screen_connections)
+```
+Let's try with the PUMA version
+
+```{r}
+screen_internal <- read_csv("input/puma_assay_data_CBIP_2139-01.csv.gz")
+```
+
+```{r}
+screen_internal %>% 
+  ggplot(aes(RESULT_VALUE, fill = as.factor(Class))) + 
+  geom_histogram(bins = 100) + 
+  facet_wrap(~Class, ncol = 1, scales = "free_y") 
+```
+
+From the paper:
+> Compounds with high or low correlations of their Cell Painting profiles to PPARGC1A overexpression were chosen for further study (hence all samples are below ~ -0.35 or above ~0.35 on the X axis). 
+
+```{r}
+screen_internal_connections <-
+  inner_join(screen_internal,
+             connections,
+             by = c("BRD_ID" = "BROAD_CPD_ID")) %>%
+  mutate(
+    assay_activity_level =
+      case_when(
+        Class == 0 & RESULT_VALUE > 0 ~ "active_high",
+        Class == 0 & RESULT_VALUE < 0 ~ "active_low",
+        Class == 1 &
+          RESULT_VALUE > 0 ~ "borderline_active_high",
+        Class == 1 &
+          RESULT_VALUE < 0 ~ "borderline_active_low",
+        Class == 2 ~ "inactive",
+        TRUE ~ NA_character_
+      )
+  ) %>%
+  mutate(
+    morphology_similarity_level =
+      case_when(abs(value) > 0.35 ~ "morph_strong",
+                TRUE ~ "morph_weak")
+  ) %>%
+  rename(pgc1a_assay_value = RESULT_VALUE,
+         morphology_based_value = value)
+```
+
+
+
+```{r}
+screen_internal_connections %>%
+  ggplot(aes(assay_activity_level, morphology_based_value)) + geom_boxplot() +
+  ggtitle("Morphology based activity, stratified by activity in the PGC1a assay")
+
+screen_internal_connections %>%
+  ggplot(aes(assay_activity_level, pgc1a_assay_value)) + geom_boxplot() +
+  ggtitle("PGC1 activity score, stratified by activity in the PGC1a assay (sanity check)")
+```
+```{r}
+screen_internal_connections %>%
+  ggplot(aes(morphology_similarity_level, morphology_based_value)) + geom_boxplot() +
+  ggtitle("Morphology based activity, stratified by morphology similarity level (sanity check)")
+
+screen_internal_connections %>%
+  ggplot(aes(morphology_similarity_level, pgc1a_assay_value)) + geom_boxplot() +
+  ggtitle("PGC1 activity score, stratified by morphology similarity level")
+```
+```{r}
+screen_internal_connections <-
+  screen_internal_connections %>%
+  mutate(assay_activity_level_simple1 =
+           ifelse(
+             assay_activity_level %in% c("active_high",
+                                         "borderline_active_high"),
+             "active",
+             "inactive"
+           )) %>%
+  mutate(assay_activity_level_simple2 =
+           ifelse(
+             assay_activity_level %in% c("active_high",
+                                         "borderline_active_high",
+                                         "active_low",
+                                         "borderline_active_low"),
+             "active",
+             "inactive"
+           ))
+```
+
+```{r}
+screen_internal_connections %>%
+  count(morphology_similarity_level, assay_activity_level)
+```
+
+
+```{r}
+screen_internal_connections %>%
+  count(morphology_similarity_level, assay_activity_level_simple1)
+```
+```{r}
+screen_internal_connections %>%
+  count(morphology_similarity_level, assay_activity_level_simple2)
+```
+
+
+```{r}
+with(screen_internal_connections, 
+     fisher.test(
+       morphology_similarity_level, 
+       assay_activity_level_simple1, 
+       alternative = "greater")) %>%
+  broom::tidy()
+```
+
+```{r}
+with(screen_internal_connections, 
+     fisher.test(
+       morphology_similarity_level, 
+       assay_activity_level_simple2, 
+       alternative = "greater")) %>%
+  broom::tidy()
+```
+
+

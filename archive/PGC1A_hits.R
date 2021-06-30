@@ -10,7 +10,7 @@ a <- read.dataset("CDRP", just.bioactives = F)
 a$data <- a$data %>% 
   mutate(Metadata_broad_sample = str_sub(Metadata_broad_sample, 1, 13))
   
-cell.count <- read.csv("../input/Cell_counts.csv") %>%
+cell.count <- read.csv("../results/manual/outputs/Cell_counts.csv") %>%
   rename(Metadata_Plate = Image_Metadata_Plate, Metadata_Well = Image_Metadata_Well) %>%
   left_join(a$data %>% 
               select(Metadata_Plate, Metadata_Well, Metadata_broad_sample)) %>%
@@ -35,7 +35,7 @@ b <- readRDS("../results/master/2017-10-11_7d18c89d/cr_melt_cp_canon.rds") %>%
 brd.list <- read.csv("../input/ppargc1_jon_followup.csv", header = F) %>% mutate(V1 = str_sub(V1, 1, 13)) %>% as.matrix() %>% as.vector()
 
 a$data %>%
-  filter(Metadata_broad_sample %in% brd.list) %>%
+#  filter(Metadata_broad_sample %in% brd.list) %>%
   select(Metadata_broad_sample, Cells_AreaShape_Area, Cells_Intensity_MeanIntensity_AGP, Cells_Intensity_StdIntensityEdge_Mito) %>%
   group_by(Metadata_broad_sample) %>%
   summarise(Cells_AreaShape_Area = median(Cells_AreaShape_Area), 
