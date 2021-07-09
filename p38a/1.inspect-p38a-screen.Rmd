@@ -1,0 +1,34 @@
+---
+title: "Inspect p38a screen"
+output: html_notebook
+---
+
+```{r message=FALSE}
+library(magrittr)
+library(tidyverse)
+```
+
+```{r}
+screen_data <- read_csv("input/p38_data.csv")
+```
+Recompute adjusted P-value from `KSP5`
+
+```{r}
+screen_data <-
+  screen_data %>%
+  mutate(AdjP_recomputed = p.adjust(KSP5, method = "BH"))
+```
+
+There's a linear relationship with `AdjP` but the slope is off.
+
+```{r}
+screen_data %>%
+  ggplot(aes(AdjP_recomputed, AdjP)) + geom_point() + geom_abline(slope = 1)
+```
+`AdjP` is a factor of `8.121353e-03` lower for some reason
+
+```{r}
+lm(AdjP ~ AdjP_recomputed, screen_data) %>%
+  broom::tidy()
+```
+
