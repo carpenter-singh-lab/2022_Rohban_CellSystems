@@ -8,40 +8,76 @@ library(magrittr)
 library(tidyverse)
 ```
 
+Read data and drop `AdjP` because it was computed incorrectly.
+
 ```{r}
-screen_data <- read_csv("input/p38_data.csv")
+screen_data <- 
+  read_csv("input/p38_data.csv") %>%
+  select(-AdjP)
 ```
 Recompute adjusted P-value from `KSP5`
 
 ```{r}
 screen_data <-
   screen_data %>%
-  mutate(AdjP_R = p.adjust(KSP5, method = "BH"))
+  mutate(AdjP = p.adjust(KSP5, method = "BH"))
 ```
 
-There's a linear relationship with `AdjP` but the slope is off.
-
-```{r}
-screen_data %>%
-  ggplot(aes(AdjP_R / 1.231322e+02, AdjP)) + geom_point() + geom_abline(slope = 1)
-```
-
-`AdjP` is a factor of `1.231322e+02` lower for some reason
-
-```{r}
-lm(AdjP_R ~ AdjP, screen_data) %>%
-  broom::tidy()
-```
-```{r}
-screen_data %>% 
-  select(Broad:AdjP_R) %>%
-  pairs()
-```
 
 - `is_rndm` indicates if the compounds is a Cell Painting negative control (based on correlation to the ORF)
 - `medTLR5` is the ratio of the mean of the p38 imaging readout wrt DMSO for that compound (mean across the n=4 replicates)
+- `Broad` is the Cell Painting correlation with the ORF 
 
 ```{r}
+screen_data
+```
+Verify the semantics of `isrndm`
 
+```{r}
+screen_data %>%
+  ggplot(aes(as.factor(isrndm), Broad)) + geom_point()
+```
+Create new variables
+
+```{r}
+screen_data <- 
+  screen_data %>% 
+  mutate(is_activator = medTLR5 > 1)  %>%
+  mutate(is_cp_negcon = as.factor(isrndm))
+```
+
+Plot KS-test adjusted p-value vs Cell Painting correlation
+
+```{r}
+p <- 
+  screen_data %>%
+  ggplot(aes(Broad, -log10(AdjP), shape = is_cp_negcon, color = is_activator)) + 
+  geom_point() + 
+  geom_hline(yintercept = -log10(0.05), linetype = "dotted") +
+  coord_cartesian(clip = "off") +
+  xlab("Cell Painting Correlation") +
+  ylab("-log10 adjusted p-value") + 
+  theme_bw()
+
+print(p)
+
+ggsave("output/p38_figure_pvalue.png", width = 6, height = 4)
+```
+
+Plot ratio of medians of compounds:DMSO vs Cell Painting correlation
+
+```{r}
+p <- 
+  screen_data %>%
+  ggplot(aes(Broad, medTLR5, shape = is_cp_negcon, color = is_activator)) + 
+  geom_point() + 
+  coord_cartesian(clip = "off") +
+  xlab("Cell Painting Correlation") +
+  ylab("Ratio of medians") + 
+  theme_bw()
+
+print(p)
+
+ggsave("output/p38_figure_ratio_median.png", width = 6, height = 4)
 ```
 
