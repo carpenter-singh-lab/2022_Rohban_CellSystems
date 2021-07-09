@@ -1,9 +1,13 @@
 figure(99)
 clf
 
+% Cell Painting negative control, p38 activator (light shade of gray)
 plot(newtab.Broad(newtab.isrndm == 1 & newtab.medTLR5 > 1), log(newtab.AdjP(newtab.isrndm == 1 & newtab.medTLR5 > 1)), 'o', 'markersize', 9, 'color', [0.7 0.7 0.7], 'markerfacecolor', [0.7 0.7 0.7]); hold on;
+% Cell Painting negative control, p38 inhibitor (dark shade of gray)
 plot(newtab.Broad(newtab.isrndm == 1 & newtab.medTLR5 < 1), log(newtab.AdjP(newtab.isrndm == 1 & newtab.medTLR5 < 1)), 'o', 'markersize', 9, 'color', [0.3 0.3 0.3], 'markerfacecolor', [0.3 0.3 0.3]);
+% Cell Painting hit, p38 activator (light shade of red)
 plot(newtab.Broad(newtab.isrndm == 0 & newtab.medTLR5 > 1), log(newtab.AdjP(newtab.isrndm == 0 & newtab.medTLR5 > 1)), 'o', 'markersize', 9, 'color', [1 0.5 0.5], 'markerfacecolor', [1 0.5 0.5]); hold on;
+% Cell Painting hit, p38 inhibitor (dark shade of red)
 plot(newtab.Broad(newtab.isrndm == 0 & newtab.medTLR5 < 1), log(newtab.AdjP(newtab.isrndm == 0 & newtab.medTLR5 < 1)), 'o', 'markersize', 9, 'color', [0.6 0 0], 'markerfacecolor', [0.6 0 0]);
 
 line(get(gca, 'xlim'), [log(q(end)) log(q(end))], 'linestyle', '--', 'color', [0.5 0.5 0.5])
