@@ -5,9 +5,9 @@ output: html_notebook
 
 ```{r message=FALSE}
 library(magrittr)
+library(glue)
 library(tidyverse)
 ```
-
 
 
 ```{r}
@@ -30,8 +30,309 @@ single_cell <-
   )
 ```
 
+- `is_rndm` indicates if the compounds is a Cell Painting negative control (based on correlation to the ORF)
+- `Broad` is the Cell Painting correlation with the ORF 
+- `KS5`: KS statistic 
+- `KSP5`: KS p value
+- `diff5`: ratio of median of compound to median of DMSO
+- `TLR5`: raw p38 activity for that cell
 
 ```{r}
-
+single_cell <-
+  single_cell %>%
+  mutate(is_dmso = Cmpd == "DMSO")
 ```
 
+No perturbations in P=10
+
+```{r}
+single_cell %>%
+  filter(!is_dmso) %>%
+  count(P)
+```
+```{r}
+single_cell <-
+  single_cell %>%
+  filter(P != 10)
+```
+
+~99.9% of the values are < 1.05
+
+```{r}
+single_cell %>%
+  group_by(P) %>%
+  summarise(q999 = quantile(TLR5, c(.999))) %>%
+  arrange(desc(q999))
+```
+
+```{r}
+single_cell <-
+  single_cell %>%
+  filter(TLR5 < quantile(TLR5, 0.999))
+```
+
+>  p38 activity in single cells was calculated using the ratio of the median intensity of the p38-KTR in a 5-pixel-wide cytoplasmic ring around the nucleus to the median intensity of the p38-KTR in the nucleus.
+
+```{r}
+single_cell <- 
+  single_cell %>%
+  filter(TLR5 > 0) 
+```
+
+
+```{r}
+single_cell %>%
+  ggplot(aes(TLR5, fill = is_dmso)) + 
+  geom_histogram(position="identity", alpha = 0.5, bins = 50) + 
+  facet_wrap(~P, ncol = 3, scales = "free_x")
+```
+
+There are two DMSO's in each of the 10 columns
+
+```{r}
+single_cell %>%
+  filter(is_dmso) %>%
+  distinct(P, R, C) %>%
+  count(P, C) %>%
+  ggplot(aes(C, n)) + 
+  geom_point() + 
+  facet_wrap(~P) +
+  xlab("Column") +
+  ylab("Number of DMSO wells")
+```
+
+There's some evidence of column effect
+
+```{r}
+single_cell %>%
+  filter(is_dmso) %>%
+  ggplot(aes(TLR5, group = C)) + geom_density() + facet_wrap(~P)
+```
+
+
+```{r}
+single_cell %>%
+  filter(is_dmso) %>%
+  group_by(P, C) %>%
+  summarise(mean_TLR5 = mean(TLR5)) %>%
+  ggplot(aes(as.factor(P), mean_TLR5)) + 
+  geom_boxplot() +
+  ggtitle("Distribution of mean TLR5 values in DMSO wells")
+```
+
+Likely not much of row effect (but hard to know because it's just n = 2)
+
+```{r}
+single_cell %>%
+  filter(is_dmso) %>%
+  ggplot(aes(TLR5, group = R)) + geom_density() + facet_wrap(~P)
+```
+
+Normalizing w.r.t. DMSO in the same column is therefore justified.
+
+Inspect the plate layout.
+
+```{r}
+single_cell %>%
+  distinct(P, R, C, Cmpd) %>%
+  ggplot(aes(C, R, fill = Cmpd)) + 
+  geom_tile(color = "black") + 
+  coord_equal() + 
+  theme_minimal() + 
+  facet_wrap(~P) +
+  theme(legend.position = "none")
+```
+A compound is present only on a single plate
+
+```{r}
+single_cell %>%
+  filter(!is_dmso) %>%
+  distinct(P, Cmpd) %>%
+  count(Cmpd) %>% 
+  filter(n > 1)
+```
+
+Trim DMSOs
+
+```{r}
+single_cell <-
+  single_cell %>%
+  inner_join(single_cell %>%
+               filter(!is_dmso) %>%
+               distinct(P, C))
+```
+
+Inspect the plate layout.
+
+```{r}
+single_cell %>%
+  distinct(P, R, C, Cmpd) %>%
+  ggplot(aes(C, R, fill = Cmpd)) + 
+  geom_tile(color = "black") + 
+  coord_equal() + 
+  theme_minimal() + 
+  facet_wrap(~P) +
+  theme(legend.position = "none")
+```
+
+
+```{r}
+compute_statistics <- function(population, sample, variable) {
+  
+  population %>%
+    group_by(P, C, Cmpd, Broad, isrndm) %>%
+    summarise(ks_pval = ks.test(.data[[variable]], sample[[variable]])$p.value,
+              ks_stat = ks.test(.data[[variable]], sample[[variable]])$statistic,
+              t_pval = t.test(.data[[variable]], sample[[variable]])$p.value,
+              t_stat = t.test(.data[[variable]], sample[[variable]])$statistic,
+              median_ratio = mean(.data[[variable]]) / mean(sample[[variable]]), 
+              .groups = "keep")
+}
+```
+
+
+```{r}
+statistics <-
+  cytominer::stratify(
+  population = single_cell %>% filter(!is_dmso),
+  sample = single_cell %>% filter(is_dmso),
+  reducer = compute_statistics,
+  strata = c("P", "C"),
+  variable = "TLR5"
+)
+```
+
+
+```{r}
+statistics %>%
+  ggplot(aes(Cmpd, t_stat)) + 
+  geom_boxplot() +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) + 
+  facet_wrap(~isrndm, scales = "free_x")
+```
+```{r}
+statistics %>%
+  ggplot(aes(Cmpd, median_ratio)) + 
+  geom_boxplot() +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) + 
+  facet_wrap(~isrndm, scales = "free_x")
+```
+```{r}
+plot_distribution <- function(Cmpdi) {
+  statistics_i <-
+    statistics %>%
+    filter(Cmpd == Cmpdi) %>%
+    summarise(across(all_of(
+      c("ks_pval", "ks_stat", "t_pval", "t_stat", "Broad", "isrndm")
+    ), mean))
+  
+  cp_type <- ifelse(statistics_i$isrndm == 1, "cpneg", "cphit")
+  cmpd_single_cell <-
+    single_cell %>%
+    ungroup() %>%
+    filter(Cmpd == Cmpdi)
+  
+  dmso_single_cell <-
+    cmpd_single_cell %>%
+    distinct(P, C) %>%
+    inner_join(single_cell %>% filter(is_dmso))
+  
+  combined_single_cell <-
+    bind_rows(dmso_single_cell,
+              cmpd_single_cell)
+  
+  p <-
+    combined_single_cell %>%
+    ggplot(aes(TLR5, fill = Cmpd)) +
+    geom_density(position = "identity",
+                   alpha = 0.5) +
+    facet_wrap( ~ C) +
+    ggtitle(glue("{cp_type}_{Cmpdi}"),
+            subtitle =
+              with(
+                statistics_i,
+                sprintf(
+                  "ks_stat = %.2f ks_pval = %.2g t_stat = %.1f t_pval = %.2g cp_cor = %.2f",
+                  ks_stat,
+                  ks_pval,
+                  t_stat,
+                  t_pval,
+                  Broad
+                )
+              )) 
+  
+  ggsave(
+    glue("output/distributions/{cp_type}_{Cmpdi}.png"),
+    p,
+    width = 6,
+    height = 4
+  )
+}
+```
+
+
+```{r}
+statistics %>%
+  distinct(Cmpd) %>%
+  pull("Cmpd") %>%
+  walk(plot_distribution)
+```
+
+
+```{r}
+statistics_agg <-
+  statistics %>%
+  group_by(Cmpd) %>%
+  summarise(across(all_of(
+    c("ks_pval", "ks_stat", "t_pval", "t_stat", "median_ratio", "Broad", "isrndm")
+  ), mean)) %>%
+  mutate(t_pval_adj = p.adjust(t_pval, "BH"),
+         ks_pval_adj = p.adjust(ks_pval, "BH"))
+```
+
+
+```{r}
+statistics_agg %>%
+  ggplot(aes(Broad, -log10(t_pval_adj))) + 
+  geom_point() + 
+  geom_hline(yintercept = -log10(0.05)) + 
+  xlab("Cell Painting Correlation") +
+  coord_cartesian(clip = "off")
+```
+
+
+```{r}
+statistics_agg %>%
+  ggplot(aes(Broad, -log10(ks_pval_adj))) + 
+  geom_point() + 
+  geom_hline(yintercept = -log10(0.05)) + 
+  xlab("Cell Painting Correlation") +
+  coord_cartesian(clip = "off")
+```
+
+
+```{r}
+statistics_agg %>%
+  ggplot(aes(Broad, median_ratio)) + 
+  geom_point() + 
+  xlab("Cell Painting Correlation") +
+  coord_cartesian(clip = "off")
+```
+
+
+```{r}
+statistics_agg %>%
+  ggplot(aes(Broad, t_stat)) + 
+  geom_point() +
+  xlab("Cell Painting Correlation") +
+  coord_cartesian(clip = "off")
+```
+
+
+```{r}
+statistics_agg %>%
+  ggplot(aes(Broad, ks_stat)) + 
+  geom_point() +
+  xlab("Cell Painting Correlation") +
+  coord_cartesian(clip = "off")
+```
