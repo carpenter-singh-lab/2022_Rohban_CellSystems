@@ -25,4 +25,4 @@ render_notebook("1.inspect-p38a-screen")
 
 render_notebook("2.inspect-single-cell")
 
-system("montage output/distributions/*.png -tile 5x -geometry +1+1 output/distributions.png")
+system("montage output/distributions/*.png -tile 4x -geometry +1+1 output/distributions.png")
