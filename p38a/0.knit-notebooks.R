@@ -22,3 +22,5 @@ render_notebook <-
 
 
 render_notebook("1.inspect-p38a-screen")
+
+render_notebook("2.inspect-single-cell")
