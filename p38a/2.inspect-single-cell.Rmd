@@ -180,7 +180,7 @@ single_cell %>%
 compute_statistics <- function(population, sample, variable) {
   
   population %>%
-    group_by(P, C, Cmpd, Broad, isrndm) %>%
+    group_by(P, R, C, Cmpd, Broad, isrndm) %>%
     summarise(ks_pval = ks.test(.data[[variable]], sample[[variable]])$p.value,
               ks_stat = ks.test(.data[[variable]], sample[[variable]])$statistic,
               t_pval = t.test(.data[[variable]], sample[[variable]])$p.value,
@@ -202,6 +202,13 @@ statistics <-
 )
 ```
 
+Statistics are computed per replicate (n=4) for each of the 34 compounds
+
+```{r}
+statistics %>%
+  count(Cmpd) %>%
+  count(n)
+```
 
 ```{r}
 statistics %>%
@@ -217,7 +224,7 @@ statistics %>%
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) + 
   facet_wrap(~isrndm, scales = "free_x")
 ```
-```{r}
+```{r eval=TRUE}
 plot_distribution <- function(Cmpdi) {
   statistics_i <-
     statistics %>%
@@ -235,7 +242,7 @@ plot_distribution <- function(Cmpdi) {
   dmso_single_cell <-
     cmpd_single_cell %>%
     distinct(P, C) %>%
-    inner_join(single_cell %>% filter(is_dmso))
+    inner_join(single_cell %>% filter(is_dmso), by = c("P", "C"))
   
   combined_single_cell <-
     bind_rows(dmso_single_cell,
@@ -271,7 +278,7 @@ plot_distribution <- function(Cmpdi) {
 ```
 
 
-```{r}
+```{r eval=TRUE}
 statistics %>%
   distinct(Cmpd) %>%
   pull("Cmpd") %>%
@@ -336,3 +343,18 @@ statistics_agg %>%
   xlab("Cell Painting Correlation") +
   coord_cartesian(clip = "off")
 ```
+```{r}
+screen_data <- 
+  read_csv("input/p38_data.csv") 
+```
+```{r}
+inner_join(statistics_agg %>% select(Cmpd, ks_pval),
+           screen_data %>% select(Cmpd, KSP5)) %>%
+  ggplot(aes(ks_pval, KSP5)) +
+  geom_point() + 
+  coord_equal() +
+  geom_abline(slope = 1) +
+  xlab("ks p-value (R)") +
+  xlab("ks p-value (Matlab)")
+```
+
