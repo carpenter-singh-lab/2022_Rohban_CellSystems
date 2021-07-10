@@ -322,7 +322,12 @@ statistics_agg %>%
   xlab("Cell Painting Correlation") +
   coord_cartesian(clip = "off")
 ```
-
+```{r}
+statistics_agg %>% 
+  mutate(is_significant_ks_test_01 = ks_pval_adj < 0.01) %>%
+  mutate(is_cp_negative_control = isrndm == 1) %>%
+  count(is_cp_negative_control, is_significant_ks_test_01)
+```
 
 ```{r}
 statistics_agg %>%
