@@ -302,7 +302,7 @@ statistics_agg <-
 statistics_agg %>%
   ggplot(aes(Broad, -log10(t_pval_adj))) + 
   geom_point() + 
-  geom_hline(yintercept = -log10(0.05)) + 
+  geom_hline(yintercept = -log10(0.01)) + 
   xlab("Cell Painting Correlation") +
   coord_cartesian(clip = "off")
 ```
@@ -312,7 +312,7 @@ statistics_agg %>%
 statistics_agg %>%
   ggplot(aes(Broad, -log10(ks_pval_adj))) + 
   geom_point() + 
-  geom_hline(yintercept = -log10(0.05)) + 
+  geom_hline(yintercept = -log10(0.01)) + 
   xlab("Cell Painting Correlation") +
   coord_cartesian(clip = "off")
 ```
