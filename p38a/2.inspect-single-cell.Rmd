@@ -345,7 +345,7 @@ statistics_agg <-
 
 
 ```{r}
-plot_paper_figure <- function(test_type, annotate_column, strong_effect_threshold = 8) {
+plot_paper_figure <- function(test_type, annotate_column, strong_effect_threshold = 2) {
   
   statistics_agg <-
     statistics_agg %>%
@@ -370,7 +370,7 @@ plot_paper_figure <- function(test_type, annotate_column, strong_effect_threshol
       )
   }
   
-  if (annotate_column == "strong_effect") {
+  if (annotate_column == "significant") {
     p <- p +
       ggrepel::geom_text_repel(
         data = statistics_agg %>% filter(-log10(pval_adj) > strong_effect_threshold),
@@ -417,7 +417,7 @@ print(p)
 
 
 ```{r}
-p <- plot_paper_figure("ks", "strong_effect")
+p <- plot_paper_figure("ks", "significant")
 
 print(p)
 ```
@@ -432,7 +432,7 @@ print(p)
 
 
 ```{r}
-p <- plot_paper_figure("t", "strong_effect")
+p <- plot_paper_figure("t", "significant")
 
 print(p)
 ```
