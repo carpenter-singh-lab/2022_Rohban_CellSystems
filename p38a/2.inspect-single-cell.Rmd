@@ -13,7 +13,7 @@ library(tidyverse)
 ```{r}
 single_cell <-
   read_csv(
-    "input/p38_single_cell.csv.gz",
+    "input/p38_single_cell_all_conc.csv.gz",
     col_types = cols(
       P = col_integer(),
       R = col_integer(),
@@ -40,7 +40,22 @@ single_cell <-
 ```{r}
 single_cell <-
   single_cell %>%
-  mutate(is_dmso = Cmpd == "DMSO")
+  mutate(is_dmso = Cmpd == "DMSO") %>%
+  mutate(Cmpd = ifelse(is_dmso, "_DMSO", Cmpd)) %>%
+  mutate(is_cp_negcon = isrndm == 1)
+```
+
+
+```{r}
+single_cell %>% 
+  filter(is.na(TLR5)) %>%
+  count(P)
+```
+
+```{r}
+single_cell <-
+  single_cell %>% 
+  filter(!is.na(TLR5))
 ```
 
 No perturbations in P=10
@@ -56,7 +71,7 @@ single_cell <-
   filter(P != 10)
 ```
 
-~99.9% of the values are < 1.05
+~99.9% of the values are < 1.06
 
 ```{r}
 single_cell %>%
@@ -74,9 +89,15 @@ single_cell <-
 >  p38 activity in single cells was calculated using the ratio of the median intensity of the p38-KTR in a 5-pixel-wide cytoplasmic ring around the nucleus to the median intensity of the p38-KTR in the nucleus.
 
 ```{r}
+single_cell %>% 
+  filter(TLR5 < 0) %>%
+  count(P)
+```
+
+```{r}
 single_cell <- 
   single_cell %>%
-  filter(TLR5 > 0) 
+  filter(TLR5 >= 0) 
 ```
 
 
@@ -114,7 +135,7 @@ single_cell %>%
 single_cell %>%
   filter(is_dmso) %>%
   group_by(P, C) %>%
-  summarise(mean_TLR5 = mean(TLR5)) %>%
+  summarise(mean_TLR5 = mean(TLR5), .groups = "keep") %>%
   ggplot(aes(as.factor(P), mean_TLR5)) + 
   geom_boxplot() +
   ggtitle("Distribution of mean TLR5 values in DMSO wells")
@@ -180,12 +201,12 @@ single_cell %>%
 compute_statistics <- function(population, sample, variable) {
   
   population %>%
-    group_by(P, R, C, Cmpd, Broad, isrndm, diff5) %>%
+    group_by(P, R, C, Cmpd, Conc, Broad, is_cp_negcon, diff5) %>%
     summarise(ks_pval = ks.test(.data[[variable]], sample[[variable]])$p.value,
               ks_stat = ks.test(.data[[variable]], sample[[variable]])$statistic,
               t_pval = t.test(.data[[variable]], sample[[variable]])$p.value,
               t_stat = t.test(.data[[variable]], sample[[variable]])$statistic,
-              median_ratio = mean(.data[[variable]]) / mean(sample[[variable]]), 
+              median_ratio = median(.data[[variable]]) / median(sample[[variable]]), 
               .groups = "keep")
 }
 ```
@@ -202,11 +223,11 @@ statistics <-
 )
 ```
 
-Statistics are computed per replicate (n=4) for each of the 34 compounds
+Statistics are computed per replicate (n=4) for each of the 34 compounds, at each concentration
 
 ```{r}
 statistics %>%
-  count(Cmpd) %>%
+  count(Cmpd, Conc) %>%
   count(n)
 ```
 
@@ -215,29 +236,32 @@ statistics %>%
   ggplot(aes(Cmpd, t_stat)) + 
   geom_boxplot() +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) + 
-  facet_wrap(~isrndm, scales = "free_x")
+  facet_grid(Conc~is_cp_negcon, scales = "free_x", 
+             labeller = labeller(.rows = label_both, .cols = label_both))
 ```
 ```{r}
 statistics %>%
   ggplot(aes(Cmpd, median_ratio)) + 
   geom_boxplot() +
   scale_x_discrete(guide = guide_axis(n.dodge = 2)) + 
-  facet_wrap(~isrndm, scales = "free_x")
+  facet_grid(Conc~is_cp_negcon, scales = "free_x", 
+             labeller = labeller(.rows = label_both, .cols = label_both))
 ```
 ```{r eval=TRUE}
-plot_distribution <- function(Cmpdi) {
+plot_distribution <- function(Cmpdi, Conci) {
   statistics_i <-
     statistics %>%
-    filter(Cmpd == Cmpdi) %>%
+    filter(Cmpd == Cmpdi & Conc == Conci) %>%
     summarise(across(all_of(
-      c("ks_pval", "ks_stat", "t_pval", "t_stat", "Broad", "isrndm")
-    ), mean))
+      c("ks_pval", "ks_stat", "t_pval", "t_stat", "Broad", "is_cp_negcon")
+    ), mean)) %>%
+    mutate(is_cp_negcon = is_cp_negcon == 1)
   
-  cp_type <- ifelse(statistics_i$isrndm == 1, "cpneg", "cphit")
+  cp_type <- ifelse(statistics_i$is_cp_negcon, "cpneg", "cphit")
   cmpd_single_cell <-
     single_cell %>%
     ungroup() %>%
-    filter(Cmpd == Cmpdi)
+    filter(Cmpd == Cmpdi & Conc == Conci)
   
   dmso_single_cell <-
     cmpd_single_cell %>%
@@ -254,7 +278,7 @@ plot_distribution <- function(Cmpdi) {
     geom_density(position = "identity",
                    alpha = 0.5) +
     facet_wrap( ~ C) +
-    ggtitle(glue("{cp_type}_{Cmpdi}"),
+    ggtitle(glue("{cp_type}_{Cmpdi}_{Conci}"),
             subtitle =
               with(
                 statistics_i,
@@ -269,7 +293,7 @@ plot_distribution <- function(Cmpdi) {
               )) 
   
   ggsave(
-    glue("output/distributions/{cp_type}_{Cmpdi}.png"),
+    glue("output/distributions/{cp_type}_{Cmpdi}_conc_{Conci}.png"),
     p,
     width = 6,
     height = 4
@@ -280,21 +304,22 @@ plot_distribution <- function(Cmpdi) {
 
 ```{r eval=TRUE}
 statistics %>%
-  distinct(Cmpd) %>%
-  pull("Cmpd") %>%
-  walk(plot_distribution)
+  distinct(Cmpd, Conc) %>%
+  pwalk(plot_distribution)
 ```
 
 
 ```{r}
 statistics_agg <-
   statistics %>%
-  group_by(Cmpd) %>%
+  group_by(Cmpd, Conc) %>%
   summarise(across(all_of(
-    c("ks_pval", "ks_stat", "t_pval", "t_stat", "median_ratio", "Broad", "isrndm", "diff5")
+    c("ks_pval", "ks_stat", "t_pval", "t_stat", "median_ratio", "Broad", "is_cp_negcon", "diff5")
   ), mean)) %>%
+  ungroup() %>%
   mutate(t_pval_adj = p.adjust(t_pval, "BH"),
-         ks_pval_adj = p.adjust(ks_pval, "BH"))
+         ks_pval_adj = p.adjust(ks_pval, "BH"),
+         is_cp_negcon = is_cp_negcon == 1)
 ```
 
 
@@ -308,7 +333,7 @@ screen_data <-
 ```{r}
 combined_data <-
   inner_join(
-    statistics_agg %>% select(Cmpd, ks_pval, median_ratio),
+    statistics_agg %>% filter(Conc == 1) %>% select(Cmpd, ks_pval, median_ratio),
     screen_data %>% select(Cmpd, KSP5, medTLR5)
   )
 ```
@@ -339,16 +364,20 @@ combined_data %>%
 ```{r}
 statistics_agg <- 
   statistics_agg %>% 
-  mutate(is_inhibitor = median_ratio < 1)  %>%
-  mutate(is_cp_negcon= isrndm == 1)
+  mutate(is_inhibitor = median_ratio < 1)
 ```
 
 
 ```{r}
-plot_paper_figure <- function(test_type, annotate_column, strong_effect_threshold = 2) {
+plot_paper_figure <- 
+  function(test_type, 
+           annotate_column, 
+           Conci,
+           strong_effect_threshold = 2) {
   
   statistics_agg <-
     statistics_agg %>%
+    filter(Conc == Conci) %>%
     mutate(pval_adj = .data[[paste0(test_type, "_pval_adj")]])
     
   p <- 
@@ -392,14 +421,16 @@ plot_paper_figure <- function(test_type, annotate_column, strong_effect_threshol
     ylab(glue("-log10 adjusted p-value ({test_type}-test)")) +
     theme_bw()
   
+  p <- p + ggtitle(glue("Conc = {Conci}"))
+  
   ggsave(
-    glue("output/p38_{test_type}_tlr_annot_{annotate_column}.png"),
+    glue("output/p38_{test_type}_tlr_annot_{annotate_column}_conc_{Conci}.png"),
     width = 6,
     height = 4
   )
   
   ggsave(
-    glue("output/p38_{test_type}_tlr_annot_{annotate_column}.svg"),
+    glue("output/p38_{test_type}_tlr_annot_{annotate_column}_conc_{Conci}.svg"),
     width = 6,
     height = 4
   )  
@@ -410,29 +441,42 @@ plot_paper_figure <- function(test_type, annotate_column, strong_effect_threshol
 
 
 ```{r}
-p <- plot_paper_figure("ks", "median_ratio")
+Conci <- 1
+
+p <- plot_paper_figure("ks", "median_ratio", Conci)
+
+print(p)
+
+p <- plot_paper_figure("ks", "significant", Conci)
+
+print(p)
+
+p <- plot_paper_figure("t", "median_ratio", Conci)
+
+print(p)
+
+p <- plot_paper_figure("t", "significant", Conci)
 
 print(p)
 ```
 
 
 ```{r}
-p <- plot_paper_figure("ks", "significant")
+Conci <- 10
+
+p <- plot_paper_figure("ks", "median_ratio", Conci)
 
 print(p)
-```
 
-
-
-```{r}
-p <- plot_paper_figure("t", "median_ratio")
+p <- plot_paper_figure("ks", "significant", Conci)
 
 print(p)
-```
 
+p <- plot_paper_figure("t", "median_ratio", Conci)
 
-```{r}
-p <- plot_paper_figure("t", "significant")
+print(p)
+
+p <- plot_paper_figure("t", "significant", Conci)
 
 print(p)
 ```
@@ -441,16 +485,14 @@ print(p)
 ```{r}
 statistics_agg %>% 
   mutate(is_significant_t_test_01 = t_pval_adj < 0.01) %>%
-  count(is_cp_negcon, is_significant_t_test_01)
+  count(Conc, is_cp_negcon, is_significant_t_test_01)
 ```
-
 
 
 ```{r}
 statistics_agg %>% 
   mutate(is_significant_ks_test_01 = ks_pval_adj < 0.01) %>%
-  mutate(is_cp_negcon = isrndm == 1) %>%
-  count(is_cp_negcon, is_significant_ks_test_01)
+  count(Conc, is_cp_negcon, is_significant_ks_test_01)
 ```
 
 
@@ -459,7 +501,8 @@ statistics_agg %>%
   ggplot(aes(Broad, median_ratio)) + 
   geom_point() + 
   xlab("Cell Painting Correlation") +
-  coord_cartesian(clip = "off")
+  coord_cartesian(clip = "off") + 
+  facet_wrap(~Conc)
 ```
 
 
@@ -468,7 +511,8 @@ statistics_agg %>%
   ggplot(aes(Broad, t_stat)) + 
   geom_point() +
   xlab("Cell Painting Correlation") +
-  coord_cartesian(clip = "off")
+  coord_cartesian(clip = "off") + 
+  facet_wrap(~Conc)
 ```
 
 
@@ -477,6 +521,7 @@ statistics_agg %>%
   ggplot(aes(Broad, ks_stat)) + 
   geom_point() +
   xlab("Cell Painting Correlation") +
-  coord_cartesian(clip = "off")
+  coord_cartesian(clip = "off") + 
+  facet_wrap(~Conc)
 ```
 

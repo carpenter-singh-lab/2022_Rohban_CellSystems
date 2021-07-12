@@ -26,7 +26,7 @@ screen_data <-
 
 
 - `is_rndm` indicates if the compounds is a Cell Painting negative control (based on correlation to the ORF)
-- `medTLR5` is the ratio of the mean of the p38 imaging readout wrt DMSO for that compound (mean across the n=4 replicates)
+- `medTLR5` is the ratio of the median of the p38 imaging readout wrt DMSO for that compound (mean across the n=4 replicates)
 - `Broad` is the Cell Painting correlation with the ORF 
 
 ```{r}
