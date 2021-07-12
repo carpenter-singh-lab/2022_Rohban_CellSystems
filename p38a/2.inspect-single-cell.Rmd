@@ -583,3 +583,9 @@ statistics_agg %>%
   facet_wrap(~Conc)
 ```
 
+
+```{r}
+statistics_agg %>%
+  write_csv("output/statistics_agg.csv")
+```
+
