@@ -180,7 +180,7 @@ single_cell %>%
 compute_statistics <- function(population, sample, variable) {
   
   population %>%
-    group_by(P, R, C, Cmpd, Broad, isrndm) %>%
+    group_by(P, R, C, Cmpd, Broad, isrndm, diff5) %>%
     summarise(ks_pval = ks.test(.data[[variable]], sample[[variable]])$p.value,
               ks_stat = ks.test(.data[[variable]], sample[[variable]])$statistic,
               t_pval = t.test(.data[[variable]], sample[[variable]])$p.value,
@@ -291,43 +291,168 @@ statistics_agg <-
   statistics %>%
   group_by(Cmpd) %>%
   summarise(across(all_of(
-    c("ks_pval", "ks_stat", "t_pval", "t_stat", "median_ratio", "Broad", "isrndm")
+    c("ks_pval", "ks_stat", "t_pval", "t_stat", "median_ratio", "Broad", "isrndm", "diff5")
   ), mean)) %>%
   mutate(t_pval_adj = p.adjust(t_pval, "BH"),
          ks_pval_adj = p.adjust(ks_pval, "BH"))
 ```
 
 
+
 ```{r}
-statistics_agg %>%
-  ggplot(aes(Broad, -log10(t_pval_adj))) + 
-  geom_point() + 
-  geom_hline(yintercept = -log10(0.01)) + 
-  xlab("Cell Painting Correlation") +
-  coord_cartesian(clip = "off")
+screen_data <- 
+  read_csv("input/p38_data.csv") 
 ```
+
+
+```{r}
+combined_data <-
+  inner_join(
+    statistics_agg %>% select(Cmpd, ks_pval, median_ratio),
+    screen_data %>% select(Cmpd, KSP5, medTLR5)
+  )
+```
+
+
+```{r}
+combined_data %>%
+  ggplot(aes(ks_pval, KSP5)) +
+  geom_point() +
+  coord_equal() +
+  geom_abline(slope = 1) +
+  xlab("ks p-value (R)") +
+  ylab("ks p-value (Matlab)")
+```
+
+
+```{r}
+combined_data %>%
+  ggplot(aes(median_ratio, medTLR5)) +
+  geom_point() +
+  coord_equal() +
+  geom_abline(slope = 1) +
+  xlab("median ratio (R)") +
+  ylab("median ratio (Matlab)")
+```
+
+
+```{r}
+statistics_agg <- 
+  statistics_agg %>% 
+  mutate(is_inhibitor = median_ratio < 1)  %>%
+  mutate(is_cp_negcon= isrndm == 1)
+```
+
+
+```{r}
+plot_paper_figure <- function(test_type, annotate_column, strong_effect_threshold = 8) {
+  
+  statistics_agg <-
+    statistics_agg %>%
+    mutate(pval_adj = .data[[paste0(test_type, "_pval_adj")]])
+    
+  p <- 
+    statistics_agg %>%
+    ggplot(aes(Broad, -log10(pval_adj), shape = is_cp_negcon, color = is_inhibitor)) +
+    geom_point()
+  
+  if (annotate_column == "median_ratio") {
+    p <- p +
+      ggrepel::geom_text_repel(
+        data = statistics_agg %>% filter(is_inhibitor),
+        aes(label = sprintf("%0.2f", median_ratio)),
+        max.overlaps = Inf,
+        min.segment.length = unit(0, 'lines'),
+        nudge_y = .3,
+        color = "black",
+        alpha = 0.5,
+        size = 3
+      )
+  }
+  
+  if (annotate_column == "strong_effect") {
+    p <- p +
+      ggrepel::geom_text_repel(
+        data = statistics_agg %>% filter(-log10(pval_adj) > strong_effect_threshold),
+        aes(label = Cmpd),
+        max.overlaps = Inf,
+        min.segment.length = unit(0, 'lines'),
+        nudge_y = .3,
+        color = "black",
+        alpha = 0.5,
+        size = 3
+      )
+    
+  }
+  
+  p <- p +
+    geom_hline(yintercept = -log10(0.01), linetype = "dotted") +
+    coord_cartesian(clip = "off") +
+    xlab("Cell Painting Correlation") +
+    ylab(glue("-log10 adjusted p-value ({test_type}-test)")) +
+    theme_bw()
+  
+  ggsave(
+    glue("output/p38_{test_type}_tlr_annot_{annotate_column}.png"),
+    width = 6,
+    height = 4
+  )
+  
+  ggsave(
+    glue("output/p38_{test_type}_tlr_annot_{annotate_column}.svg"),
+    width = 6,
+    height = 4
+  )  
+  
+  p
+}
+```
+
+
+```{r}
+p <- plot_paper_figure("ks", "median_ratio")
+
+print(p)
+```
+
+
+```{r}
+p <- plot_paper_figure("ks", "strong_effect")
+
+print(p)
+```
+
+
+
+```{r}
+p <- plot_paper_figure("t", "median_ratio")
+
+print(p)
+```
+
+
+```{r}
+p <- plot_paper_figure("t", "strong_effect")
+
+print(p)
+```
+
+
 ```{r}
 statistics_agg %>% 
   mutate(is_significant_t_test_01 = t_pval_adj < 0.01) %>%
-  mutate(is_cp_negative_control = isrndm == 1) %>%
-  count(is_cp_negative_control, is_significant_t_test_01)
+  count(is_cp_negcon, is_significant_t_test_01)
 ```
 
 
-```{r}
-statistics_agg %>%
-  ggplot(aes(Broad, -log10(ks_pval_adj))) + 
-  geom_point() + 
-  geom_hline(yintercept = -log10(0.01)) + 
-  xlab("Cell Painting Correlation") +
-  coord_cartesian(clip = "off")
-```
+
 ```{r}
 statistics_agg %>% 
   mutate(is_significant_ks_test_01 = ks_pval_adj < 0.01) %>%
-  mutate(is_cp_negative_control = isrndm == 1) %>%
-  count(is_cp_negative_control, is_significant_ks_test_01)
+  mutate(is_cp_negcon = isrndm == 1) %>%
+  count(is_cp_negcon, is_significant_ks_test_01)
 ```
+
 
 ```{r}
 statistics_agg %>%
@@ -353,19 +478,5 @@ statistics_agg %>%
   geom_point() +
   xlab("Cell Painting Correlation") +
   coord_cartesian(clip = "off")
-```
-```{r}
-screen_data <- 
-  read_csv("input/p38_data.csv") 
-```
-```{r}
-inner_join(statistics_agg %>% select(Cmpd, ks_pval),
-           screen_data %>% select(Cmpd, KSP5)) %>%
-  ggplot(aes(ks_pval, KSP5)) +
-  geom_point() + 
-  coord_equal() +
-  geom_abline(slope = 1) +
-  xlab("ks p-value (R)") +
-  xlab("ks p-value (Matlab)")
 ```
 

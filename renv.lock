@@ -109,10 +109,10 @@
     },
     "Rcpp": {
       "Package": "Rcpp",
-      "Version": "1.0.6",
+      "Version": "1.0.7",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "dbb5e436998a7eba5a9d682060533338"
+      "Hash": "dab19adae4440ae55aa8a9d238b246bb"
     },
     "Rglpk": {
       "Package": "Rglpk",
@@ -214,10 +214,10 @@
     },
     "caret": {
       "Package": "caret",
-      "Version": "6.0-86",
+      "Version": "6.0-88",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "77b0545e2c16b4e57c8da2d14042b28d"
+      "Hash": "5ffe8bf1fd0fc5a0a43d495f689af13b"
     },
     "cellranger": {
       "Package": "cellranger",
@@ -242,10 +242,10 @@
     },
     "cli": {
       "Package": "cli",
-      "Version": "2.5.0",
+      "Version": "3.0.0",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "a94ba44cee3ea571e813721e64184172"
+      "Hash": "096829b701eec2d2b4538be63de97e75"
     },
     "clipr": {
       "Package": "clipr",
@@ -277,10 +277,10 @@
     },
     "cpp11": {
       "Package": "cpp11",
-      "Version": "0.2.7",
+      "Version": "0.3.1",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "730eebcc741a5c36761f7d4d0f5e37b8"
+      "Hash": "e02edab2bc389c5e4b12949b13df44f2"
     },
     "crayon": {
       "Package": "crayon",
@@ -299,16 +299,21 @@
     "cytominer": {
       "Package": "cytominer",
       "Version": "0.2.2.9000",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "b19d59e97e5ed3f5b463af7555a93430"
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "cytominer",
+      "RemoteUsername": "cytomining",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "3fe522a81b5fd239c12ceb2c66e93951dbb71ca4",
+      "Hash": "c7f53074b100ab3cdbbd8b1287866b28"
     },
     "data.table": {
       "Package": "data.table",
-      "Version": "1.13.6",
+      "Version": "1.14.0",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "813fa8857aaa949b243e2e0b4abb8592"
+      "Hash": "d1b8b1a821ee564a3515fa6c6d5c52dc"
     },
     "dbplyr": {
       "Package": "dbplyr",
@@ -341,10 +346,10 @@
     },
     "dplyr": {
       "Package": "dplyr",
-      "Version": "1.0.5",
+      "Version": "1.0.7",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "d0d76c11ec807eb3f000eba4e3eb0f68"
+      "Hash": "36f1ae62f026c8ba9f9b5c9a08c03297"
     },
     "ellipsis": {
       "Package": "ellipsis",
@@ -397,10 +402,10 @@
     },
     "formatR": {
       "Package": "formatR",
-      "Version": "1.8",
+      "Version": "1.11",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "3a5d6129643015003ab29e9aef8d6367"
+      "Hash": "2590a6a868515a69f258640a51b724c9"
     },
     "fs": {
       "Package": "fs",
@@ -530,10 +535,10 @@
     },
     "ipred": {
       "Package": "ipred",
-      "Version": "0.9-9",
+      "Version": "0.9-11",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "816a7f746179f159f8faa87af730f3c1"
+      "Hash": "c5d91d6045b8cd091d40b58b247cabb7"
     },
     "isoband": {
       "Package": "isoband",
@@ -600,10 +605,10 @@
     },
     "lava": {
       "Package": "lava",
-      "Version": "1.6.8.1",
+      "Version": "1.6.9",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "4f337c8dcd7fdf0df89ee74c4f5d94d5"
+      "Hash": "25957dc1105e701678bcb1241b162dfc"
     },
     "lifecycle": {
       "Package": "lifecycle",
@@ -621,10 +626,10 @@
     },
     "lubridate": {
       "Package": "lubridate",
-      "Version": "1.7.9.2",
+      "Version": "1.7.10",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "5b5b02f621d39a499def7923a5aee746"
+      "Hash": "1ebfdc8a3cfe8fe19184f5481972b092"
     },
     "magrittr": {
       "Package": "magrittr",
@@ -824,10 +829,10 @@
     },
     "recipes": {
       "Package": "recipes",
-      "Version": "0.1.15",
+      "Version": "0.1.16",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "e53c0258e2d126419df25e5390082819"
+      "Hash": "992b676bce64e85d1d25c33c2de80727"
     },
     "rematch": {
       "Package": "rematch",
@@ -957,10 +962,10 @@
     },
     "tidyselect": {
       "Package": "tidyselect",
-      "Version": "1.1.0",
+      "Version": "1.1.1",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "6ea435c354e8448819627cf686f66e0a"
+      "Hash": "7243004a708d06d4716717fa1ff5b2fe"
     },
     "tidyverse": {
       "Package": "tidyverse",
