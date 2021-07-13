@@ -586,6 +586,7 @@ statistics_agg %>%
 
 ```{r}
 statistics_agg %>%
+  mutate(across(where(is.double), ~sprintf("%.2g", .))) %>%
   write_csv("output/statistics_agg.csv")
 ```
 
