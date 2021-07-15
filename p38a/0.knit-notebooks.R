@@ -28,3 +28,5 @@ render_notebook("2.inspect-single-cell")
 system("montage output/distributions/*_conc_1.png -tile 4x -geometry +1+1 output/distributions_conc_1.png")
 
 system("montage output/distributions/*_conc_10.png -tile 4x -geometry +1+1 output/distributions_conc_10.png")
+
+render_notebook("3.figures")

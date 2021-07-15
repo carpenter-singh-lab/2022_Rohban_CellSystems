@@ -1,0 +1,116 @@
+---
+title: "Plot figures for paper"
+output: html_notebook
+---
+
+```{r message=FALSE}
+library(magrittr)
+library(glue)
+library(tidyverse)
+```
+
+```{r}
+statistics_agg <- read_csv("output/statistics_agg.csv")
+```
+```{r}
+statistics_agg <-
+  statistics_agg %>%
+  mutate(
+    compound_cp_type =
+      case_when(
+        is_cp_negcon ~ "neutral",
+        !is_cp_negcon ~ "predicted"
+      )
+  ) %>%
+  mutate(compound_activity_type =
+           case_when(is_inhibitor ~ "inhibits",
+                     !is_inhibitor ~ "activates"))
+```
+
+
+```{r}
+plot_paper_figure <- 
+  function(test_type, 
+           annotate_column, 
+           Conci,
+           strong_effect_threshold = 2,
+           compound_list = NULL) {
+  
+  statistics_agg <-
+    statistics_agg %>%
+    filter(Conc == Conci) %>%
+    mutate(pval_adj = .data[[paste0(test_type, "_pval_adj")]])
+    
+  p <- 
+    statistics_agg %>%
+    ggplot(aes(Broad, -log10(pval_adj), shape = compound_cp_type, color = compound_activity_type)) +
+    geom_point()
+  
+  if (annotate_column == "compound_list") {
+    p <- p +
+      ggrepel::geom_text_repel(
+        data = statistics_agg %>% filter(Cmpd %in% compound_list),
+        aes(label = Cmpd),
+        max.overlaps = Inf,
+        min.segment.length = unit(0, 'lines'),
+        nudge_y = 4,
+        color = "black",
+        alpha = .8,
+        size = 4
+      )
+    
+  } 
+  
+  p <- p +
+    geom_hline(yintercept = -log10(0.01), linetype = "dotted") +
+    coord_cartesian(clip = "off") +
+    xlab("Cell Painting Correlation") +
+    ylab("-log p assay") +
+    theme_bw()
+  
+  p <- p +
+    theme(panel.border = element_blank(),
+          panel.grid = element_blank(),
+          legend.title = element_blank(),
+          legend.text = element_text(size = 11),
+          legend.position = "bottom",
+          axis.title = element_text(size = 12),
+          axis.text = element_text(size = 10))
+  
+  ggsave(
+    glue("output/p38_{test_type}_tlr_annot_{annotate_column}_conc_{Conci}.png"),
+    width = 4.6,
+    height = 4
+  )
+  
+  ggsave(
+    glue("output/p38_{test_type}_tlr_annot_{annotate_column}_conc_{Conci}.svg"),
+    width = 4.6,
+    height = 4
+  )  
+  
+  p
+  }
+
+plot_paper_figure("t", "compound_list", Conci = 1, compound_list = compound_list)
+```
+
+
+Pick the 4 hits across KS-test and t-test -based selection
+
+```{r}
+compound_list <- c("K543", "A649", "K381", "K523")
+```
+
+
+```{r}
+Conci <- 1
+
+p <- plot_paper_figure("ks", "compound_list", Conci = Conci, compound_list = compound_list)
+
+print(p)
+
+p <- plot_paper_figure("t", "compound_list", Conci = Conci, compound_list = compound_list)
+
+print(p)
+```
