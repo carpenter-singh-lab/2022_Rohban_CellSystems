@@ -65,27 +65,28 @@ plot_paper_figure <-
     geom_hline(yintercept = -log10(0.01), linetype = "dotted") +
     coord_cartesian(clip = "off") +
     xlab("Cell Painting Correlation") +
-    ylab(expression(paste(-log[10](p)))) +
+    ylab("-log p assay") +
     theme_bw()
   
   p <- p +
     theme(panel.border = element_blank(),
           panel.grid = element_blank(),
           legend.title = element_blank(),
+          legend.text = element_text(size = 11),
           legend.position = "bottom",
-          axis.title = element_text(size = 10),
+          axis.title = element_text(size = 12),
           axis.text = element_text(size = 10))
   
   ggsave(
     glue("output/p38_{test_type}_tlr_annot_{annotate_column}_conc_{Conci}.png"),
-    width = 4.5,
-    height = 3
+    width = 4.6,
+    height = 4
   )
   
   ggsave(
     glue("output/p38_{test_type}_tlr_annot_{annotate_column}_conc_{Conci}.svg"),
-    width = 4,
-    height = 3
+    width = 4.6,
+    height = 4
   )  
   
   p
