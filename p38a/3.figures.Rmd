@@ -12,6 +12,20 @@ library(tidyverse)
 ```{r}
 statistics_agg <- read_csv("output/statistics_agg.csv")
 ```
+```{r}
+statistics_agg <-
+  statistics_agg %>%
+  mutate(
+    compound_cp_type =
+      case_when(
+        is_cp_negcon ~ "neutral",
+        !is_cp_negcon ~ "predicted"
+      )
+  ) %>%
+  mutate(compound_activity_type =
+           case_when(is_inhibitor ~ "inhibits",
+                     !is_inhibitor ~ "activates"))
+```
 
 
 ```{r}
@@ -29,38 +43,8 @@ plot_paper_figure <-
     
   p <- 
     statistics_agg %>%
-    ggplot(aes(Broad, -log10(pval_adj), shape = is_cp_negcon, color = is_inhibitor)) +
+    ggplot(aes(Broad, -log10(pval_adj), shape = compound_cp_type, color = compound_activity_type)) +
     geom_point()
-  
-  if (annotate_column == "median_ratio") {
-    p <- p +
-      ggrepel::geom_text_repel(
-        data = statistics_agg %>% filter(is_inhibitor),
-        aes(label = sprintf("%0.2f", median_ratio)),
-        max.overlaps = Inf,
-        min.segment.length = unit(0, 'lines'),
-        nudge_y = .3,
-        color = "black",
-        alpha = 0.5,
-        size = 3
-      )
-  }
-  
-  if (annotate_column == "significant") {
-    p <- p +
-      ggrepel::geom_text_repel(
-        data = statistics_agg %>% filter(-log10(pval_adj) > strong_effect_threshold),
-        aes(label = Cmpd),
-        max.overlaps = Inf,
-        min.segment.length = unit(0, 'lines'),
-        nudge_y = .3,
-        color = "black",
-        alpha = 0.5,
-        size = 3
-      )
-    
-  }
-  
   
   if (annotate_column == "compound_list") {
     p <- p +
@@ -69,10 +53,10 @@ plot_paper_figure <-
         aes(label = Cmpd),
         max.overlaps = Inf,
         min.segment.length = unit(0, 'lines'),
-        nudge_y = .3,
+        nudge_y = 4,
         color = "black",
-        alpha = 0.5,
-        size = 3
+        alpha = .8,
+        size = 4
       )
     
   } 
@@ -81,31 +65,33 @@ plot_paper_figure <-
     geom_hline(yintercept = -log10(0.01), linetype = "dotted") +
     coord_cartesian(clip = "off") +
     xlab("Cell Painting Correlation") +
-    ylab(glue("-log10 adjusted p-value ({test_type}-test)")) +
+    ylab(expression(paste(-log[10](p)))) +
     theme_bw()
   
   p <- p +
     theme(panel.border = element_blank(),
-          panel.grid = element_blank())
-  
-  p <- p + ggtitle(glue("Conc = {Conci}"))
+          panel.grid = element_blank(),
+          legend.title = element_blank(),
+          legend.position = "bottom",
+          axis.title = element_text(size = 10),
+          axis.text = element_text(size = 10))
   
   ggsave(
     glue("output/p38_{test_type}_tlr_annot_{annotate_column}_conc_{Conci}.png"),
-    width = 6,
-    height = 4
+    width = 4.5,
+    height = 3
   )
   
   ggsave(
     glue("output/p38_{test_type}_tlr_annot_{annotate_column}_conc_{Conci}.svg"),
-    width = 6,
-    height = 4
+    width = 4,
+    height = 3
   )  
   
   p
   }
 
-plot_paper_figure("ks", "compound_list", Conci = Conci, compound_list = compound_list)
+plot_paper_figure("t", "compound_list", Conci = 1, compound_list = compound_list)
 ```
 
 
