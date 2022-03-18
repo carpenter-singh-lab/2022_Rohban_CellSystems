@@ -69,6 +69,8 @@ cdrp.profiles <- cdrp.profiles %>%
   slice(1) %>%
   ungroup()
 
+cdrp.profiles <- data.frame(cdrp.profiles)
+
 rownames(cdrp.profiles) <- cdrp.profiles$Metadata_broad_sample
 
 same.moa <- function(x, y) {
@@ -120,7 +122,8 @@ v22 <- cr.melt %>%
 
 V <- rbind(c(v11, v12), c(v21, v22))
 
-fisher.test(V, alternative = "greater")
+f <- fisher.test(V, alternative = "greater")
+print(f)
 
 cr <- cdrp.profiles %>%
   select(one_of(feats)) %>%
@@ -144,10 +147,71 @@ V %>% htmlTable::htmlTable()
 
 ```
 
+```{r}
+
+library(gtools)
+library(foreach)
+set.seed(24)
+
+doParallel::registerDoParallel(cores = 4)
+
+cr.melt.skeleton <- cr.melt %>% select(-value)
+
+n <- 10000
+nll <- foreach (i = 1:n) %dopar% {
+  rownames(cdrp.profiles) <- permute(cdrp.profiles$Metadata_broad_sample)
+  cr.melt.fake <- cdrp.profiles %>%
+  select(one_of(feats)) %>%
+  t %>%
+  cor %>% 
+  reshape2::melt()
+  
+  cr.melt.fake <- cr.melt.fake %>% 
+    left_join(cr.melt.skeleton, by = c("Var1", "Var2"))
+  
+  v11 <- cr.melt.fake %>% 
+  filter(as.character(Var1) < as.character(Var2)) %>%
+  arrange(-value) %>%
+  slice(1:round(n() * top.p)) %>%
+  filter(same.moa) %>%
+  NROW
+
+  v12 <- cr.melt.fake %>% 
+    filter(as.character(Var1) < as.character(Var2)) %>%
+    arrange(-value) %>%
+    slice(1:round(n() * top.p)) %>%
+    filter(!same.moa) %>%
+    NROW
+  
+  v21 <- cr.melt.fake %>% 
+    filter(as.character(Var1) < as.character(Var2)) %>%
+    arrange(-value) %>%
+    slice((round(n() * top.p)+1):n()) %>%
+    filter(same.moa) %>%
+    NROW
+  
+  v22 <- cr.melt.fake %>% 
+    filter(as.character(Var1) < as.character(Var2)) %>%
+    arrange(-value) %>%
+    slice((round(n() * top.p)+1):n()) %>%
+    filter(!same.moa) %>%
+    NROW
+  
+  V <- rbind(c(v11, v12), c(v21, v22))
+  
+  f.fake <- fisher.test(V, alternative = "greater")
+  as.vector(f.fake$estimate)
+}
+
+print(1-ecdf(unlist(nll))(3.95))
+print(max(unlist(nll)))
+
+```
+
 ```{r network view of data}
 
 library(igraph)
-k <- 4
+k <- 2
 
 sim_normalize <- function(sim_mat) {
   sim_mat_norm <- apply(sim_mat, 1, function(x) (ecdf(x)(x)))

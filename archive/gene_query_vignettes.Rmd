@@ -13,6 +13,7 @@ doParallel::registerDoParallel(cores = 4)
 
 source("validate_compound_conn.R")
 valid.pair <- Vectorize(valid.pair)
+valid.pair.alt <- Vectorize(valid.pair.alt)
 
 soft.req <- T
 
@@ -30,19 +31,171 @@ moa2 <- moa2 %>%
 
 moa2 <- moa2 %>% 
   group_by(Name) %>%
-  slice(1) %>%
+  dplyr::slice(1) %>%
   ungroup()
 
 pthw <- Pf_org$data %>%
-  select(Gene, Pathway) %>%
+  dplyr::select(Gene, Pathway) %>%
   unique %>%
-  filter(Gene != "EMPTY")
+  dplyr::filter(Gene != "EMPTY")
 
 gene.compound.cr <- gene.compound.cr %>%
   left_join(., moa2, by = c("Var1" = "CPD_NAME")) %>%
   left_join(., pthw, by = c("Var2" = "Gene")) %>%
   mutate(valid = valid.pair(Var2, Target)) 
   
+```
+
+```{r}
+
+vls <- gene.compound.cr %>%
+  group_by(Var1) %>%
+  summarise(valids = sum(valid > 0)) %>%
+  select(valids)
+
+library(ggplot2)
+
+g <- ggplot(vls, aes(x = valids)) + geom_histogram(aes(y = ..count..)) + xlab("Number of Associated Genes")
+
+ggsave(filename = "n_gene_plot.png", g)
+
+```
+
+```{r}
+
+vls <- gene.compound.cr %>%
+  group_by(Var2) %>%
+  summarise(valids = sum(valid > 0)) %>%
+  select(valids)
+
+library(ggplot2)
+
+g <- ggplot(vls, aes(x = valids)) + geom_histogram(aes(y = ..count..)) + xlab("Number of Associated Compounds")
+
+ggsave(filename = "n_compound_plot.png", g)
+
+```
+
+```{r}
+
+gene.compound.cr.alt <- gene.compound.cr %>%
+  left_join(., moa2, by = c("Var1" = "CPD_NAME")) %>%
+  left_join(., pthw, by = c("Var2" = "Gene")) %>%
+  mutate(valid = valid.pair.alt(Var2, Target)) 
+
+```
+
+
+```{r}
+
+cmpd.targs <- gene.compound.cr %>% 
+  filter(valid > 0) %>%
+  group_by(Var1) %>%
+  #dplyr::summarise(valids = sum(valid > 0))
+  dplyr::summarise(valids = length(str_split(Target, ", ")[[1]]))
+
+cmpd.joined <- gene.compound.cr %>%
+  filter(valid > 0) %>%
+  left_join(cmpd.targs, by = "Var1")
+  
+library(ggplot2)
+
+g <- ggplot(cmpd.joined, aes(x = value, y = valids)) + ggplot2::geom_point() + ylab("Number of Direct Protein Targets of the Compound") + xlab("Absolute Correlation of a Correct Compound-Gene Connection")
+
+ggsave("plot.png", g)
+
+```
+
+```{r}
+
+corr.thr <- 0.35
+gene.thr <- 3
+
+cmpd.targs <- gene.compound.cr %>% 
+  group_by(Var1) %>%
+  dplyr::summarise(valids = length(str_split(Target, ", ")[[1]]))
+
+cmpd.joined <- gene.compound.cr %>%
+  left_join(cmpd.targs, by = "Var1")
+  
+u <- cmpd.joined %>% 
+  group_by(Var1) %>%
+  summarise(valids = mean(valids),
+            correct.matches = sum(valid > 0 & value > corr.thr),
+            non.matches = sum(valid == 0 & value > corr.thr)) 
+
+V11 <- u %>% 
+  filter(valids < gene.thr & correct.matches > 0) %>%
+  NROW()
+
+V12 <- u %>% 
+  filter(valids < gene.thr & correct.matches == 0) %>%
+  NROW()
+
+V21 <- u %>% 
+  filter(valids >= gene.thr & correct.matches > 0) %>%
+  NROW()
+
+V22 <- u %>% 
+  filter(valids >= gene.thr & correct.matches == 0) %>%
+  NROW()
+
+V <- rbind(c(V11, V12), c(V21, V22))
+fisher.test(V, alternative = "greater")
+
+```
+
+```{r}
+ls <- c()
+gene.compound.cr.tot <- readRDS("../results/master/2017-10-11_7d18c89d/cr_melt_cp.rds")
+
+
+gene <- lapply(gene.compound.cr.tot$Var2, function(x) str_split(x, "_")[[1]][1]) %>% unlist
+allele <- lapply(gene.compound.cr.tot$Var2, function(x) str_split(x, "_")[[1]][2]) %>% unlist
+v <- gene.compound.cr.tot %>%
+  mutate(Var2.gene = gene,
+         Var2.allele = allele)
+u <- v %>%
+  filter(Var2.allele == "WT" | Var2.allele == "WT.1")
+
+gene.compound.cr.tot <- u %>% mutate(Var2 = Var2.gene) %>% select(Var1, Var2, value)
+
+gene.compound.cr.all <- gene.compound.cr.tot %>%
+  left_join(gene.compound.cr, by = c("Var1", "Var2"))
+
+for (gene in unique(gene.compound.cr$Var2)) {
+  u <- gene.compound.cr.all %>%
+    filter(Var2 == gene) %>%
+    arrange(-abs(value.x)) 
+  
+  s <- which(u$valid > 0)[1] %>% as.matrix() %>% as.vector()
+  ls <- c(ls, s)  
+}
+
+df <- data.frame(rank = ls)
+
+library(ggplot2)
+
+g <- ggplot(df %>% filter(!is.na(rank)), aes(x = rank)) + geom_histogram(bins = 40) + xlab("rank number of the top-most correct compound for a given gene") + ggplot2::xlim(0, 15863) + theme_bw()
+
+ggsave("rank_hist.png", g)
+
+```
+
+```{r}
+
+cmpd.num <- length(unique(gene.compound.cr.all$Var1))
+length(which(df$rank < cmpd.num * 0.001))
+length(which(df$rank < cmpd.num * 0.01))
+length(which(df$rank < cmpd.num * 0.02))
+length(which(df$rank < cmpd.num * 0.05))
+
+```
+
+```{r}
+
+length(which(df$rank < 307))
+
 ```
 
 ```{r}
@@ -68,6 +221,108 @@ cs <- cumsum(vls)
 
 plot(cs, type = "l")
 
+
+```
+
+```{r}
+library(ggplot2)
+
+vls <- gene.compound.cr %>% 
+  filter(!is.na(Target)) %>%
+  arrange(-abs(value)) %>%
+  select(valid) %>%
+  as.matrix() %>%
+  as.vector()
+
+corrs <- gene.compound.cr %>% 
+  filter(!is.na(Target)) %>%
+  arrange(-abs(value)) %>%
+  select(value) %>%
+  as.matrix() %>%
+  as.vector()
+
+pos.avg <- sum(vls)/sum(vls != 0)
+zr <- which(vls == 0)
+nzr <- which(vls != 0)
+
+hash.marks <- vls
+vls[zr] <- -1/length(zr)
+vls[nzr] <- vls[nzr]/length(nzr)/pos.avg
+
+cs <- cumsum(vls)
+
+df <- data.frame(abs.corr = 1 - abs(corrs), enrichment = cs)
+
+library(ggplot2)
+
+g <- ggplot(df, aes(x = abs.corr, y = enrichment)) + geom_line() + xlab(" 1 - Absolute Correlation") + ylab("Enrichment Score")
+
+ggsave("enrichment_by_corr.png", g)
+
+```
+
+```{r}
+
+valid.pairs <- gene.compound.cr %>%
+  filter(valid > 0) %>%
+  select(value) %>%
+  as.matrix() %>%
+  as.vector() %>%
+  abs()
+
+non.val.pairs <- gene.compound.cr %>%
+  filter(valid == 0) %>%
+  select(value) %>%
+  as.matrix() %>%
+  as.vector() %>%
+  abs()
+
+df1 <- data.frame(same.moa = "Correct Pairs", correlation = valid.pairs) 
+df2 <- data.frame(same.moa = "Incorrect Pairs", correlation = non.val.pairs)
+
+library(ggplot2)
+
+g <- ggplot2::ggplot(mapping = aes(x = correlation, y=..density..)) +
+  geom_histogram(data = df1, aes(fill = "red"), bins = 40, alpha=0.5) +
+  geom_histogram(data = df2, aes(fill = "blue"), bins = 40, alpha=0.5) +
+  xlab("Correlation") + 
+  scale_fill_manual(name = "", values = c("red", "blue"), labels=c("red" = "Correct Pairs", "blue" = "Incorrect Pairs")) 
+  
+ggsave("correct_vs_incorrect_corr.png", g)
+
+```
+
+```{r}
+
+u <- gene.compound.cr %>%
+  dplyr::mutate(value.rank = NROW(gene.compound.cr) - rank(abs(value)))
+
+valid.pairs <- u %>%
+  filter(valid > 0) %>%
+  select(value.rank) %>%
+  as.matrix() %>%
+  as.vector() %>%
+  abs()
+
+non.val.pairs <- u %>%
+  filter(valid == 0) %>%
+  select(value.rank) %>%
+  as.matrix() %>%
+  as.vector() %>%
+  abs()
+
+df1 <- data.frame(same.moa = "Correct Pairs", correlation = valid.pairs) 
+df2 <- data.frame(same.moa = "Incorrect Pairs", correlation = non.val.pairs)
+
+library(ggplot2)
+
+g <- ggplot2::ggplot(mapping = aes(x = correlation, y=..density..)) +
+  geom_histogram(data = df1, aes(fill = "red"), bins = 40, alpha=0.5) +
+  geom_histogram(data = df2, aes(fill = "blue"), bins = 40, alpha=0.5) +
+  xlab("rank of absolute correlation") + 
+  scale_fill_manual(name = "", values = c("red", "blue"), labels=c("red" = "Correct Pairs", "blue" = "Incorrect Pairs")) 
+  
+ggsave("correct_vs_incorrect_rank.png", g)
 ```
 
 ```{r}
@@ -86,9 +341,10 @@ valid.sum <- gene.compound.cr %>%
   summarise(valid.sum = sum(valid)) %>% 
   arrange(-valid.sum)
 
+#valid.sum != 0 & valid/valid.sum >= 0.05 & soft.req |
 gene.compound.cr.precise <- gene.compound.cr %>%
   left_join(., valid.sum, by = "Var2") %>%
-  mutate(valid2 = (valid.sum != 0 & valid/valid.sum >= 0.05 & soft.req | valid.pair2(Target, Var2))) 
+  mutate(valid2 = ( valid.pair2(Target, Var2))) 
 
 
 vls <- gene.compound.cr.precise %>% 
@@ -133,13 +389,17 @@ dev.print(device = pdf, "enrichment.pdf")
 
 ```{r}
 
-v11 <- gene.compound.cr.precise %>% filter(abs(value) >= 0.35) %>% select(valid2) %>% as.matrix() %>% as.vector() %>% sum()
+gene.compound.cr.precise <- gene.compound.cr.alt %>% filter(!is.na(Target))
 
-v12 <- gene.compound.cr.precise %>% filter(abs(value) < 0.35) %>% select(valid2) %>% as.matrix() %>% as.vector() %>% sum()
+val.thr <- 0.5
 
-v21 <- gene.compound.cr.precise %>% filter(abs(value) >= 0.35) %>% select(valid2) %>% mutate(valid2 = ! valid2) %>% as.matrix() %>% as.vector() %>% sum()
+v11 <- gene.compound.cr.precise %>% filter(abs(value) >= 0.35 & valid > val.thr) %>% NROW 
 
-v22 <- gene.compound.cr.precise %>% filter(abs(value) < 0.35) %>% select(valid2) %>% mutate(valid2 = ! valid2) %>% as.matrix() %>% as.vector() %>% sum()
+v12 <- gene.compound.cr.precise %>% filter(abs(value) < 0.35 & valid > val.thr) %>% NROW 
+
+v21 <- gene.compound.cr.precise %>% filter(abs(value) >= 0.35 & valid <= val.thr) %>% NROW 
+
+v22 <- gene.compound.cr.precise %>% filter(abs(value) < 0.35 & valid <= val.thr) %>% NROW
 
 V <- rbind(c(v11, v12), c(v21, v22))
 

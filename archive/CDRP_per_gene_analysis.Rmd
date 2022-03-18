@@ -90,8 +90,9 @@ Pf.gene$data <- Pf.gene$data %>% dplyr::filter(! Treatment %in% genes.to.remove)
 
 ############
 
+moa2 <- readr::read_csv("../input/CDP2/MOA_annot2.csv")
 Pf.cmpd <- readRDS("../results/master/2017-04-20_64917c8b/Pf_annotated.rds")
-Pf.cmpd$data %<>% mutate(CPD_NAME = ifelse(CPD_NAME != "", CPD_NAME, Metadata_broad_sample))
+Pf.cmpd$data %<>% ungroup() %>% mutate(CPD_NAME = ifelse(CPD_NAME != "", CPD_NAME, Metadata_broad_sample))
 
 source("rep.corr.func.R")
 Pf.1 <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
@@ -102,7 +103,7 @@ if (!just.bioactives) {
   Pf <- Pf.1 
 }
 
-u <- rep.cor(list(data = Pf, feat_cols = Pf.cmpd$feat_cols, factor_cols = Pf.cmpd$factor_cols), grp.var = "Metadata_broad_sample", feat.var = Pf.cmpd$feat_cols, aux.var = "Metadata_broad_sample")
+u <- rep.cor(list(data = Pf, feat_cols = Pf.cmpd$feat_cols, factor_cols = Pf.cmpd$factor_cols), grp.var = "Metadata_broad_sample", feat.var = Pf.cmpd$feat_cols)
 up <- readr::read_csv("../results/master/2017-04-21_425d6537/Cell_counts.csv")
 
 getmode <- function(v) {
@@ -119,7 +120,7 @@ z <- y %>%
   dplyr::left_join(., unique(Pf[,c("Metadata_Plate", "Metadata_Well", "Metadata_broad_sample")])) 
   
 y2 <- y %>% 
-  dplyr::left_join(., unique(Pf.cmpd$data[,c("CPD_NAME", "CPD_NAME_san", "Name", "MOA", "Target", "Phase", "Metadata_broad_sample")]))
+  dplyr::left_join(., unique(moa2[,c("CPD_NAME", "Name", "MOA", "Target", "Metadata_broad_sample")]))
 
 x <- z %>%
  left_join(., u, by = "Metadata_broad_sample") %>%
@@ -138,6 +139,7 @@ Pf.cmpd$data <- g
 Pf.cmpd$factor_cols <- c(Pf.cmpd$factor_cols, "rep.corr", "Mean_Cells_Count")
 Pf.cmpd$data$Mean_Cells_Count <- round(scale(Pf.cmpd$data$Mean_Cells_Count), 2)
 Pf.cmpd$data <- Pf.cmpd$data %>% dplyr::group_by(CPD_NAME) %>% slice(1) %>% ungroup
+Pf.cmpd$factor_cols <- setdiff(Pf.cmpd$factor_cols, c("CPD_NAME_san", "Phase"))
 #really.strong.cmpds <- u$Metadata_broad_sample[which(u$cr > 0.2)]
 #Pf.cmpd$data %<>% 
 #  dplyr::filter(Metadata_broad_sample %in% really.strong.cmpds)
@@ -348,6 +350,10 @@ valid.pair <- function(gene.name, compound.targ) {
   
   targets <- str_split(target, ", ")[[1]]
   
+  if (gene.name %in% targets) {
+    return(T)
+  }
+  
   n <- ppi.all %>% 
     dplyr::filter(Protein.1 == gene.name & Protein.2 %in% targets |
                     Protein.2 == gene.name & Protein.1 %in% targets) %>%
@@ -406,9 +412,22 @@ sample.tot <- function(Pf.cmpd, Pf.gene, cr.melt, verbose = F, cor.thr = 0.5, ho
     
     ppi <- ppi.all %>% dplyr::filter(Protein.1 %in% main.targ | Protein.2 %in% main.targ)
     ppi2 <- ppi.all %>% dplyr::filter(Protein.1 %in% rest.targ | Protein.2 %in% rest.targ)
+    if (F) {
+    pr <- main.targ
+    for (p in pr) {
+      if ((ppi %>% filter(Protein.1 == p & Protein.2 == p) %>% NROW()) == 0)
+        ppi <- rbind(ppi, data.frame(Protein.1 = p, Protein.2 = p, Method = "", Type = "", Evidence = ""))
+    }
+    
+    pr <- rest.targ
+    for (p in pr) {
+      if ((ppi2 %>% filter(Protein.1 == p & Protein.2 == p) %>% NROW()) == 0)
+        ppi2 <- rbind(ppi2, data.frame(Protein.1 = p, Protein.2 = p, Method = "", Type = "", Evidence = ""))
+    }}
     
     id <- ppi %>% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %>% unique %>% NROW
     id0 <- ppi2 %>% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %>% unique %>% NROW
+    
     Vi <- rbind(c(id, NROW(ppi %>% unique) - id), c(id0, NROW(ppi2 %>% unique) - id0))
     V <- V + Vi
     
@@ -453,7 +472,7 @@ system("rm predictions.html")
 if (LUAD || LUAD.mut) {
   res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, cr.melt = cr.melt, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)  
 } else {
-  res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, cr.melt = cr.melt, verbose = T, cor.thr = cor.thr, how.many = no.top.matches)
+  res <- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, cr.melt = cr.melt, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)
 }
 
 f <- fisher.test(res$V, alternative = "greater")

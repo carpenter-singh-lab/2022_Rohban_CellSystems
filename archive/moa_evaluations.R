@@ -1,13 +1,12 @@
 library(dplyr)
-library(stringr)
 library(reshape2)
 library(doParallel)
 
 same.moa <- function(moa.list.1, moa.list.2) {
   if (is.na(moa.list.1) || is.na(moa.list.2) || moa.list.1 == "" || moa.list.2 == "") 
     return(FALSE)
-  moas.1 <- str_split(moa.list.1, ", ")[[1]]
-  moas.2 <- str_split(moa.list.2, ", ")[[1]]
+  moas.1 <- strsplit(moa.list.1, ", ")[[1]]
+  moas.2 <- strsplit(moa.list.2, ", ")[[1]]
   return(any(moas.1 %in% moas.2) | any(moas.2 %in% moas.1))
 }
 
