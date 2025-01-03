@@ -1,3 +1,4 @@
 ci:
-    skip: [pylint]
+  skip: [pylint]
 repos:
+- repo: local
