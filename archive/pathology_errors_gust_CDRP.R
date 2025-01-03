@@ -16,7 +16,7 @@ brd.cdrp <- Pf.cdrp$data %>% dplyr::filter(CPD_NAME == cmpd) %>% ungroup() %>% s
 
 Pf <- readRDS("../results/master/2017-06-02_4df9ed93/Pf_bio_new.rds")
 u.cdrp <- rep.cor(list(data = Pf),
-                  grp.var = "Metadata_broad_sample", 
+                  grp.var = "Metadata_broad_sample",
                   feat.var = f)
 
 
@@ -30,7 +30,7 @@ pl.well.gust <- Pf.full.plate.norm$data %>% dplyr::filter(Image_Metadata_BROAD_I
 cdrp.rep <- u.cdrp %>% dplyr::filter(Metadata_broad_sample == brd.cdrp)
 
 u.gust <- rep.cor(Pf.full.plate.norm,
-             grp.var = "Image_Metadata_BROAD_ID", 
+             grp.var = "Image_Metadata_BROAD_ID",
              feat.var = Pf.full.plate.norm$feat_cols)
 
 gust.rep <- u.gust %>% dplyr::filter(Image_Metadata_BROAD_ID == brd.gust)

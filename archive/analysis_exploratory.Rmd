@@ -20,13 +20,13 @@ load("../input/TA/Initial_analysis_workspace_old.RData")
 Pf.ta.all <- Pf_org.org
 Pf.ta <- Pf_org.org.collapsed
 strong.trt <- Pf.trt.strong.collapsed$data$Treatment
-data.annot <- Pf.strong %>% dplyr::filter(Treatment %in% strong.trt) %>% dplyr::select(one_of(c("Treatment", "Pathway", "Gene", "AlleleDesc"))) %>% 
-  dplyr::mutate(Pathway = str_replace(Pathway, "Canonical ", "")) %>% 
+data.annot <- Pf.strong %>% dplyr::filter(Treatment %in% strong.trt) %>% dplyr::select(one_of(c("Treatment", "Pathway", "Gene", "AlleleDesc"))) %>%
+  dplyr::mutate(Pathway = str_replace(Pathway, "Canonical ", "")) %>%
   dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2))
 
 desired.ta <- data.annot$Treatment
-Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(Treatment %in% c(as.character(desired.ta), "EMPTY_")) 
-Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta) 
+Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(Treatment %in% c(as.character(desired.ta), "EMPTY_"))
+Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta)
 Pf.gene <- Pf.ta
 Pf.gene.all <- Pf.ta.all
 
@@ -35,8 +35,8 @@ u <- rep.cor(Pf.full.plate.norm, "Image_Metadata_BROAD_ID", Pf.full.plate.norm$f
 thr <- non.rep.cor(Pf.full.plate.norm, "Image_Metadata_BROAD_ID", Pf.full.plate.norm$feat_cols)
 strong.cmpd <- u$Image_Metadata_BROAD_ID[which(u$cr > thr)]
 
-Pf.final <- Pf.full.plate.norm$data %>% dplyr::filter(Image_Metadata_BROAD_ID %in% strong.cmpd) %>% as.data.frame() 
-Pf.final.all <- Pf.full.plate.norm$data %>% as.data.frame() 
+Pf.final <- Pf.full.plate.norm$data %>% dplyr::filter(Image_Metadata_BROAD_ID %in% strong.cmpd) %>% as.data.frame()
+Pf.final.all <- Pf.full.plate.norm$data %>% as.data.frame()
 
 all.cols <- colnames(Pf.final)
 fact.col <- all.cols[which(str_detect(all.cols, "Metadata") | all.cols %in% c("Plate", "Well"))]
@@ -221,7 +221,7 @@ ag.ant <- function(x, y) {
   x.s <- str_split(x, " ")[[1]]
   y.s <- str_split(y, " ")[[1]]
   res <- F
-  if (x.s[length(x.s)] == "agonist" && y.s[length(y.s)] == "antagonist" || 
+  if (x.s[length(x.s)] == "agonist" && y.s[length(y.s)] == "antagonist" ||
       x.s[length(x.s)] == "antagonist" && y.s[length(y.s)] == "agonist") {
     if (paste(x.s[1:(length(x.s)-1)], collapse = " ") == paste(y.s[1:(length(y.s)-1)], collapse = " ")) {
       res <- T
@@ -234,7 +234,7 @@ v <- rep(1, length(moa.list$Metadata_pert_id))
 same.moa <- outer(v, v, "*")
 rownames(same.moa) <- 1:length(moa.list$Metadata_pert_id)
 colnames(same.moa) <- 1:length(moa.list$Metadata_pert_id)
-same.moa.list <- same.moa %>% melt %>% dplyr::filter(moa.list$Metadata_pert_id[Var1] < moa.list$Metadata_pert_id[Var2]) 
+same.moa.list <- same.moa %>% melt %>% dplyr::filter(moa.list$Metadata_pert_id[Var1] < moa.list$Metadata_pert_id[Var2])
 same.moa.list[,3] <- apply(same.moa.list, 1, function(x) ag.ant(moa.list$Metadata_moa[x[1]], moa.list$Metadata_moa[x[2]]))
 same.moa <- outer(v, v, "*")
 rownames(same.moa) <- moa.list$Metadata_pert_id
@@ -282,7 +282,7 @@ u %>% dplyr::arrange(`MOA 1`) %>% dplyr::group_by(`Compound 1`, `Compound 2`) %>
 ```{r Find the correlation matrix, eval=T}
 
 base.dir <- "2016-07-20_90b7bb86"
-cmpd.name <- readRDS(sprintf("../input/Gustafsdottir/%s/cmpds.names.rds", base.dir))  
+cmpd.name <- readRDS(sprintf("../input/Gustafsdottir/%s/cmpds.names.rds", base.dir))
 Pf.cmpd$data <- plyr::join(Pf.cmpd$data[,c("Image_Metadata_BROAD_ID", Pf.cmpd$feat_cols)], cmpd.name, by = "Image_Metadata_BROAD_ID")
 
 Pf.cmpd$data <- Pf.cmpd$data %>% dplyr::mutate(Image_Metadata_SOURCE_COMPOUND_NAME = str_to_lower(Image_Metadata_SOURCE_COMPOUND_NAME)) %>% dplyr::group_by(Image_Metadata_SOURCE_COMPOUND_NAME) %>% dplyr::slice(1) %>% dplyr::ungroup()
@@ -311,22 +311,22 @@ for (gn in genes) {
   print (sprintf("Gene : %s", gn))
 for (conn.type in c("pos", "neg")) {
   sgn.conn <- ifelse(conn.type == "pos", -1, 1)
-  
+
   entr <- function(x) {
     x <- abs(x)
     x[which(x < 0.4)] <- 0
     x <- x/sum(x)
     return(sum(-x[which(x != 0)] * log(x[which(x != 0)])))
   }
-  
+
   ent <- apply(cr1, 1, function(x) entr(x))
   ent <- data.frame(Compound = names(ent), Specificity = ent)
   ent$Specificity <- lapply(ent$Specificity, function(x) (1 - ecdf(ent$Specificity)(x))) %>% unlist
-  
+
   # %in% cls[[1]]
-  u <- cr1 %>% melt %>% dplyr::filter(Var2 == gn) %>% dplyr::group_by(Var1) %>% dplyr::summarise(value = mean(value)) %>% dplyr::arrange(sgn.conn * value) %>% head(., 50) %>%  dplyr::mutate(Compound = Var1, Corr = value) %>% dplyr::select(one_of("Compound", "Corr")) %>% dplyr::mutate(Corr = round(Corr, 2)) 
+  u <- cr1 %>% melt %>% dplyr::filter(Var2 == gn) %>% dplyr::group_by(Var1) %>% dplyr::summarise(value = mean(value)) %>% dplyr::arrange(sgn.conn * value) %>% head(., 50) %>%  dplyr::mutate(Compound = Var1, Corr = value) %>% dplyr::select(one_of("Compound", "Corr")) %>% dplyr::mutate(Corr = round(Corr, 2))
   u <- plyr::join(u, ent, "Compound") %>% dplyr::mutate(Specificity = round(Specificity, 2)) %>% dplyr::filter(Specificity >= Specificity.thr)
-  
+
   name.to.brd <- Pf.cmpd$data[,c("Image_Metadata_BROAD_ID", "Image_Metadata_SOURCE_COMPOUND_NAME")] %>% unique()
   colnames(name.to.brd) <- c("Broad.ID", "Compound")
   u <- plyr::join(u, name.to.brd, by = "Compound")
@@ -353,11 +353,11 @@ for (conn.type in c("pos", "neg")) {
   }
   u <- cbind(u, data.frame(feats.contribution = feats.contib))
   if (NROW(u) > 0) {
-    v <- c(v, list(u %>% htmlTable::htmlTable(., col.rgroup = c("none", "#E7E7E7"))))  
+    v <- c(v, list(u %>% htmlTable::htmlTable(., col.rgroup = c("none", "#E7E7E7"))))
   } else {
-    v <- c(v, list(NULL))  
+    v <- c(v, list(NULL))
   }
-  
+
   u$Compound %>% as.character() %>% cat(., sep = "\n")
 }
 }

@@ -29,7 +29,7 @@ moa2 <- moa2 %>%
   mutate(CPD_NAME = str_to_lower(CPD_NAME)) %>%
   mutate(CPD_NAME = ifelse(str_sub(CPD_NAME, 1, 4) == "brd-", Metadata_broad_sample, CPD_NAME))
 
-moa2 <- moa2 %>% 
+moa2 <- moa2 %>%
   group_by(Name) %>%
   dplyr::slice(1) %>%
   ungroup()
@@ -42,8 +42,8 @@ pthw <- Pf_org$data %>%
 gene.compound.cr <- gene.compound.cr %>%
   left_join(., moa2, by = c("Var1" = "CPD_NAME")) %>%
   left_join(., pthw, by = c("Var2" = "Gene")) %>%
-  mutate(valid = valid.pair(Var2, Target)) 
-  
+  mutate(valid = valid.pair(Var2, Target))
+
 ```
 
 ```{r}
@@ -81,14 +81,14 @@ ggsave(filename = "n_compound_plot.png", g)
 gene.compound.cr.alt <- gene.compound.cr %>%
   left_join(., moa2, by = c("Var1" = "CPD_NAME")) %>%
   left_join(., pthw, by = c("Var2" = "Gene")) %>%
-  mutate(valid = valid.pair.alt(Var2, Target)) 
+  mutate(valid = valid.pair.alt(Var2, Target))
 
 ```
 
 
 ```{r}
 
-cmpd.targs <- gene.compound.cr %>% 
+cmpd.targs <- gene.compound.cr %>%
   filter(valid > 0) %>%
   group_by(Var1) %>%
   #dplyr::summarise(valids = sum(valid > 0))
@@ -97,7 +97,7 @@ cmpd.targs <- gene.compound.cr %>%
 cmpd.joined <- gene.compound.cr %>%
   filter(valid > 0) %>%
   left_join(cmpd.targs, by = "Var1")
-  
+
 library(ggplot2)
 
 g <- ggplot(cmpd.joined, aes(x = value, y = valids)) + ggplot2::geom_point() + ylab("Number of Direct Protein Targets of the Compound") + xlab("Absolute Correlation of a Correct Compound-Gene Connection")
@@ -111,32 +111,32 @@ ggsave("plot.png", g)
 corr.thr <- 0.35
 gene.thr <- 3
 
-cmpd.targs <- gene.compound.cr %>% 
+cmpd.targs <- gene.compound.cr %>%
   group_by(Var1) %>%
   dplyr::summarise(valids = length(str_split(Target, ", ")[[1]]))
 
 cmpd.joined <- gene.compound.cr %>%
   left_join(cmpd.targs, by = "Var1")
-  
-u <- cmpd.joined %>% 
+
+u <- cmpd.joined %>%
   group_by(Var1) %>%
   summarise(valids = mean(valids),
             correct.matches = sum(valid > 0 & value > corr.thr),
-            non.matches = sum(valid == 0 & value > corr.thr)) 
+            non.matches = sum(valid == 0 & value > corr.thr))
 
-V11 <- u %>% 
+V11 <- u %>%
   filter(valids < gene.thr & correct.matches > 0) %>%
   NROW()
 
-V12 <- u %>% 
+V12 <- u %>%
   filter(valids < gene.thr & correct.matches == 0) %>%
   NROW()
 
-V21 <- u %>% 
+V21 <- u %>%
   filter(valids >= gene.thr & correct.matches > 0) %>%
   NROW()
 
-V22 <- u %>% 
+V22 <- u %>%
   filter(valids >= gene.thr & correct.matches == 0) %>%
   NROW()
 
@@ -166,10 +166,10 @@ gene.compound.cr.all <- gene.compound.cr.tot %>%
 for (gene in unique(gene.compound.cr$Var2)) {
   u <- gene.compound.cr.all %>%
     filter(Var2 == gene) %>%
-    arrange(-abs(value.x)) 
-  
+    arrange(-abs(value.x))
+
   s <- which(u$valid > 0)[1] %>% as.matrix() %>% as.vector()
-  ls <- c(ls, s)  
+  ls <- c(ls, s)
 }
 
 df <- data.frame(rank = ls)
@@ -202,7 +202,7 @@ length(which(df$rank < 307))
 
 library(ggplot2)
 
-vls <- gene.compound.cr %>% 
+vls <- gene.compound.cr %>%
   filter(!is.na(Target)) %>%
   arrange(-abs(value)) %>%
   select(valid) %>%
@@ -227,14 +227,14 @@ plot(cs, type = "l")
 ```{r}
 library(ggplot2)
 
-vls <- gene.compound.cr %>% 
+vls <- gene.compound.cr %>%
   filter(!is.na(Target)) %>%
   arrange(-abs(value)) %>%
   select(valid) %>%
   as.matrix() %>%
   as.vector()
 
-corrs <- gene.compound.cr %>% 
+corrs <- gene.compound.cr %>%
   filter(!is.na(Target)) %>%
   arrange(-abs(value)) %>%
   select(value) %>%
@@ -277,7 +277,7 @@ non.val.pairs <- gene.compound.cr %>%
   as.vector() %>%
   abs()
 
-df1 <- data.frame(same.moa = "Correct Pairs", correlation = valid.pairs) 
+df1 <- data.frame(same.moa = "Correct Pairs", correlation = valid.pairs)
 df2 <- data.frame(same.moa = "Incorrect Pairs", correlation = non.val.pairs)
 
 library(ggplot2)
@@ -285,9 +285,9 @@ library(ggplot2)
 g <- ggplot2::ggplot(mapping = aes(x = correlation, y=..density..)) +
   geom_histogram(data = df1, aes(fill = "red"), bins = 40, alpha=0.5) +
   geom_histogram(data = df2, aes(fill = "blue"), bins = 40, alpha=0.5) +
-  xlab("Correlation") + 
-  scale_fill_manual(name = "", values = c("red", "blue"), labels=c("red" = "Correct Pairs", "blue" = "Incorrect Pairs")) 
-  
+  xlab("Correlation") +
+  scale_fill_manual(name = "", values = c("red", "blue"), labels=c("red" = "Correct Pairs", "blue" = "Incorrect Pairs"))
+
 ggsave("correct_vs_incorrect_corr.png", g)
 
 ```
@@ -311,7 +311,7 @@ non.val.pairs <- u %>%
   as.vector() %>%
   abs()
 
-df1 <- data.frame(same.moa = "Correct Pairs", correlation = valid.pairs) 
+df1 <- data.frame(same.moa = "Correct Pairs", correlation = valid.pairs)
 df2 <- data.frame(same.moa = "Incorrect Pairs", correlation = non.val.pairs)
 
 library(ggplot2)
@@ -319,9 +319,9 @@ library(ggplot2)
 g <- ggplot2::ggplot(mapping = aes(x = correlation, y=..density..)) +
   geom_histogram(data = df1, aes(fill = "red"), bins = 40, alpha=0.5) +
   geom_histogram(data = df2, aes(fill = "blue"), bins = 40, alpha=0.5) +
-  xlab("rank of absolute correlation") + 
-  scale_fill_manual(name = "", values = c("red", "blue"), labels=c("red" = "Correct Pairs", "blue" = "Incorrect Pairs")) 
-  
+  xlab("rank of absolute correlation") +
+  scale_fill_manual(name = "", values = c("red", "blue"), labels=c("red" = "Correct Pairs", "blue" = "Incorrect Pairs"))
+
 ggsave("correct_vs_incorrect_rank.png", g)
 ```
 
@@ -336,18 +336,18 @@ valid.pair2 <- function(targets, gene) {
 
 valid.pair2 <- Vectorize(valid.pair2)
 
-valid.sum <- gene.compound.cr %>% 
-  group_by(Var2) %>% 
-  summarise(valid.sum = sum(valid)) %>% 
+valid.sum <- gene.compound.cr %>%
+  group_by(Var2) %>%
+  summarise(valid.sum = sum(valid)) %>%
   arrange(-valid.sum)
 
 #valid.sum != 0 & valid/valid.sum >= 0.05 & soft.req |
 gene.compound.cr.precise <- gene.compound.cr %>%
   left_join(., valid.sum, by = "Var2") %>%
-  mutate(valid2 = ( valid.pair2(Target, Var2))) 
+  mutate(valid2 = ( valid.pair2(Target, Var2)))
 
 
-vls <- gene.compound.cr.precise %>% 
+vls <- gene.compound.cr.precise %>%
   arrange(-abs(value)) %>%
   select(valid2) %>%
   as.matrix() %>%
@@ -360,13 +360,13 @@ nzr <- which(vls != 0)
 vls[zr] <- -1/length(zr)
 vls[nzr] <- vls[nzr]/length(nzr)
 cs <- cumsum(vls)
- 
+
 g2 <- ggplot(data.frame(x = 1:length(cs), y = cs), aes(x = x, y = y)) + geom_line() + xlab("sorted index of gene-compound connections") + ylab("enrichment")
 
-g <- ggplot() 
+g <- ggplot()
 
 for (i in indx) {
-    g <- g + geom_vline(xintercept = i)  
+    g <- g + geom_vline(xintercept = i)
 }
 
 g <- g + xlab("") + theme(axis.title.x=element_blank(),
@@ -374,7 +374,7 @@ g <- g + xlab("") + theme(axis.title.x=element_blank(),
         axis.ticks.x=element_blank())
 
 g1 <- ggplot_gtable(ggplot_build(g))
-g2 <- ggplot_gtable(ggplot_build(g2)) 
+g2 <- ggplot_gtable(ggplot_build(g2))
 maxWidth <- unit.pmax(g1$widths[2:3], g2$widths[2:3])
 g1$widths[2:3] <- maxWidth
 g2$widths[2:3] <- maxWidth
@@ -393,11 +393,11 @@ gene.compound.cr.precise <- gene.compound.cr.alt %>% filter(!is.na(Target))
 
 val.thr <- 0.5
 
-v11 <- gene.compound.cr.precise %>% filter(abs(value) >= 0.35 & valid > val.thr) %>% NROW 
+v11 <- gene.compound.cr.precise %>% filter(abs(value) >= 0.35 & valid > val.thr) %>% NROW
 
-v12 <- gene.compound.cr.precise %>% filter(abs(value) < 0.35 & valid > val.thr) %>% NROW 
+v12 <- gene.compound.cr.precise %>% filter(abs(value) < 0.35 & valid > val.thr) %>% NROW
 
-v21 <- gene.compound.cr.precise %>% filter(abs(value) >= 0.35 & valid <= val.thr) %>% NROW 
+v21 <- gene.compound.cr.precise %>% filter(abs(value) >= 0.35 & valid <= val.thr) %>% NROW
 
 v22 <- gene.compound.cr.precise %>% filter(abs(value) < 0.35 & valid <= val.thr) %>% NROW
 
@@ -417,18 +417,18 @@ fisher.test(V, alternative = "greater")
 thr <- 0.35
 
 s11 <- gene.compound.cr.precise %>%
-  filter(abs(value) >= thr & valid2) 
+  filter(abs(value) >= thr & valid2)
 
 s12 <- gene.compound.cr.precise %>%
-  filter(abs(value) < thr & valid2) 
+  filter(abs(value) < thr & valid2)
 
 s21 <- gene.compound.cr.precise %>%
   filter(abs(value) >= thr & !valid2)
 
 s22 <- gene.compound.cr.precise %>%
-  filter(abs(value) < thr & !valid2) 
-    
-  
+  filter(abs(value) < thr & !valid2)
+
+
 V <- rbind(c(s11 %>% NROW, s12 %>% NROW), c(s21 %>% NROW, s22 %>% NROW))
 fisher.test(V, alternative = "greater")
 
@@ -443,11 +443,11 @@ library(igraph)
 
 coeff <- 1.5
 
-adj.mat <- s11 %>% 
-  mutate(value = ifelse(value > 0, 2, ifelse(value < 0, 1, 0))) %>% 
-  reshape2::acast(Name ~ Var2, fill = 0) 
+adj.mat <- s11 %>%
+  mutate(value = ifelse(value > 0, 2, ifelse(value < 0, 1, 0))) %>%
+  reshape2::acast(Name ~ Var2, fill = 0)
 
-org.adj.mat <- adj.mat 
+org.adj.mat <- adj.mat
 
 mt1 <- matrix(0, NROW(adj.mat), NROW(adj.mat))
 rownames(mt1) <- rownames(adj.mat)
@@ -482,12 +482,12 @@ E(g)$color <- ifelse(E(g)$weight == 1, "red", "blue")
 graphics.off()
 quartz(width = 20, height = 15)
 
-plot(g, 
+plot(g,
      vertex.size = vertex.size,
-     vertex.size2 = vertex.size2, 
-     vertex.label.cex = vertex.label.cex, 
-     vertex.shape = vertex.shape, 
-     curved = T, vertex.label.color = cls, 
+     vertex.size2 = vertex.size2,
+     vertex.label.cex = vertex.label.cex,
+     vertex.shape = vertex.shape,
+     curved = T, vertex.label.color = cls,
      asp = 15/20)
 
 dev.print(device = pdf, "hit_graph.pdf")
@@ -502,65 +502,65 @@ n <- 10
 permute <- F
 .gene <- gene.compound.cr %>% select(Var2) %>% unique %>% as.matrix() %>% as.vector()
 gene.compound.cr <- gene.compound.cr.precise
-  
+
 if (permute) {
-  .cr <- gene.compound.cr %>% 
-    group_by(Var1, Var2) %>% 
+  .cr <- gene.compound.cr %>%
+    group_by(Var1, Var2) %>%
     summarise(value = max(value, na.rm = T)) %>%
     select(Var1, Var2, value) %>%
     reshape2::acast(Var1 ~ Var2)
-  
-  rn <- rownames(.cr) 
-  cn <- colnames(.cr) 
-  
+
+  rn <- rownames(.cr)
+  cn <- colnames(.cr)
+
   while(T) {
     cn.pr <- sample(cn, size = length(cn))
     if (all(cn.pr != cn)) {
       break
     }
   }
-    
+
   colnames(.cr) <- cn.pr
-  
+
   gene.compound.cr.pr <- .cr %>%
     reshape2::melt() %>%
-    left_join(., gene.compound.cr %>% select(-value), by = c("Var1", "Var2")) 
+    left_join(., gene.compound.cr %>% select(-value), by = c("Var1", "Var2"))
 } else {
   gene.compound.cr.pr <- gene.compound.cr
 }
 
-gene.compound.cr.pr <- gene.compound.cr.pr %>% 
+gene.compound.cr.pr <- gene.compound.cr.pr %>%
   arrange(-abs(value)) %>%
   filter(!is.na(Target))
 
 matching.score <- function(gene.x, top.k, N, n) {
-  sg.v <- gene.compound.cr.pr %>% filter(Var2 == gene.x) %>% slice(1:top.k) 
+  sg.v <- gene.compound.cr.pr %>% filter(Var2 == gene.x) %>% slice(1:top.k)
   sg <- sg.v %>% filter(valid2) %>% NROW
-  
+
   cr.rem <- gene.compound.cr.pr %>% filter(Var2 == gene.x) %>% slice((top.k + 1):n())
-  
+
   p.val <- foreach (j = 1:n, .combine = rbind) %do% {
     nl <- foreach (i = 1:N) %dopar% {
        r <- cr.rem %>% sample_n(NROW(sg.v)) %>% filter(valid2) %>% NROW
        r
     }
-    
+
     nl <- unlist(nl)
     if (max(nl) == 0) {
       return(1)
     }
     return(1 - ecdf(nl)(sg))
   }
-  
+
   mean(p.val)
 }
 
-p.vals <- pblapply(.gene, function(x) matching.score(x, top.k = k, N, n)) %>% unlist 
+p.vals <- pblapply(.gene, function(x) matching.score(x, top.k = k, N, n)) %>% unlist
 
 gene.blacklist <- gene.compound.cr %>% group_by(Var2) %>% summarise(x = sum(valid)) %>% filter(x == 0) %>% select(Var2) %>% as.matrix() %>% as.vector()
 
 data.frame(gene = .gene, p.value = p.vals) %>%
-  filter(!gene %in% gene.blacklist) %>% 
+  filter(!gene %in% gene.blacklist) %>%
   mutate(p.value = p.adjust(p.value, "BH")) %>%
   arrange(p.value) %>%
   htmlTable::htmlTable()
@@ -577,65 +577,65 @@ n <- 10
 permute <- F
 .compound <- gene.compound.cr %>% select(Var1) %>% unique %>% as.matrix() %>% as.vector()
 gene.compound.cr <- gene.compound.cr.precise
-  
+
 if (permute) {
-  .cr <- gene.compound.cr %>% 
-    group_by(Var1, Var2) %>% 
+  .cr <- gene.compound.cr %>%
+    group_by(Var1, Var2) %>%
     summarise(value = max(value, na.rm = T)) %>%
     select(Var1, Var2, value) %>%
     reshape2::acast(Var1 ~ Var2)
-  
-  rn <- rownames(.cr) 
-  cn <- colnames(.cr) 
-  
+
+  rn <- rownames(.cr)
+  cn <- colnames(.cr)
+
   while(T) {
     cn.pr <- sample(cn, size = length(cn))
     if (all(cn.pr != cn)) {
       break
     }
   }
-    
+
   colnames(.cr) <- cn.pr
-  
+
   gene.compound.cr.pr <- .cr %>%
     reshape2::melt() %>%
-    left_join(., gene.compound.cr %>% select(-value), by = c("Var1", "Var2")) 
+    left_join(., gene.compound.cr %>% select(-value), by = c("Var1", "Var2"))
 } else {
   gene.compound.cr.pr <- gene.compound.cr
 }
 
-gene.compound.cr.pr <- gene.compound.cr.pr %>% 
+gene.compound.cr.pr <- gene.compound.cr.pr %>%
   arrange(-abs(value)) %>%
   filter(!is.na(Target))
 
 matching.score <- function(compound.x, top.k, N, n) {
-  sg.v <- gene.compound.cr.pr %>% filter(Var1 == compound.x) %>% slice(1:top.k) 
+  sg.v <- gene.compound.cr.pr %>% filter(Var1 == compound.x) %>% slice(1:top.k)
   sg <- sg.v %>% filter(valid2) %>% NROW
-  
+
   cr.rem <- gene.compound.cr.pr %>% filter(Var1 == compound.x) %>% slice((top.k + 1):n())
-  
+
   p.val <- foreach (j = 1:n, .combine = rbind) %do% {
     nl <- foreach (i = 1:N) %dopar% {
        r <- cr.rem %>% sample_n(NROW(sg.v)) %>% filter(valid2) %>% NROW
        r
     }
-    
+
     nl <- unlist(nl)
     if (max(nl) == 0) {
       return(1)
     }
     return(1 - ecdf(nl)(sg))
   }
-  
+
   mean(p.val)
 }
 
-p.vals <- pblapply(.compound, function(x) matching.score(x, top.k = k, N, n)) %>% unlist 
+p.vals <- pblapply(.compound, function(x) matching.score(x, top.k = k, N, n)) %>% unlist
 
 compound.blacklist <- gene.compound.cr %>% group_by(Var1) %>% summarise(x = sum(valid2)) %>% filter(x == 0) %>% select(Var1) %>% as.matrix() %>% as.vector()
 
 data.frame(compound = .compound, p.value = p.vals) %>%
-  filter(!compound %in% compound.blacklist) %>% 
+  filter(!compound %in% compound.blacklist) %>%
   mutate(p.value = p.adjust(p.value, "BH")) %>%
   arrange(p.value) %>%
   htmlTable::htmlTable()

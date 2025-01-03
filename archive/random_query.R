@@ -13,7 +13,7 @@ x <- y
 
 y <- readr::read_csv("../input/Cell_counts.csv")
 
-y <- y %>% 
+y <- y %>%
   left_join(., x, by = c("Image_Metadata_Plate" = "Metadata_Plate", "Image_Metadata_Well" = "Metadata_Well"))
 
 readr::write_csv(y, "Cell_counts_annotated.csv")

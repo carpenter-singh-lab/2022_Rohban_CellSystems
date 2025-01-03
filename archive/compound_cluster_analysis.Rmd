@@ -30,7 +30,7 @@ if (whiten) {
 brd.to.name <- readr::read_csv("../input/CDP2/cdrp.cpd.meta.csv")
 moa <- read.csv("../input/moas.txt", sep = "\t")
 
-moa <- moa %>% 
+moa <- moa %>%
   mutate(Name.cano = str_to_lower(Name)) %>%
   mutate(Name.cano = str_replace_all(Name.cano, "-", "")) %>%
   mutate(Name.cano = str_replace_all(Name.cano, " ", "")) %>%
@@ -38,16 +38,16 @@ moa <- moa %>%
   mutate(Name.cano = str_replace_all(Name.cano, "\\]", "")) %>%
   mutate(Name.cano = str_replace_all(Name.cano, "\\(", "")) %>%
   mutate(Name.cano = str_replace_all(Name.cano, "\\)", "")) %>%
-  mutate(Name.cano = str_replace_all(Name.cano, "\\+", "")) 
-  
-cdrp.profiles <- cdrp %>% 
+  mutate(Name.cano = str_replace_all(Name.cano, "\\+", ""))
+
+cdrp.profiles <- cdrp %>%
   group_by(Metadata_broad_sample) %>%
   summarise_at(.vars = feats, .funs = mean) %>%
   mutate(Metadata_broad_id_trunc = str_sub(Metadata_broad_sample, 1, 13)) %>%
-  left_join(., brd.to.name, by = c("Metadata_broad_id_trunc" = "BROAD_CPD_ID")) %>% 
+  left_join(., brd.to.name, by = c("Metadata_broad_id_trunc" = "BROAD_CPD_ID")) %>%
   filter(CPD_NAME != "")
-  
-cdrp.profiles <- cdrp.profiles %>% 
+
+cdrp.profiles <- cdrp.profiles %>%
   mutate(Name.cano = str_to_lower(CPD_NAME)) %>%
   mutate(Name.cano = str_replace_all(Name.cano, "-", "")) %>%
   mutate(Name.cano = str_replace_all(Name.cano, " ", "")) %>%
@@ -55,7 +55,7 @@ cdrp.profiles <- cdrp.profiles %>%
   mutate(Name.cano = str_replace_all(Name.cano, "\\]", "")) %>%
   mutate(Name.cano = str_replace_all(Name.cano, "\\(", "")) %>%
   mutate(Name.cano = str_replace_all(Name.cano, "\\)", "")) %>%
-  mutate(Name.cano = str_replace_all(Name.cano, "\\+", "")) 
+  mutate(Name.cano = str_replace_all(Name.cano, "\\+", ""))
 
 moa2 <- readr::read_csv("../input/CDP2/MOA_annot2.csv")
 moa2 <- moa2 %>% mutate(Name = ifelse(is.na(Name), CPD_NAME, Name))
@@ -64,7 +64,7 @@ cdrp.profiles <- cdrp.profiles %>%
   left_join(., moa2, by = "Metadata_broad_sample") %>%
   filter(!is.na(Name) & !is.na(MOA))
 
-cdrp.profiles <- cdrp.profiles %>% 
+cdrp.profiles <- cdrp.profiles %>%
   group_by(Metadata_broad_sample) %>%
   slice(1) %>%
   ungroup()
@@ -74,7 +74,7 @@ cdrp.profiles <- data.frame(cdrp.profiles)
 rownames(cdrp.profiles) <- cdrp.profiles$Metadata_broad_sample
 
 same.moa <- function(x, y) {
-  if (is.na(x) || is.na(y) || x == "" || y == "") 
+  if (is.na(x) || is.na(y) || x == "" || y == "")
     return(FALSE)
   xs <- str_split(x, ", ")[[1]]
   ys <- str_split(y, ", ")[[1]]
@@ -86,34 +86,34 @@ same.moa <- Vectorize(same.moa)
 cr.melt <- cdrp.profiles %>%
   select(one_of(feats)) %>%
   t %>%
-  cor %>% 
+  cor %>%
   reshape2::melt() %>%
   left_join(., cdrp.profiles %>% select(-one_of(feats)), by = c("Var1" = "Metadata_broad_sample")) %>%
   left_join(., cdrp.profiles %>% select(-one_of(feats)), by = c("Var2" = "Metadata_broad_sample")) %>%
   mutate(same.moa = same.moa(MOA.x, MOA.y))
 
-v11 <- cr.melt %>% 
+v11 <- cr.melt %>%
   filter(as.character(Var1) < as.character(Var2)) %>%
   arrange(-value) %>%
   slice(1:round(n() * top.p)) %>%
   filter(same.moa) %>%
   NROW
 
-v12 <- cr.melt %>% 
+v12 <- cr.melt %>%
   filter(as.character(Var1) < as.character(Var2)) %>%
   arrange(-value) %>%
   slice(1:round(n() * top.p)) %>%
   filter(!same.moa) %>%
   NROW
 
-v21 <- cr.melt %>% 
+v21 <- cr.melt %>%
   filter(as.character(Var1) < as.character(Var2)) %>%
   arrange(-value) %>%
   slice((round(n() * top.p)+1):n()) %>%
   filter(same.moa) %>%
   NROW
 
-v22 <- cr.melt %>% 
+v22 <- cr.melt %>%
   filter(as.character(Var1) < as.character(Var2)) %>%
   arrange(-value) %>%
   slice((round(n() * top.p)+1):n()) %>%
@@ -130,7 +130,7 @@ cr <- cdrp.profiles %>%
   t %>%
   cor
 
-cr.melt %>% 
+cr.melt %>%
   filter(as.character(Var1) < as.character(Var2)) %>%
   arrange(-value) %>%
   slice(1:round(n() * 0.05)) %>%
@@ -163,42 +163,42 @@ nll <- foreach (i = 1:n) %dopar% {
   cr.melt.fake <- cdrp.profiles %>%
   select(one_of(feats)) %>%
   t %>%
-  cor %>% 
+  cor %>%
   reshape2::melt()
-  
-  cr.melt.fake <- cr.melt.fake %>% 
+
+  cr.melt.fake <- cr.melt.fake %>%
     left_join(cr.melt.skeleton, by = c("Var1", "Var2"))
-  
-  v11 <- cr.melt.fake %>% 
+
+  v11 <- cr.melt.fake %>%
   filter(as.character(Var1) < as.character(Var2)) %>%
   arrange(-value) %>%
   slice(1:round(n() * top.p)) %>%
   filter(same.moa) %>%
   NROW
 
-  v12 <- cr.melt.fake %>% 
+  v12 <- cr.melt.fake %>%
     filter(as.character(Var1) < as.character(Var2)) %>%
     arrange(-value) %>%
     slice(1:round(n() * top.p)) %>%
     filter(!same.moa) %>%
     NROW
-  
-  v21 <- cr.melt.fake %>% 
+
+  v21 <- cr.melt.fake %>%
     filter(as.character(Var1) < as.character(Var2)) %>%
     arrange(-value) %>%
     slice((round(n() * top.p)+1):n()) %>%
     filter(same.moa) %>%
     NROW
-  
-  v22 <- cr.melt.fake %>% 
+
+  v22 <- cr.melt.fake %>%
     filter(as.character(Var1) < as.character(Var2)) %>%
     arrange(-value) %>%
     slice((round(n() * top.p)+1):n()) %>%
     filter(!same.moa) %>%
     NROW
-  
+
   V <- rbind(c(v11, v12), c(v21, v22))
-  
+
   f.fake <- fisher.test(V, alternative = "greater")
   as.vector(f.fake$estimate)
 }
@@ -228,20 +228,20 @@ cr.norm <- sim_normalize(cr)
 
 cr.melt <- cr.melt %>%
   select(-value) %>%
-  left_join(., cr.norm %>% reshape2::melt(), by = c("Var1", "Var2")) 
+  left_join(., cr.norm %>% reshape2::melt(), by = c("Var1", "Var2"))
 
 
-moa.cnt <- moa2 %>% 
-  filter(Metadata_broad_sample %in% cr.melt$Var1) %>% 
-  group_by(MOA) %>% 
+moa.cnt <- moa2 %>%
+  filter(Metadata_broad_sample %in% cr.melt$Var1) %>%
+  group_by(MOA) %>%
   tally
 
-moa.adj.mat <- cr.melt %>% 
-  left_join(., moa.cnt, by = c("MOA.x" = "MOA")) %>% 
-  left_join(., moa.cnt, by = c("MOA.y" = "MOA")) %>% 
+moa.adj.mat <- cr.melt %>%
+  left_join(., moa.cnt, by = c("MOA.x" = "MOA")) %>%
+  left_join(., moa.cnt, by = c("MOA.y" = "MOA")) %>%
   filter(Var1 != Var2) %>%
-  filter(n.x >= 6 & n.y >= 6) %>% 
-  group_by(MOA.x, MOA.y) %>% 
+  filter(n.x >= 6 & n.y >= 6) %>%
+  group_by(MOA.x, MOA.y) %>%
   summarise(n.z = sum(value > 0.99)/n.x[1]/n.y[1]) %>%
   arrange(-n.z) %>%
   slice(1:k) %>%
@@ -294,8 +294,8 @@ for (i in 1:length(cls)) {
     as.matrix() %>%
     as.vector() %>%
     lapply(., function(x) str_split(x, ", ")[[1]]) %>%
-    unlist 
-    
+    unlist
+
     moa.freq <- prop.table(table(moas.in.cls)) * length(moas.in.cls)
     df <- as.data.frame(moa.freq)
     colnames(df) <- c(sprintf("MOA in cluster %d", i), "n")
@@ -327,56 +327,56 @@ is.in <- Vectorize(is.in)
 
 plot.within.MOA <- function(MOA.name, cor.thr = 0.90, plot.mat = F, verbose = F) {
   MOA.name <- MOA.name %>% as.matrix() %>% as.vector()
-  
-  brds <- cdrp.profiles %>% 
+
+  brds <- cdrp.profiles %>%
     filter(is.in(MOA, MOA.name)) %>%
-    select(Metadata_broad_sample) %>% 
-    as.matrix() %>% 
+    select(Metadata_broad_sample) %>%
+    as.matrix() %>%
     as.vector()
-  
-  other.brds <- cdrp.profiles %>% 
+
+  other.brds <- cdrp.profiles %>%
     filter(!str_detect(MOA, MOA.name)) %>%
-    select(Metadata_broad_sample) %>% 
-    as.matrix() %>% 
+    select(Metadata_broad_sample) %>%
+    as.matrix() %>%
     as.vector()
 
   if (plot.mat) {
-    corrplot::corrplot(cr.norm[brds, brds], 
-                       method = "color", 
-                       order = "hclust", 
-                       hclust.method = "average", 
-                       is.corr = F, 
-                       cl.lim = c(0, 1), 
+    corrplot::corrplot(cr.norm[brds, brds],
+                       method = "color",
+                       order = "hclust",
+                       hclust.method = "average",
+                       is.corr = F,
+                       cl.lim = c(0, 1),
                        col = colorRampPalette(c("green", "white", "darkred", "white", "darkblue"))(200))
   }
-  
+
   x <- cr.norm[brds, brds] %>% as.dist() %>% as.vector()
   y <- cr.norm[brds, other.brds] %>% as.vector()
-  
+
   z1 <- x
   z2 <- y
-  
+
   v11 <- which(z1 > cor.thr) %>% length
   v12 <- which(z1 < cor.thr) %>% length
   v21 <- which(z2 > cor.thr) %>% length
   v22 <- which(z2 < cor.thr) %>% length
-  
+
   V <- rbind(c(v11, v12), c(v21, v22))
-  
+
   if (verbose) {
     print(V)
   }
-  
+
   fsh <- fisher.test(V, alternative = "greater")
-  return(data.frame(p.value = fsh$p.value, 
+  return(data.frame(p.value = fsh$p.value,
                     odds.ratio = fsh$estimate))
 }
 
 sig.moas <- cdrp.profiles %>%
-  group_by(MOA) %>% 
-  tally %>% 
-  arrange(-n) %>% 
-  filter(n >= 2 & MOA != "") %>% 
+  group_by(MOA) %>%
+  tally %>%
+  arrange(-n) %>%
+  filter(n >= 2 & MOA != "") %>%
   select(MOA) %>%
   as.matrix() %>%
   as.vector() %>%
@@ -395,21 +395,21 @@ MOA.list <- cdrp.profiles %>%
   dplyr::rename(MOA = MOA.sep)
 
 df <- data.frame(MOA = sig.moas)
-df <- df %>% 
+df <- df %>%
   group_by(MOA) %>%
   do(data.frame(plot.within.MOA(.[,"MOA"]))) %>%
   ungroup()
-  
+
 moa.corr <- df %>% as.data.frame()
 
-moa.corr <- moa.corr %>% 
-  left_join(., MOA.list %>% 
-            group_by(MOA) %>% 
-            tally %>% 
-            ungroup(), 
+moa.corr <- moa.corr %>%
+  left_join(., MOA.list %>%
+            group_by(MOA) %>%
+            tally %>%
+            ungroup(),
           by = "MOA") %>%
   filter(n >= 6) %>%
-  mutate(p.value = p.adjust(p.value, method = "BH")) 
+  mutate(p.value = p.adjust(p.value, method = "BH"))
 
 moa.corr %>%
   mutate(is.consistent = p.value < 0.05) %>%
@@ -425,7 +425,7 @@ moa.corr %>%
 
 metadata <- cdrp.profiles %>%
   select(Metadata_broad_sample, MOA) %>%
-  rename(Metadata_moa = MOA) %>% 
+  rename(Metadata_moa = MOA) %>%
   distinct()
 
 moas.score <- moa_recall(cr, metadata = metadata, n.cores = 3, N = 10000)
@@ -434,11 +434,11 @@ moas.score <- moas.score %>% filter(!is.na(p.value))
 
 #moas.score <- moas.score %>% mutate(p.value = p.adjust(p.value, method = "BH"))
 
-moas.score %>% 
-  left_join(., MOA.list %>% 
-            group_by(MOA) %>% 
-            tally %>% 
-            ungroup(), 
+moas.score %>%
+  left_join(., MOA.list %>%
+            group_by(MOA) %>%
+            tally %>%
+            ungroup(),
           by = "MOA") %>%
   filter(n >= 2) %>%
   #mutate(p.value = p.adjust(p.value, "BH")) %>%
@@ -460,18 +460,18 @@ extremest.value <- function(x) {
   } else {
     return(mx)
   }
-} 
+}
 
 count.sig <- function(x, thr = 0.5) {
   y <- length(which(x >= thr))
   z <- length(which(x <= -thr))
-  
+
   ifelse(y > z, y, -z)
 }
 
-moa.names <- moa.corr %>% 
+moa.names <- moa.corr %>%
   filter(p.value < 0.05) %>%
-  select(MOA) %>% 
+  select(MOA) %>%
   as.matrix() %>%
   as.vector()
 
@@ -486,33 +486,33 @@ addn <- MOA.list %>%
 #moa.names <- c(moa.names, addn)
 
 for (MOA.name in moa.names) {
-  brds <- cdrp.profiles %>% 
+  brds <- cdrp.profiles %>%
     filter(str_detect(MOA, MOA.name)) %>%
-    select(CPD_NAME.x) %>% 
-    mutate(CPD_NAME = str_to_lower(CPD_NAME.x)) 
-  
+    select(CPD_NAME.x) %>%
+    mutate(CPD_NAME = str_to_lower(CPD_NAME.x))
+
     brds1 <- brds %>% mutate(CPD_NAME = str_replace(CPD_NAME, "-", ""))
     brds2 <- brds %>% mutate(CPD_NAME = str_replace(CPD_NAME, "-", " "))
     brds <- rbind(brds1, brds2, brds) %>% as.matrix() %>% as.vector() %>% unique
-    
-    cmpd.num <- gene.compound.cr %>% 
-      filter(Var1 %in% brds) %>% 
-      group_by(Var2) %>% 
-      tally %>% 
+
+    cmpd.num <- gene.compound.cr %>%
+      filter(Var1 %in% brds) %>%
+      group_by(Var2) %>%
+      tally %>%
       slice(1) %>%
-      select(n) %>% 
+      select(n) %>%
       as.matrix() %>%
       as.vector()
 
-  if (length(cmpd.num) > 0 && cmpd.num > 0) {    
-    
-    gene.compound.cr %>% 
-      filter(Var1 %in% brds) %>% 
-      group_by(Var2) %>% 
+  if (length(cmpd.num) > 0 && cmpd.num > 0) {
+
+    gene.compound.cr %>%
+      filter(Var1 %in% brds) %>%
+      group_by(Var2) %>%
       summarise(value = count.sig(value, 0.45)) %>%
-      arrange(-value) %>% 
-      slice(c(1:5, (n()-4):n())) %>% 
-      rename(gene = Var2) %>% 
+      arrange(-value) %>%
+      slice(c(1:5, (n()-4):n())) %>%
+      rename(gene = Var2) %>%
       rename(!!sprintf("max corr. to %s in %d cmpd.", MOA.name, cmpd.num) := !!"value") %>%
       knitr::kable() %>%
       print
@@ -531,16 +531,16 @@ rep.moa <- function(x, colname) {
     u[1] <- colname
     colnames(df) <- u
     return(df)
-  } 
+  }
   return(x)
 }
 
-cr.melt.exp <- cr.melt %>% 
+cr.melt.exp <- cr.melt %>%
   mutate(MOA.x = as.character(MOA.x), MOA.y = as.character(MOA.y)) %>%
   mutate(rownm = 1:n()) %>%
-  filter(as.character(Var1) < as.character(Var2)) %>% 
-  arrange(-value) %>% 
-  slice(1:round(n() * 0.05)) %>% 
+  filter(as.character(Var1) < as.character(Var2)) %>%
+  arrange(-value) %>%
+  slice(1:round(n() * 0.05)) %>%
   group_by(rownm) %>%
   do(data.frame(rep.moa(.[], "MOA.y"))) %>%
   ungroup() %>%
@@ -565,7 +565,7 @@ cx <- cf %>%
   mutate(value = ifelse(is.na(n), 0, n)) %>%
   select(-n) %>%
   reshape2::acast(Var1 ~ Var2)
-  
+
 i <- which(apply(cx, 1, sum) > 0)
 cx <- cx[i, i]
 
@@ -587,60 +587,60 @@ corrplot::corrplot(v, method = "color", is.corr = F, tl.cex = 0.5)
 thr <- 0.97
 
 gene.compound.cr <- readRDS("../results/master/2017-05-02_9796dc34/cr_melt_cp.rds")
-cr.gc <- gene.compound.cr %>% 
+cr.gc <- gene.compound.cr %>%
   group_by(Var1, Var2) %>%
   slice(1) %>%
   ungroup() %>%
   reshape2::acast(Var1 ~ Var2)
 
-cr.norm.gc <- apply(cr.gc, 2, function(x) (ecdf(x)(x))) 
+cr.norm.gc <- apply(cr.gc, 2, function(x) (ecdf(x)(x)))
 rownames(cr.norm.gc) <- rownames(cr.gc)
 colnames(cr.norm.gc) <- colnames(cr.gc)
 
-gene.compound.cr <- cr.norm.gc %>% 
+gene.compound.cr <- cr.norm.gc %>%
   reshape2::melt()
 
 gene.compound.cr.ext <- gene.compound.cr %>%
-  left_join(., cdrp.profiles %>% 
+  left_join(., cdrp.profiles %>%
               select(CPD_NAME.x, Metadata_broad_sample, MOA, Target) %>%
-              mutate(CPD_NAME.x = ifelse(str_detect(CPD_NAME.x, "BRD-"), 
-                                         Metadata_broad_sample, 
-                                         str_to_lower(CPD_NAME.x))),  
+              mutate(CPD_NAME.x = ifelse(str_detect(CPD_NAME.x, "BRD-"),
+                                         Metadata_broad_sample,
+                                         str_to_lower(CPD_NAME.x))),
             by = c("Var1" = "CPD_NAME.x")) %>%
   group_by(Var1, Var2) %>%
   slice(1) %>%
-  ungroup() 
+  ungroup()
 
 v11 <- gene.compound.cr.ext %>%
-  filter(str_detect(Target, paste0(Var2, ", ")) | 
+  filter(str_detect(Target, paste0(Var2, ", ")) |
            str_detect(Target, paste0(", ", Var2)) |
-           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2, ", ")) |
            Target == Var2) %>%
   filter(value > thr | value < 1 - thr) %>%
   NROW
 
 v12 <- gene.compound.cr.ext %>%
-  filter(! (str_detect(Target, paste0(Var2, ", ")) | 
+  filter(! (str_detect(Target, paste0(Var2, ", ")) |
            str_detect(Target, paste0(", ", Var2)) |
-           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2, ", ")) |
            Target == Var2)) %>%
-  filter(value > thr | value < 1 - thr) %>% 
+  filter(value > thr | value < 1 - thr) %>%
   NROW
 
 v21 <- gene.compound.cr.ext %>%
-  filter(str_detect(Target, paste0(Var2, ", ")) | 
+  filter(str_detect(Target, paste0(Var2, ", ")) |
            str_detect(Target, paste0(", ", Var2)) |
-           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2, ", ")) |
            Target == Var2) %>%
-  filter(! (value > thr | value < 1 - thr)) %>% 
+  filter(! (value > thr | value < 1 - thr)) %>%
   NROW
 
 v22 <- gene.compound.cr.ext %>%
-  filter(!(str_detect(Target, paste0(Var2, ", ")) | 
+  filter(!(str_detect(Target, paste0(Var2, ", ")) |
            str_detect(Target, paste0(", ", Var2)) |
-           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2, ", ")) |
            Target == Var2)) %>%
-  filter(! (value > thr | value < 1 - thr)) %>% 
+  filter(! (value > thr | value < 1 - thr)) %>%
   NROW
 
 V <- rbind(c(v11, v12), c(v21, v22))
@@ -648,9 +648,9 @@ V <- rbind(c(v11, v12), c(v21, v22))
 fisher.test(V, alternative = "greater") %>% print
 
 gene.compound.cr.ext %>%
-  filter(str_detect(Target, paste0(Var2, ", ")) | 
+  filter(str_detect(Target, paste0(Var2, ", ")) |
            str_detect(Target, paste0(", ", Var2)) |
-           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2, ", ")) |
            Target == Var2) %>%
   filter(value > thr | value < 1 - thr) %>%
   arrange(Var2) %>%
@@ -664,29 +664,29 @@ source("getPPI.R")
 thr <- 0.97
 
 gene.compound.cr <- readRDS("../results/master/2017-05-02_9796dc34/cr_melt_cp.rds")
-cr.gc <- gene.compound.cr %>% 
+cr.gc <- gene.compound.cr %>%
   group_by(Var1, Var2) %>%
   slice(1) %>%
   ungroup() %>%
   reshape2::acast(Var1 ~ Var2)
 
-cr.norm.gc <- apply(cr.gc, 2, function(x) (ecdf(x)(x))) 
+cr.norm.gc <- apply(cr.gc, 2, function(x) (ecdf(x)(x)))
 rownames(cr.norm.gc) <- rownames(cr.gc)
 colnames(cr.norm.gc) <- colnames(cr.gc)
 
-gene.compound.cr <- cr.norm.gc %>% 
+gene.compound.cr <- cr.norm.gc %>%
   reshape2::melt()
 
 gene.compound.cr.ext <- gene.compound.cr %>%
-  left_join(., cdrp.profiles %>% 
+  left_join(., cdrp.profiles %>%
               select(CPD_NAME.x, Metadata_broad_sample, MOA, Target) %>%
-              mutate(CPD_NAME.x = ifelse(str_detect(CPD_NAME.x, "BRD-"), 
-                                         Metadata_broad_sample, 
-                                         str_to_lower(CPD_NAME.x))),  
+              mutate(CPD_NAME.x = ifelse(str_detect(CPD_NAME.x, "BRD-"),
+                                         Metadata_broad_sample,
+                                         str_to_lower(CPD_NAME.x))),
             by = c("Var1" = "CPD_NAME.x")) %>%
   group_by(Var1, Var2) %>%
   slice(1) %>%
-  ungroup() 
+  ungroup()
 
 
 expand.prot.target <- function(target) {
@@ -694,14 +694,14 @@ expand.prot.target <- function(target) {
   if (is.na(target)) {
     return(target)
   }
-  
+
   ppis <- get.all.interacting.proteins(str_split(target, ", ")[[1]])
   if (is.null(ppis)) {
     return(NA)
   }
-  
-  return(ppis %>% 
-           select(Protein.1, Protein.2) %>% 
+
+  return(ppis %>%
+           select(Protein.1, Protein.2) %>%
            group_by(Protein.1, Protein.2) %>%
            tally() %>%
            filter(n >= 5) %>%
@@ -709,46 +709,46 @@ expand.prot.target <- function(target) {
            as.matrix %>% as.vector() %>% unique() %>% paste(., collapse = ", "))
 }
 
-cmpd.targ <- gene.compound.cr.ext %>% 
-  select(Var1, Target) %>% 
+cmpd.targ <- gene.compound.cr.ext %>%
+  select(Var1, Target) %>%
   distinct() %>%
   group_by(Var1) %>%
   do(data.frame(Target = expand.prot.target(.[,"Target"])))
-  
+
 gene.compound.cr.ext <- gene.compound.cr.ext %>%
   select(-Target) %>%
   left_join(., cmpd.targ %>% ungroup(), by = "Var1")
 
 v11 <- gene.compound.cr.ext %>%
-  filter(str_detect(Target, paste0(Var2, ", ")) | 
+  filter(str_detect(Target, paste0(Var2, ", ")) |
            str_detect(Target, paste0(", ", Var2)) |
-           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2, ", ")) |
            Target == Var2) %>%
   filter(value > thr | value < 1 - thr) %>%
   NROW
 
 v12 <- gene.compound.cr.ext %>%
-  filter(! (str_detect(Target, paste0(Var2, ", ")) | 
+  filter(! (str_detect(Target, paste0(Var2, ", ")) |
            str_detect(Target, paste0(", ", Var2)) |
-           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2, ", ")) |
            Target == Var2)) %>%
-  filter(value > thr | value < 1 - thr) %>% 
+  filter(value > thr | value < 1 - thr) %>%
   NROW
 
 v21 <- gene.compound.cr.ext %>%
-  filter(str_detect(Target, paste0(Var2, ", ")) | 
+  filter(str_detect(Target, paste0(Var2, ", ")) |
            str_detect(Target, paste0(", ", Var2)) |
-           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2, ", ")) |
            Target == Var2) %>%
-  filter(! (value > thr | value < 1 - thr)) %>% 
+  filter(! (value > thr | value < 1 - thr)) %>%
   NROW
 
 v22 <- gene.compound.cr.ext %>%
-  filter(!(str_detect(Target, paste0(Var2, ", ")) | 
+  filter(!(str_detect(Target, paste0(Var2, ", ")) |
            str_detect(Target, paste0(", ", Var2)) |
-           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2, ", ")) |
            Target == Var2)) %>%
-  filter(! (value > thr | value < 1 - thr)) %>% 
+  filter(! (value > thr | value < 1 - thr)) %>%
   NROW
 
 V <- rbind(c(v11, v12), c(v21, v22))
@@ -756,9 +756,9 @@ V <- rbind(c(v11, v12), c(v21, v22))
 fisher.test(V, alternative = "greater") %>% print
 
 gene.compound.cr.ext %>%
-  filter(str_detect(Target, paste0(Var2, ", ")) | 
+  filter(str_detect(Target, paste0(Var2, ", ")) |
            str_detect(Target, paste0(", ", Var2)) |
-           str_detect(Target, paste0(", ", Var2, ", ")) | 
+           str_detect(Target, paste0(", ", Var2, ", ")) |
            Target == Var2) %>%
   filter(value > thr | value < 1 - thr) %>%
   select(-Target) %>%

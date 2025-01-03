@@ -16,12 +16,12 @@ doMC::registerDoMC(2)
 
 lst <- list.dirs("/Volumes/Seagate Backup Plus Drive/CDRP")
 cell.cnts <- foreach(lst.i = lst[2:length(lst)]) %dopar% {
-  fls <- list.files(lst.i) 
+  fls <- list.files(lst.i)
   fl <- fls[which(str_detect(fls, "sqlite"))]
   db <- src_sqlite(sprintf("%s/%s", lst.i, fl))
   img <- tbl(db, "Image")
-  
-  cell.cnt <- img %>% 
+
+  cell.cnt <- img %>%
     select(Image_Count_Cells, Image_Metadata_Plate, Image_Metadata_Well) %>%
     group_by(Image_Metadata_Plate, Image_Metadata_Well) %>%
     summarise_each(funs("sum")) %>%

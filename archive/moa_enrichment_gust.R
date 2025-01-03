@@ -28,8 +28,8 @@ u <- rep.cor(Pf.full.plate.norm, "Image_Metadata_BROAD_ID", Pf.full.plate.norm$f
 thr <- non.rep.cor(Pf.full.plate.norm, "Image_Metadata_BROAD_ID", Pf.full.plate.norm$feat_cols)
 strong.cmpd <- u$Image_Metadata_BROAD_ID[which(u$cr > thr)]
 
-Pf.final <- Pf.full.plate.norm$data %>% dplyr::filter(Image_Metadata_BROAD_ID %in% strong.cmpd) %>% as.data.frame() 
-Pf.final.all <- Pf.full.plate.norm$data %>% as.data.frame() 
+Pf.final <- Pf.full.plate.norm$data %>% dplyr::filter(Image_Metadata_BROAD_ID %in% strong.cmpd) %>% as.data.frame()
+Pf.final.all <- Pf.full.plate.norm$data %>% as.data.frame()
 
 all.cols <- colnames(Pf.final)
 fact.col <- all.cols[which(str_detect(all.cols, "Metadata") | all.cols %in% c("Plate", "Well"))]
@@ -46,7 +46,7 @@ Pf.cmpd.all <- Pf.gust.all
 Pf.cmpd.all$data <- Pf.cmpd.all$data[,colnames(Pf.cmpd$data)]
 Pf.cmpd.all$feat_cols <- Pf.cmpd$feat_cols
 Pf.cmpd.all$factor_cols <- Pf.cmpd$factor_cols
-Pf.cmpd$data$Image_Metadata_SOURCE_COMPOUND_NAME <- lapply(Pf.cmpd$data$Image_Metadata_SOURCE_COMPOUND_NAME, 
+Pf.cmpd$data$Image_Metadata_SOURCE_COMPOUND_NAME <- lapply(Pf.cmpd$data$Image_Metadata_SOURCE_COMPOUND_NAME,
                                                            function(x) str_to_lower(x)) %>% unlist
 moas <- read.csv("../input/cmpd_moa.csv", header = T)
 moas$Name <- lapply(moas$Name, function(x) str_to_lower(x)) %>% unlist
@@ -59,29 +59,29 @@ MOA.consistency <- data.frame(MOA = c(), consistent = c(), sig.strn = c(), thres
 n.sample <- 20
 
 cons <- foreach(moa = distinct.moas) %dopar% {
-  Px <- Pf.cmpd$data %>% dplyr::filter(MOA == moa) 
+  Px <- Pf.cmpd$data %>% dplyr::filter(MOA == moa)
   cr <- cor(Px[,Pf.cmpd$feat_cols] %>% t, method = corr.type)
   colnames(cr) <- Px$Image_Metadata_SOURCE_COMPOUND_NAME
   rownames(cr) <- Px$Image_Metadata_SOURCE_COMPOUND_NAME
-  
-  cr1 <- cr 
-  
+
+  cr1 <- cr
+
   smp <- c()
-  
+
   i <- 1
   while (i <= n.sample) {
     cmpd.sm <- sample(Pf.cmpd$data$Image_Metadata_SOURCE_COMPOUND_NAME %>% unique, NROW(cr1))
-    Px <- Pf.cmpd$data %>% dplyr::filter(Image_Metadata_SOURCE_COMPOUND_NAME %in% cmpd.sm) 
+    Px <- Pf.cmpd$data %>% dplyr::filter(Image_Metadata_SOURCE_COMPOUND_NAME %in% cmpd.sm)
     if (length(unique(setdiff(Px$MOA, NA))) < length((setdiff(Px$MOA, NA)))) {
       next
     }
     i <- i + 1
     cr <- cor(Px[,Pf.cmpd$feat_cols] %>% t, method = corr.type)
-    cr1.tmp <- cr 
+    cr1.tmp <- cr
     smp <- c(smp, cr1.tmp %>% as.dist() %>% median(., na.rm = T))
   }
   thr <- quantile(smp, 0.95, na.rm = T)
-  
+
   v <- cr1 %>% as.dist() %>% as.vector() %>% median
   data.frame(MOA = moa, consistent = (v >= thr), sig.strn = round(v, 2),
              thresh = round(thr, 2), n.members = NROW(cr1))

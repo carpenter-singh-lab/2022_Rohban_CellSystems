@@ -229,20 +229,20 @@ if (just.bioactives) {
   Pf &lt;- rbind(Pf.1, Pf.2)
 }
 
-feat &lt;- Pf %&gt;% 
-          dplyr::select(-dplyr::contains(&quot;Metadata_&quot;)) %&gt;% 
+feat &lt;- Pf %&gt;%
+          dplyr::select(-dplyr::contains(&quot;Metadata_&quot;)) %&gt;%
           colnames()
 
 u &lt;- rep.cor(list(data = Pf,
              feat_cols = feat,
              factor_cols = setdiff(colnames(Pf), feat)),
-        grp.var = &quot;Metadata_broad_sample&quot;, 
+        grp.var = &quot;Metadata_broad_sample&quot;,
         feat.var = feat)
 thr &lt;- non.rep.cor(list(data = Pf,
              feat_cols = feat,
              factor_cols = setdiff(colnames(Pf), feat)),
-        grp.var = &quot;Metadata_broad_sample&quot;, 
-        feat.var = feat, 
+        grp.var = &quot;Metadata_broad_sample&quot;,
+        feat.var = feat,
         quant = hit.sel.quant)
 
 strongs &lt;- u$Metadata_broad_sample[which(u$cr &gt; thr)]
@@ -265,19 +265,19 @@ metadata.ext &lt;- readr::read_csv(&quot;../input/CDP2/cdrp.cpd.meta.csv&quot;)
 
 <pre><code class="r">brd.full &lt;- unique(Pf$Metadata_broad_sample)
 brds &lt;- lapply(brd.full, function(x) paste(str_split(x,
-                                                                             &quot;-&quot;)[[1]][1:2], 
+                                                                             &quot;-&quot;)[[1]][1:2],
                                                    sep = &quot;-&quot;, collapse = &quot;-&quot;)) %&gt;% unlist()
-brd.mapping &lt;- data.frame(BROAD_CPD_ID = brds, 
+brd.mapping &lt;- data.frame(BROAD_CPD_ID = brds,
                           Image_Metadata_BROAD_ID = brd.full)
-metadata.ext %&lt;&gt;% 
-  dplyr::select(BROAD_CPD_ID, CPD_NAME) %&gt;% 
+metadata.ext %&lt;&gt;%
+  dplyr::select(BROAD_CPD_ID, CPD_NAME) %&gt;%
   dplyr::filter(BROAD_CPD_ID %in% brds) %&gt;%
   dplyr::mutate(CPD_NAME = ifelse(str_detect(CPD_NAME, &quot;BRD-&quot;), &quot;&quot;, CPD_NAME)) %&gt;%
   dplyr::inner_join(., brd.mapping, by = &quot;BROAD_CPD_ID&quot;) %&gt;%
   dplyr::select(-BROAD_CPD_ID)
 
 metadata &lt;- data.frame(Metadata_broad_sample = unique(Pf$Metadata_broad_sample))
-metadata %&lt;&gt;% 
+metadata %&lt;&gt;%
   dplyr::left_join(., metadata.ext, by = c(&quot;Metadata_broad_sample&quot; = &quot;Image_Metadata_BROAD_ID&quot;))
 
 Pf %&lt;&gt;% dplyr::left_join(., metadata, by = &quot;Metadata_broad_sample&quot;)
@@ -290,14 +290,14 @@ Pf %&lt;&gt;% dplyr::mutate(CPD_NAME = str_to_lower(CPD_NAME))
 Pf %&lt;&gt;% dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME, &quot;-&quot;, &quot;&quot;)) %&gt;%
   dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, &quot; &quot;, &quot;&quot;)) %&gt;%
   dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, &quot;\\(&quot;, &quot;&quot;)) %&gt;%
-  dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, &quot;\\)&quot;, &quot;&quot;)) 
+  dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, &quot;\\)&quot;, &quot;&quot;))
 
 MOA &lt;- read.csv(&quot;../input/moas.txt&quot;, sep = &quot;\t&quot;)
 MOA %&lt;&gt;% dplyr::mutate(Name = str_to_lower(Name)) %&gt;%
   dplyr::mutate(Name_san = str_replace_all(Name, &quot;-&quot;, &quot;&quot;)) %&gt;%
   dplyr::mutate(Name_san = str_replace_all(Name_san, &quot; &quot;, &quot;&quot;)) %&gt;%
   dplyr::mutate(Name_san = str_replace_all(Name_san, &quot;\\(&quot;, &quot;&quot;)) %&gt;%
-  dplyr::mutate(Name_san = str_replace_all(Name_san, &quot;\\)&quot;, &quot;&quot;)) 
+  dplyr::mutate(Name_san = str_replace_all(Name_san, &quot;\\)&quot;, &quot;&quot;))
 
 Pf %&lt;&gt;% dplyr::left_join(., MOA, by = c(&quot;CPD_NAME_san&quot; = &quot;Name_san&quot;))
 meta.col &lt;- setdiff(colnames(Pf), feat)
@@ -324,7 +324,7 @@ rownames(m.list) &lt;- m.list$moa[pr]
 m.list.p &lt;- lapply(x$Metadata_moa, function(x) m.list[(x %&gt;% as.character()), &quot;moa&quot;]) %&gt;% unlist
 
 if (permute.moas) {
-  x$Metadata_moa &lt;- m.list.p  
+  x$Metadata_moa &lt;- m.list.p
 }
 
 x &lt;- cbind(x, data.frame(Metadata_Treatment = paste(x$Metadata_pert_id, x$Metadata_mg_per_ml, sep = &quot;@&quot;)))
@@ -333,11 +333,11 @@ feats &lt;- feats[which(!str_detect(feats, &quot;Metadata&quot;))]
 metadata &lt;- colnames(x)
 metadata &lt;- metadata[which(str_detect(metadata, &quot;Metadata&quot;))]
 
-thr &lt;- non.rep.cor(list(data = x, 
-                        feat_col = feats, 
+thr &lt;- non.rep.cor(list(data = x,
+                        feat_col = feats,
                         factor_col = metadata),
-                   &quot;Metadata_Treatment&quot;, 
-                   feats, 
+                   &quot;Metadata_Treatment&quot;,
+                   feats,
                    quant = hit.sel.quant)
 
 u &lt;- rep.cor(list(data = x, feat_col = feats, factor_col = metadata), &quot;Metadata_Treatment&quot;, feats)
@@ -362,7 +362,7 @@ sprintf(&quot;Hit ratio (compounds) : %f%%&quot;, round(length(strong.cmpd)/leng
 
 <pre><code class="r">x.all &lt;- x
 x &lt;- x %&gt;% dplyr::filter(Metadata_Treatment %in% strong.trt)
-x.collapsed &lt;- x %&gt;% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %&gt;% 
+x.collapsed &lt;- x %&gt;% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %&gt;%
   dplyr::select(one_of(c(feats, &quot;Metadata_pert_iname&quot;, &quot;Metadata_pert_idose&quot;, &quot;Metadata_moa&quot;))) %&gt;% dplyr::summarise_each(funs(&quot;mean&quot;)) %&gt;% dplyr::ungroup() %&gt;% dplyr::filter(!is.na(Metadata_pert_iname))
 
 Pf.repurp &lt;- list(data = x.collapsed, feat_cols = feats, factor_cols = c(&quot;Metadata_pert_iname&quot;, &quot;Metadata_pert_idose&quot;, &quot;Metadata_moa&quot;))
@@ -402,8 +402,8 @@ print(length(Pf.cdrp$feat_cols))
 <pre><code>## [1] 7638
 </code></pre>
 
-<pre><code class="r">cr &lt;- cor(Pf.repurp$data[,Pf.repurp$feat_cols] %&gt;% t, 
-          Pf.cdrp$data[,Pf.cdrp$feat_cols] %&gt;% t, 
+<pre><code class="r">cr &lt;- cor(Pf.repurp$data[,Pf.repurp$feat_cols] %&gt;% t,
+          Pf.cdrp$data[,Pf.cdrp$feat_cols] %&gt;% t,
           method = corr.type)
 
 colnames(cr) &lt;- Pf.cdrp$data$Metadata_broad_sample
@@ -416,17 +416,17 @@ cr.melt &lt;- cr %&gt;% melt
 cr.melt &lt;- cr.melt %&gt;% group_by(Var1, Var2) %&gt;% dplyr::summarise(value = mean(value, na.rm = T))
 
 crx &lt;- cr.melt %&gt;% reshape2::dcast(Var1 ~ Var2)
-crx &lt;- crx %&gt;% 
+crx &lt;- crx %&gt;%
   tibble::column_to_rownames(., var = &quot;Var1&quot;)
 </code></pre>
 
-<pre><code class="r">cr.melt.ext &lt;- cr.melt %&gt;% 
+<pre><code class="r">cr.melt.ext &lt;- cr.melt %&gt;%
   dplyr::left_join(., unique(Pf.cdrp$data[,c(&quot;Metadata_broad_sample&quot;,
                                       &quot;CPD_NAME&quot;,
-                                      &quot;MOA&quot;)]), 
+                                      &quot;MOA&quot;)]),
                    by = c(&quot;Var2&quot; = &quot;Metadata_broad_sample&quot;)) %&gt;%
   dplyr::left_join(., unique(Pf.repurp$data[,c(&quot;Metadata_pert_iname&quot;,
-                                               &quot;Metadata_moa&quot;)]), 
+                                               &quot;Metadata_moa&quot;)]),
                    by = c(&quot;Var1&quot; = &quot;Metadata_pert_iname&quot;))
 </code></pre>
 
@@ -437,53 +437,53 @@ crx &lt;- crx %&gt;%
 ## character vector and factor, coercing into character vector
 </code></pre>
 
-<pre><code class="r">cr.melt.ext %&lt;&gt;% 
-  dplyr::filter(!is.infinite(value) &amp; 
-                  !is.na(MOA) &amp; 
+<pre><code class="r">cr.melt.ext %&lt;&gt;%
+  dplyr::filter(!is.infinite(value) &amp;
+                  !is.na(MOA) &amp;
                   MOA != &quot;&quot;)
 
 matching.moas &lt;- function(moa1, moa2) {
-  m1 &lt;- str_split(moa1, &quot;, &quot;)[[1]]  
-  m2 &lt;- str_split(moa2, &quot;\\|&quot;)[[1]]  
+  m1 &lt;- str_split(moa1, &quot;, &quot;)[[1]]
+  m2 &lt;- str_split(moa2, &quot;\\|&quot;)[[1]]
   any(m1 %in% m2)
 }
 
 matching.moas &lt;- Vectorize(matching.moas)
 
-cr.melt.ext2 &lt;- cr.melt.ext %&gt;% 
+cr.melt.ext2 &lt;- cr.melt.ext %&gt;%
   dplyr::mutate(match = matching.moas(MOA, Metadata_moa))
 </code></pre>
 
-<pre><code class="r">cr.melt.ext2.sor &lt;- cr.melt.ext2 %&gt;% 
+<pre><code class="r">cr.melt.ext2.sor &lt;- cr.melt.ext2 %&gt;%
   dplyr::arrange(-value) %&gt;%
   dplyr::filter(!is.na(match)) %&gt;% dplyr::ungroup()
 
 n &lt;- round(0.01 * NROW(cr.melt.ext2.sor))
 
-v11 &lt;- cr.melt.ext2.sor %&gt;% 
+v11 &lt;- cr.melt.ext2.sor %&gt;%
   dplyr::slice(1:n) %&gt;%
   dplyr::select(match) %&gt;%
-  as.matrix() %&gt;% 
+  as.matrix() %&gt;%
   as.vector() %&gt;%
   sum(., na.rm = T)
-v12 &lt;- cr.melt.ext2.sor %&gt;% 
+v12 &lt;- cr.melt.ext2.sor %&gt;%
   dplyr::slice(1:n) %&gt;%
   dplyr::select(match) %&gt;%
   dplyr::mutate(match = !match) %&gt;%
-  as.matrix() %&gt;% 
+  as.matrix() %&gt;%
   as.vector() %&gt;%
   sum(., na.rm = T)
-v21 &lt;- cr.melt.ext2.sor %&gt;% 
+v21 &lt;- cr.melt.ext2.sor %&gt;%
   dplyr::slice((n+1):NROW(cr.melt.ext2.sor)) %&gt;%
   dplyr::select(match) %&gt;%
-  as.matrix() %&gt;% 
+  as.matrix() %&gt;%
   as.vector() %&gt;%
   sum(., na.rm = T)
-v22 &lt;- cr.melt.ext2.sor %&gt;% 
+v22 &lt;- cr.melt.ext2.sor %&gt;%
   dplyr::slice((n+1):NROW(cr.melt.ext2.sor)) %&gt;%
   dplyr::select(match) %&gt;%
   dplyr::mutate(match = !match) %&gt;%
-  as.matrix() %&gt;% 
+  as.matrix() %&gt;%
   as.vector() %&gt;%
   sum(., na.rm = T)
 
@@ -491,23 +491,23 @@ V &lt;- rbind(c(v11, v12), c(v21, v22))
 fisher.test(V, alternative = &quot;greater&quot;) %&gt;% print
 </code></pre>
 
-<pre><code>## 
+<pre><code>##
 ##  Fisher&#39;s Exact Test for Count Data
-## 
+##
 ## data:  V
 ## p-value &lt; 2.2e-16
 ## alternative hypothesis: true odds ratio is greater than 1
 ## 95 percent confidence interval:
 ##  2.446901      Inf
 ## sample estimates:
-## odds ratio 
+## odds ratio
 ##   2.799486
 </code></pre>
 
-<pre><code class="r">d &lt;- cr.melt.ext2.sor %&gt;% 
+<pre><code class="r">d &lt;- cr.melt.ext2.sor %&gt;%
     dplyr::slice(1:n) %&gt;%
     dplyr::filter(match) %&gt;%
-    dplyr::arrange(MOA) 
+    dplyr::arrange(MOA)
 
 d %&gt;%
     htmlTable::htmlTable()
@@ -2226,9 +2226,9 @@ d %&gt;%
   dplyr::tally()
 colnames(c)[2] &lt;- &quot;n.total&quot;
 
-d %&gt;% 
+d %&gt;%
   dplyr::group_by(MOA) %&gt;%
-  dplyr::tally() %&gt;% 
+  dplyr::tally() %&gt;%
   dplyr::left_join(., c, by = &quot;MOA&quot;) %&gt;%
   dplyr::mutate(ratio = round(n/n.total, 3)) %&gt;%
   dplyr::arrange(-ratio) %&gt;%
@@ -2560,19 +2560,19 @@ d %&gt;%
 <pre><code class="r">k &lt;- 3
 N &lt;- 100
 
-d &lt;- cr.melt.ext2.sor %&gt;% 
+d &lt;- cr.melt.ext2.sor %&gt;%
   dplyr::group_by(Var2, MOA) %&gt;%
   dplyr::slice(1:k) %&gt;%
-  dplyr::summarise(success = any(match)) %&gt;% 
-  dplyr::filter(success) 
+  dplyr::summarise(success = any(match)) %&gt;%
+  dplyr::filter(success)
 
 ns &lt;- c()
 
 for (i in 1:N) {
-  n &lt;- d.null &lt;- cr.melt.ext2.sor %&gt;% 
+  n &lt;- d.null &lt;- cr.melt.ext2.sor %&gt;%
     dplyr::group_by(Var2, MOA) %&gt;%
     dplyr::sample_n(k) %&gt;%
-    dplyr::summarise(success = any(match)) %&gt;% 
+    dplyr::summarise(success = any(match)) %&gt;%
     dplyr::filter(success) %&gt;%
     NROW
 
@@ -2600,20 +2600,20 @@ print(NROW(d)/length(unique(cr.melt.ext2.sor$Var2)))
 <pre><code class="r">k &lt;- 3
 N &lt;- 100
 
-d &lt;- cr.melt.ext2.sor %&gt;% 
+d &lt;- cr.melt.ext2.sor %&gt;%
   dplyr::group_by(Var1, Metadata_moa) %&gt;%
   dplyr::slice(1:min(k, NROW(.))) %&gt;%
-  dplyr::summarise(success = any(match)) %&gt;% 
-  dplyr::filter(success) 
+  dplyr::summarise(success = any(match)) %&gt;%
+  dplyr::filter(success)
 
 ns &lt;- c()
 
 for (i in 1:N) {
-  n &lt;- d.null &lt;- cr.melt.ext2.sor %&gt;% 
+  n &lt;- d.null &lt;- cr.melt.ext2.sor %&gt;%
     dplyr::sample_frac(1) %&gt;%
     dplyr::group_by(Var1, Metadata_moa) %&gt;%
     dplyr::slice(1:min(k, NROW(.))) %&gt;%
-    dplyr::summarise(success = any(match)) %&gt;% 
+    dplyr::summarise(success = any(match)) %&gt;%
     dplyr::filter(success) %&gt;%
     NROW
 
@@ -2638,55 +2638,55 @@ print(NROW(d)/length(unique(cr.melt.ext2.sor$Var1)))
 <pre><code>## [1] 1.870616
 </code></pre>
 
-<pre><code class="r"># cr1 &lt;- cor(Pf.repurp$data[,Pf.repurp$feat_cols] %&gt;% t, 
+<pre><code class="r"># cr1 &lt;- cor(Pf.repurp$data[,Pf.repurp$feat_cols] %&gt;% t,
 #            method = corr.type)
-# 
+#
 # colnames(cr1) &lt;- Pf.repurp$data$Metadata_pert_iname
 # rownames(cr1) &lt;- Pf.repurp$data$Metadata_pert_iname
-# 
+#
 # cr.melt1 &lt;- cr1 %&gt;% melt
 # cr.melt1 &lt;- cr.melt1 %&gt;% group_by(Var1, Var2) %&gt;% dplyr::summarise(value = mean(value, na.rm = T))
-# 
+#
 # crx1 &lt;- cr.melt1 %&gt;% reshape2::dcast(Var1 ~ Var2)
-# crx1 &lt;- crx1 %&gt;% 
+# crx1 &lt;- crx1 %&gt;%
 #   tibble::column_to_rownames(., var = &quot;Var1&quot;)
-# 
-# crx2 &lt;- cor(Pf.cdrp$data[,Pf.cdrp$feat_cols] %&gt;% t, 
+#
+# crx2 &lt;- cor(Pf.cdrp$data[,Pf.cdrp$feat_cols] %&gt;% t,
 #            method = corr.type)
 # colnames(crx2) &lt;- Pf.cdrp$data$Metadata_broad_sample
 # rownames(crx2) &lt;- Pf.cdrp$data$Metadata_broad_sample
-# 
-# cdrp &lt;- Pf.cdrp$data$Metadata_broad_sample %&gt;% unique 
-# repurp &lt;- Pf.repurp$data$Metadata_pert_iname %&gt;% unique 
-# 
-# cr.tot &lt;- rbind(cbind(crx1[repurp, repurp], crx[repurp, cdrp]), 
+#
+# cdrp &lt;- Pf.cdrp$data$Metadata_broad_sample %&gt;% unique
+# repurp &lt;- Pf.repurp$data$Metadata_pert_iname %&gt;% unique
+#
+# cr.tot &lt;- rbind(cbind(crx1[repurp, repurp], crx[repurp, cdrp]),
 #                 cbind(t(crx[repurp, cdrp]), crx2[cdrp, cdrp]))
-# 
+#
 # hcl &lt;- hclust(as.dist(1 - cr.tot), method = &quot;complete&quot;)
 # ct &lt;- cutree(hcl, h = 1 - 0.35)
-# 
+#
 # sm &lt;- 0
 # for (i in 1:max(ct)) {
 #   nm &lt;- names(which(ct == i))
 #   cdrp.cpd &lt;- Pf.cdrp$data %&gt;%
-#     dplyr::ungroup(.) %&gt;% 
-#     dplyr::filter(Metadata_broad_sample %in% nm) %&gt;% 
+#     dplyr::ungroup(.) %&gt;%
+#     dplyr::filter(Metadata_broad_sample %in% nm) %&gt;%
 #     dplyr::select(CPD_NAME, MOA) %&gt;%
-#     dplyr::rename(name = CPD_NAME) %&gt;% 
+#     dplyr::rename(name = CPD_NAME) %&gt;%
 #     dplyr::mutate(type = &quot;cdrp&quot;) %&gt;%
-#     unique 
-# 
+#     unique
+#
 #   repurp.cpd &lt;- Pf.repurp$data %&gt;%
-#     dplyr::ungroup(.) %&gt;% 
-#     dplyr::filter(Metadata_pert_iname %in% nm) %&gt;% 
+#     dplyr::ungroup(.) %&gt;%
+#     dplyr::filter(Metadata_pert_iname %in% nm) %&gt;%
 #     dplyr::select(Metadata_pert_iname, Metadata_moa) %&gt;%
-#     dplyr::rename(name = Metadata_pert_iname, MOA = Metadata_moa) %&gt;% 
+#     dplyr::rename(name = Metadata_pert_iname, MOA = Metadata_moa) %&gt;%
 #     dplyr::mutate(type = &quot;repurp&quot;) %&gt;%
-#     unique 
-#   
+#     unique
+#
 #   if (NROW(cdrp.cpd) &gt; 0 &amp;&amp; NROW(repurp.cpd) &gt; 0) {
-#     ot &lt;- outer(setdiff(unique(cdrp.cpd$MOA), NA), 
-#                 setdiff(unique(repurp.cpd$MOA), NA), 
+#     ot &lt;- outer(setdiff(unique(cdrp.cpd$MOA), NA),
+#                 setdiff(unique(repurp.cpd$MOA), NA),
 #                 matching.moas)
 #     if (any(ot)) {
 #       rbind(cdrp.cpd, repurp.cpd) %&gt;% print #htmlTable::htmlTable()
@@ -2694,11 +2694,11 @@ print(NROW(d)/length(unique(cr.melt.ext2.sor$Var1)))
 #     }
 #   }
 # }
-# 
+#
 # print(sm)
 
 # library(&quot;blockcluster&quot;)
-# cl &lt;- cocluster(crx %&gt;% as.matrix(), 
+# cl &lt;- cocluster(crx %&gt;% as.matrix(),
 #           datatype = &quot;continuous&quot;,
 #           nbcocluster = c(50, 40))
 # quartz(width = 15, height = 10)

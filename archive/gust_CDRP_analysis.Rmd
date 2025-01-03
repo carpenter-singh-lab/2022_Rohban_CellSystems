@@ -12,7 +12,7 @@ library(foreach)
 library(doParallel)
 
 doParallel::registerDoParallel(cores = 3)
-  
+
 source("rep.corr.func.R")
 permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
@@ -46,7 +46,7 @@ if (just.bioactives) {
   Pf <- rbind(Pf.1, Pf.2)
 }
 
-Pf %<>% filter(Metadata_broad_sample != "DMSO" | 
+Pf %<>% filter(Metadata_broad_sample != "DMSO" |
                                     (!str_detect(Metadata_Well, "01") &
                                     !str_detect(Metadata_Well, "24") &
                                     !str_detect(Metadata_Well, "a") &
@@ -54,26 +54,26 @@ Pf %<>% filter(Metadata_broad_sample != "DMSO" |
 
 Pf %<>% dplyr::mutate(Metadata_plate_well = paste(Metadata_Plate_Map_Name, Metadata_Well, sep = "_"))
 
-feat <- Pf %>% 
-          dplyr::select(-dplyr::contains("Metadata_")) %>% 
+feat <- Pf %>%
+          dplyr::select(-dplyr::contains("Metadata_")) %>%
           colnames()
 
 metadata.ext <- readr::read_csv("../input/CDP2/cdrp.cpd.meta.csv")
 brd.full <- unique(Pf$Metadata_broad_sample)
 brds <- lapply(brd.full, function(x) paste(str_split(x,
-                                                                             "-")[[1]][1:2], 
+                                                                             "-")[[1]][1:2],
                                                    sep = "-", collapse = "-")) %>% unlist()
-brd.mapping <- data.frame(BROAD_CPD_ID = brds, 
+brd.mapping <- data.frame(BROAD_CPD_ID = brds,
                           Image_Metadata_BROAD_ID = brd.full)
-metadata.ext %<>% 
-  dplyr::select(BROAD_CPD_ID, CPD_NAME) %>% 
+metadata.ext %<>%
+  dplyr::select(BROAD_CPD_ID, CPD_NAME) %>%
   dplyr::filter(BROAD_CPD_ID %in% brds) %>%
   dplyr::mutate(CPD_NAME = ifelse(str_detect(CPD_NAME, "BRD-"), "", CPD_NAME)) %>%
   dplyr::inner_join(., brd.mapping, by = "BROAD_CPD_ID") %>%
   dplyr::select(-BROAD_CPD_ID)
 
 metadata <- data.frame(Metadata_broad_sample = unique(Pf$Metadata_broad_sample))
-metadata %<>% 
+metadata %<>%
   dplyr::left_join(., metadata.ext, by = c("Metadata_broad_sample" = "Image_Metadata_BROAD_ID"))
 
 Pf %<>% dplyr::left_join(., metadata, by = "Metadata_broad_sample")
@@ -82,14 +82,14 @@ Pf %<>% dplyr::mutate(CPD_NAME = str_to_lower(CPD_NAME))
 Pf %<>% dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME, "-", "")) %>%
   dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, " ", "")) %>%
   dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, "\\(", "")) %>%
-  dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, "\\)", "")) 
-  
+  dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, "\\)", ""))
+
 MOA <- read.csv("../input/moas.txt", sep = "\t")
 MOA %<>% dplyr::mutate(Name = str_to_lower(Name)) %>%
   dplyr::mutate(Name_san = str_replace_all(Name, "-", "")) %>%
   dplyr::mutate(Name_san = str_replace_all(Name_san, " ", "")) %>%
   dplyr::mutate(Name_san = str_replace_all(Name_san, "\\(", "")) %>%
-  dplyr::mutate(Name_san = str_replace_all(Name_san, "\\)", "")) 
+  dplyr::mutate(Name_san = str_replace_all(Name_san, "\\)", ""))
 
 Pf %<>% dplyr::left_join(., MOA, by = c("CPD_NAME_san" = "Name_san"))
 meta.col <- setdiff(colnames(Pf), feat)
@@ -100,7 +100,7 @@ Pf.cdrp <- list(data = Pf, feat_cols = feat, factor_cols = meta.col)
 source("rep.corr.func.R")
 
 load("../input/Gustafsdottir/Initial_analysis.RData")
-Pf.full.plate.norm$data %<>% filter(Image_Metadata_BROAD_ID != "" | 
+Pf.full.plate.norm$data %<>% filter(Image_Metadata_BROAD_ID != "" |
                                     (!str_detect(Well, "01") &
                                     !str_detect(Well, "24") &
                                     !str_detect(Well, "A") &
@@ -108,21 +108,21 @@ Pf.full.plate.norm$data %<>% filter(Image_Metadata_BROAD_ID != "" |
 metad <- readr::read_csv("../input/Gustafsdottir/BBBC022_v1_image.csv")
 metad <- metad[,c("Image_Metadata_CPD_PLATE_MAP_NAME", "Image_Metadata_PlateID")] %>% unique
 Pf.full.plate.norm$data %<>% left_join(., metad, by = c("Plate" = "Image_Metadata_PlateID"))
-Pf.full.plate.norm$factor_cols <- c(Pf.full.plate.norm$factor_cols, 
+Pf.full.plate.norm$factor_cols <- c(Pf.full.plate.norm$factor_cols,
                                     "Image_Metadata_CPD_PLATE_MAP_NAME")
 
 Pf.full.plate.norm$data %<>% dplyr::mutate(Metadata_plate_well = paste(Image_Metadata_CPD_PLATE_MAP_NAME, Well, sep = "_"))
-Pf.full.plate.norm$factor_cols <- c(Pf.full.plate.norm$factor_cols, 
+Pf.full.plate.norm$factor_cols <- c(Pf.full.plate.norm$factor_cols,
                                     "Metadata_plate_well")
 
 
 MOAs <- read.csv("../input/Gustafsdottir/MOAs.csv")
-Pf.full.plate.norm$data %<>% 
-  dplyr::left_join(., 
-                   MOAs, 
+Pf.full.plate.norm$data %<>%
+  dplyr::left_join(.,
+                   MOAs,
                    by = c("Image_Metadata_SOURCE_COMPOUND_NAME" = "Name"))
 
-Pf.full.plate.norm$factor_cols <- c(Pf.full.plate.norm$factor_cols, 
+Pf.full.plate.norm$factor_cols <- c(Pf.full.plate.norm$factor_cols,
                                     colnames(MOAs)) %>% unique()
 
 Pf.gust <- Pf.full.plate.norm
@@ -135,35 +135,35 @@ Pf.gust$factor_cols <- c("Image_Metadata_BROAD_ID",
 # gust.cmpd <- Pf.gust$data %>%
 #   select(Image_Metadata_BROAD_ID, Image_Metadata_SOURCE_COMPOUND_NAME) %>%
 #   unique
-# 
+#
 # cdrp.cmpd <- Pf.cdrp$data %>%
 #   select(Metadata_broad_sample, CPD_NAME) %>%
 #   unique
-# 
+#
 # cmpds.all <- gust.cmpd %>%
 #   dplyr::full_join(., cdrp.cmpd, by = c("Image_Metadata_BROAD_ID" = "Metadata_broad_sample")) %>%
 #   filter(Image_Metadata_BROAD_ID != "" &
 #            !is.na(Image_Metadata_BROAD_ID)) %>%
-#   mutate(name = ifelse(!is.na(CPD_NAME) & CPD_NAME != "", 
-#                        as.character(CPD_NAME), 
-#                        ifelse(Image_Metadata_SOURCE_COMPOUND_NAME != "" & 
+#   mutate(name = ifelse(!is.na(CPD_NAME) & CPD_NAME != "",
+#                        as.character(CPD_NAME),
+#                        ifelse(Image_Metadata_SOURCE_COMPOUND_NAME != "" &
 #                                 !is.na(Image_Metadata_SOURCE_COMPOUND_NAME),
 #                               as.character(Image_Metadata_SOURCE_COMPOUND_NAME),
 #                               as.character(Image_Metadata_BROAD_ID)))) %>%
-#   mutate(CPD_NAME = name, Image_Metadata_SOURCE_COMPOUND_NAME = name) %>% 
+#   mutate(CPD_NAME = name, Image_Metadata_SOURCE_COMPOUND_NAME = name) %>%
 #   unique() %>%
 #   group_by(Image_Metadata_BROAD_ID) %>%
 #   slice(1) %>%
 #   ungroup(.)
-# 
-# Pf.cdrp$data %<>% 
+#
+# Pf.cdrp$data %<>%
 #   dplyr::select(-CPD_NAME) %>%
-#   dplyr::left_join(., 
+#   dplyr::left_join(.,
 #                    cmpds.all[,c("Image_Metadata_BROAD_ID", "CPD_NAME")],
 #                    by = c("Metadata_broad_sample" = "Image_Metadata_BROAD_ID"))
-# Pf.gust$data %<>% 
+# Pf.gust$data %<>%
 #   dplyr::select(-Image_Metadata_SOURCE_COMPOUND_NAME) %>%
-#   dplyr::left_join(., 
+#   dplyr::left_join(.,
 #                    cmpds.all[,c("Image_Metadata_BROAD_ID", "Image_Metadata_SOURCE_COMPOUND_NAME")],
 #                    by = c("Image_Metadata_BROAD_ID"))
 
@@ -206,7 +206,7 @@ r <- lapply(1:length(v), function(i) (sum(v[1:i])/sum(v))) %>% unlist
 k <- which.min(abs(r - pca.thr))
 
 if (!do.pca) {
-  k <- length(v)  
+  k <- length(v)
 }
 
 d1 <- cbind(pr$x[1:NROW(Pf.cdrp$data),1:k] %>% as.data.frame(), Pf.cdrp$data[,Pf.cdrp$factor_cols] %>% as.data.frame())
@@ -228,17 +228,17 @@ print(NROW(Pf.gust$data))
 ```{r hit selection}
 
 u <- rep.cor(Pf.cdrp,
-        grp.var = "Metadata_plate_well", 
-        feat.var = Pf.cdrp$feat_cols, 
+        grp.var = "Metadata_plate_well",
+        feat.var = Pf.cdrp$feat_cols,
         aux.var = "Metadata_broad_sample")
 u.cdrp <- u
 
 if (!dmos.null) {
   thr <- non.rep.cor(Pf.cdrp,
-        grp.var = "Metadata_broad_sample", 
-        feat.var = Pf.cdrp$feat_cols, 
+        grp.var = "Metadata_broad_sample",
+        feat.var = Pf.cdrp$feat_cols,
         quant = hit.sel.quant.cdrp)
-  
+
 } else {
   thr <- u %>% dplyr::filter(Metadata_broad_sample == "DMSO") %>% select(cr) %>% as.matrix() %>% as.vector() %>% quantile(., hit.sel.quant.cdrp, na.rm = T)
 
@@ -270,13 +270,13 @@ u.gust <- u
 
 if (!dmos.null) {
   thr <- non.rep.cor(Pf.gust,
-                   "Image_Metadata_BROAD_ID", 
-                   Pf.gust$feat_cols, 
+                   "Image_Metadata_BROAD_ID",
+                   Pf.gust$feat_cols,
                    quant = hit.sel.quant)
 
 } else {
   thr <- u %>% dplyr::filter(Image_Metadata_BROAD_ID == "") %>% select(cr) %>% as.matrix() %>% as.vector() %>% quantile(., hit.sel.quant, na.rm = T)
-  
+
 }
 
 if (manual.hit.sel.thr) {
@@ -309,12 +309,12 @@ if (collapse.profiles) {
 }
 
 
-# Pf.cdrp$data %<>% 
+# Pf.cdrp$data %<>%
 #   group_by(CPD_NAME) %>%
 #   slice(1) %>%
 #   ungroup(.)
-# 
-# Pf.gust$data %<>% 
+#
+# Pf.gust$data %<>%
 #   group_by(Image_Metadata_SOURCE_COMPOUND_NAME) %>%
 #   slice(1) %>%
 #   ungroup(.)
@@ -323,25 +323,25 @@ if (collapse.profiles) {
 
 ```{r restricting to the common compounds, eval=T}
 
-Pf.cdrp$data$CPD_NAME <- Pf.cdrp$data$CPD_NAME %>% str_to_lower() 
+Pf.cdrp$data$CPD_NAME <- Pf.cdrp$data$CPD_NAME %>% str_to_lower()
 Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME <- Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME %>% str_to_lower()
 
-cmpd1 <- Pf.cdrp$data$CPD_NAME 
-cmpd2 <- Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME 
+cmpd1 <- Pf.cdrp$data$CPD_NAME
+cmpd2 <- Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME
 
 if (just.common.cmpds) {
-  cmpd <- setdiff(intersect(cmpd1, cmpd2), c("", "NA",NA))  
+  cmpd <- setdiff(intersect(cmpd1, cmpd2), c("", "NA",NA))
 } else {
-  cmpd <- c(cmpd1, cmpd2) %>% unique 
+  cmpd <- c(cmpd1, cmpd2) %>% unique
 }
 
 print(length(cmpd))
 
-#strn.cdrp <- Pf.cdrp$data %>% 
+#strn.cdrp <- Pf.cdrp$data %>%
 #  group_by(CPD_NAME, Metadata_broad_sample) %>%
 #  dplyr::do(data.frame(strength = sum(abs(.[,-c(1, 2, 3)]) > 1 )))
 
-#strn.gust <- Pf.gust$data %>% 
+#strn.gust <- Pf.gust$data %>%
 #  group_by(Image_Metadata_SOURCE_COMPOUND_NAME, Image_Metadata_BROAD_ID) %>%
 #  dplyr::do(data.frame(strength = sum(abs(.[,-c(1, 2, 3, 4)]) > 1 )))
 
@@ -349,29 +349,29 @@ if (set.moa.to.cmpd.name) {
   Pf.cdrp$data %<>%
     dplyr::filter(CPD_NAME %in% cmpd) %>%
     dplyr::mutate(MOA = CPD_NAME)
-  
+
   Pf.gust$data %<>%
     dplyr::filter(Image_Metadata_SOURCE_COMPOUND_NAME %in% cmpd) %>%
     dplyr::mutate(MOA = Image_Metadata_SOURCE_COMPOUND_NAME)
-  
+
 } else {
   Pf.cdrp$data %<>%
     dplyr::filter(CPD_NAME %in% cmpd) %>%
     dplyr::mutate(MOA = paste(CPD_NAME, MOA, sep = ", "))
-  
+
   Pf.gust$data %<>%
     dplyr::filter(Image_Metadata_SOURCE_COMPOUND_NAME %in% cmpd) %>%
-    dplyr::mutate(MOA = paste(Image_Metadata_SOURCE_COMPOUND_NAME, 
-                              MOA, 
+    dplyr::mutate(MOA = paste(Image_Metadata_SOURCE_COMPOUND_NAME,
+                              MOA,
                               sep = ", "))
 }
 
-# Pf.gust$data %<>% 
+# Pf.gust$data %<>%
 #   dplyr::group_by() %>%
 #   dplyr::slice(1) %>%
 #   dplyr::ungroup()
-# 
-# Pf.cdrp$data %<>% 
+#
+# Pf.cdrp$data %<>%
 #   dplyr::group_by(CPD_NAME) %>%
 #   dplyr::slice(1) %>%
 #   dplyr::ungroup()
@@ -390,37 +390,37 @@ Pf.cdrp.tr$data %<>%
   dplyr::arrange(CPD_NAME)
 
 if (feat.be.cor.analysis) {
-  z1 <- Pf.cdrp.tr$data[,Pf.cdrp.tr$feat_cols]  
+  z1 <- Pf.cdrp.tr$data[,Pf.cdrp.tr$feat_cols]
   z2 <- Pf.gust.tr$data[,Pf.gust.tr$feat_cols]
   d <- diag(cor(z1, z2))
   ft <- names(which(d > 0.4))
   fact_cols <- setdiff(colnames(Pf.cdrp$data), Pf.cdrp$feat_cols)
   cdrp <- list(data = cbind(Pf.cdrp$data[,ft], Pf.cdrp$data[,fact_cols]), feat_cols = ft, factor_cols = fact_cols)
-  
+
   fact_cols <- setdiff(colnames(Pf.gust$data), Pf.gust$feat_cols)
   gust <- list(data = cbind(Pf.gust$data[,ft], Pf.gust$data[,fact_cols]), feat_cols = ft, factor_cols = fact_cols)
-  
+
   Pf.cdrp <- cdrp
   Pf.gust <- gust
 }
-  
+
 if (do.cca) {
   x <- cancor(Pf.cdrp.tr$data[,Pf.cdrp$feat_cols], Pf.gust.tr$data[,Pf.gust$feat_cols], xcenter = F, ycenter = F)
-  
+
   x1 <- apply(Pf.cdrp$data[,Pf.cdrp$feat_cols], 1, function(row) (row - x$xcenter)) %>% t
   x1 <- x1[,1:NROW(x$xcoef)] %*% x$xcoef
   x1 <- as.data.frame(x1)
-  
+
   x2 <- apply(Pf.gust$data[,Pf.gust$feat_cols], 1, function(row) (row - x$ycenter)) %>% t
   x2 <- x2[,1:NROW(x$ycoef)] %*% x$ycoef
   x2 <- as.data.frame(x2)
-  
+
   fact_cols <- setdiff(colnames(Pf.cdrp$data), Pf.cdrp$feat_cols)
   cdrp <- list(data = cbind(x1, Pf.cdrp$data[,fact_cols]), feat_cols = colnames(x1), factor_cols = fact_cols)
-  
+
   fact_cols <- setdiff(colnames(Pf.gust$data), Pf.gust$feat_cols)
   gust <- list(data = cbind(x2, Pf.gust$data[,fact_cols]), feat_cols = colnames(x2), factor_cols = fact_cols)
-  
+
   Pf.cdrp <- cdrp
   Pf.gust <- gust
 }
@@ -436,7 +436,7 @@ cmpd <- unique(Pf.cdrp$data$CPD_NAME)
 Pf.cdrp$data$CPD_NAME %>% unique %>% length %>% print
 Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME %>% unique %>% length %>% print
 
-cr <- cor(Pf.cdrp$data[,Pf.cdrp$feat_cols] %>% t, 
+cr <- cor(Pf.cdrp$data[,Pf.cdrp$feat_cols] %>% t,
           Pf.gust$data[,Pf.gust$feat_cols] %>% t,
           method = corr.type)
 
@@ -444,7 +444,7 @@ rownames(cr) <- Pf.cdrp$data$Metadata_broad_sample
 colnames(cr) <- Pf.gust$data$Image_Metadata_BROAD_ID
 
 cr.melt <- cr %>% melt
-cr.melt %<>% 
+cr.melt %<>%
   dplyr::group_by(Var1, Var2) %>%
   dplyr::summarise(value = max(value)) %>%
   dplyr::ungroup()
@@ -455,17 +455,17 @@ crx <- cr
 
 ```{r}
 
-cr.melt.ext <- cr.melt %>% 
+cr.melt.ext <- cr.melt %>%
   dplyr::left_join(., unique(Pf.cdrp$data[,c("Metadata_broad_sample",
                                       "CPD_NAME",
-                                      "MOA")]), 
+                                      "MOA")]),
                    by = c("Var1" = "Metadata_broad_sample")) %>%
   dplyr::left_join(., unique(Pf.gust$data[,c("Image_Metadata_BROAD_ID",
                                              "Image_Metadata_SOURCE_COMPOUND_NAME",
-                                             "MOA")]), 
+                                             "MOA")]),
                    by = c("Var2" = "Image_Metadata_BROAD_ID"))
-  
-cr.melt.ext %<>% 
+
+cr.melt.ext %<>%
    dplyr::filter(!is.infinite(value))
 
 matching.moas <- function(moa1, moa2) {
@@ -476,53 +476,53 @@ matching.moas <- function(moa1, moa2) {
 
 matching.moas <- Vectorize(matching.moas)
 
-cr.melt.ext2 <- cr.melt.ext %>% 
+cr.melt.ext2 <- cr.melt.ext %>%
   dplyr::mutate(match = matching.moas(MOA.x, MOA.y))
 
 ```
 
 ```{r}
 
-cr.melt.ext2.sor <- cr.melt.ext2 %>% 
+cr.melt.ext2.sor <- cr.melt.ext2 %>%
   dplyr::arrange(-value) %>%
   dplyr::filter(!is.na(match)) %>% dplyr::ungroup()
 
 n <- round(0.01 * NROW(cr.melt.ext2.sor))
 
-v11 <- cr.melt.ext2.sor %>% 
+v11 <- cr.melt.ext2.sor %>%
   dplyr::slice(1:n) %>%
   dplyr::select(match) %>%
-  as.matrix() %>% 
+  as.matrix() %>%
   as.vector() %>%
   sum(., na.rm = T)
-v12 <- cr.melt.ext2.sor %>% 
+v12 <- cr.melt.ext2.sor %>%
   dplyr::slice(1:n) %>%
   dplyr::select(match) %>%
   dplyr::mutate(match = !match) %>%
-  as.matrix() %>% 
+  as.matrix() %>%
   as.vector() %>%
   sum(., na.rm = T)
-v21 <- cr.melt.ext2.sor %>% 
+v21 <- cr.melt.ext2.sor %>%
   dplyr::slice((n+1):NROW(cr.melt.ext2.sor)) %>%
   dplyr::select(match) %>%
-  as.matrix() %>% 
+  as.matrix() %>%
   as.vector() %>%
   sum(., na.rm = T)
-v22 <- cr.melt.ext2.sor %>% 
+v22 <- cr.melt.ext2.sor %>%
   dplyr::slice((n+1):NROW(cr.melt.ext2.sor)) %>%
   dplyr::select(match) %>%
   dplyr::mutate(match = !match) %>%
-  as.matrix() %>% 
+  as.matrix() %>%
   as.vector() %>%
   sum(., na.rm = T)
 
 V <- rbind(c(v11, v12), c(v21, v22))
 fisher.test(V, alternative = "greater") %>% print
 
-d <- cr.melt.ext2.sor %>% 
+d <- cr.melt.ext2.sor %>%
     dplyr::slice(1:n) %>%
     dplyr::filter(match) %>%
-    dplyr::arrange(MOA.x) 
+    dplyr::arrange(MOA.x)
 
 d %>%
     htmlTable::htmlTable()
@@ -532,10 +532,10 @@ c <- cr.melt.ext2.sor %>%
   dplyr::group_by(MOA.x) %>%
   dplyr::tally()
 colnames(c)[2] <- "n.total"
-  
-d %>% 
+
+d %>%
   dplyr::group_by(MOA.x) %>%
-  dplyr::tally() %>% 
+  dplyr::tally() %>%
   dplyr::left_join(., c, by = "MOA.x") %>%
   dplyr::mutate(ratio = round(n/n.total, 3)) %>%
   dplyr::arrange(-ratio) %>%
@@ -550,41 +550,41 @@ k <- 3
 print(k)
 N <- 300
 
-d <- cr.melt.ext2.sor %>% 
+d <- cr.melt.ext2.sor %>%
   dplyr::group_by(Var1, MOA.x) %>%
   dplyr::slice(1:k) %>%
-  dplyr::summarise(success = any(match)) %>% 
-  dplyr::filter(success) 
-  
+  dplyr::summarise(success = any(match)) %>%
+  dplyr::filter(success)
+
 ns <- c()
 
 for (i in 1:N) {
-  n <- d.null <- cr.melt.ext2.sor %>% 
+  n <- d.null <- cr.melt.ext2.sor %>%
     dplyr::group_by(Var1, MOA.x) %>%
     dplyr::sample_n(k) %>%
-    dplyr::summarise(success = any(match)) %>% 
+    dplyr::summarise(success = any(match)) %>%
     dplyr::filter(success) %>%
     NROW
-  
+
   ns <- c(ns, n)
 }
-  
+
 print(NROW(d)/length(unique(cr.melt.ext2.sor$Var1)))
 print(mean(ns)/length(unique(cr.melt.ext2.sor$Var1)))
 print(NROW(d)/mean(ns))
 
 d %>% htmlTable::htmlTable()
 
-d <- cr.melt.ext2.sor %>% 
+d <- cr.melt.ext2.sor %>%
   dplyr::group_by(Var1, MOA.x) %>%
   dplyr::slice(1:k) %>%
-  dplyr::summarise(success = any(match)) 
+  dplyr::summarise(success = any(match))
 
 # a <- strn.cdrp %>%
 #   dplyr::ungroup(.) %>%
 #   dplyr::right_join(., d, by = c("Metadata_broad_sample" = "Var1")) %>%
 #   select(strength) %>%
-#   as.matrix() %>% 
+#   as.matrix() %>%
 #   as.vector()
 
 
@@ -596,26 +596,26 @@ k <- max(round(perc.top * length(cmpd)), 1)
 k <- 3
 N <- 300
 
-d <- cr.melt.ext2.sor %>% 
+d <- cr.melt.ext2.sor %>%
   dplyr::group_by(Var2, MOA.y) %>%
   dplyr::slice(1:min(k, NROW(.))) %>%
-  dplyr::summarise(success = any(match)) %>% 
-  dplyr::filter(success) 
-  
+  dplyr::summarise(success = any(match)) %>%
+  dplyr::filter(success)
+
 ns <- c()
 
 for (i in 1:N) {
-  n <- d.null <- cr.melt.ext2.sor %>% 
+  n <- d.null <- cr.melt.ext2.sor %>%
     dplyr::sample_frac(1) %>%
     dplyr::group_by(Var2, MOA.y) %>%
     dplyr::slice(1:min(k, NROW(.))) %>%
-    dplyr::summarise(success = any(match)) %>% 
+    dplyr::summarise(success = any(match)) %>%
     dplyr::filter(success) %>%
     NROW
-  
+
   ns <- c(ns, n)
 }
-  
+
 print(NROW(d)/length(unique(cr.melt.ext2.sor$Var2)))
 print(mean(ns)/length(unique(cr.melt.ext2.sor$Var2)))
 print(NROW(d)/mean(ns))
@@ -625,10 +625,10 @@ print(NROW(d)/mean(ns))
 
 ```{r}
 
-thr <- cr.melt.ext2 %>% 
+thr <- cr.melt.ext2 %>%
   dplyr::filter(!match) %>%
   dplyr::select(value) %>%
-  as.matrix() %>% 
+  as.matrix() %>%
   as.vector() %>%
   quantile(., 0.95)
 
@@ -645,49 +645,49 @@ print(d/sum(cr.melt.ext2$match))
 u.gust <- u.gust %>% filter(cr >= thr.gust)
 u.cdrp <- u.cdrp %>% filter(cr >= thr.cdrp)
 
-dx <- cr.melt.ext2.sor %>% left_join(., u.gust, by = c("Var2" = "Image_Metadata_BROAD_ID")) 
+dx <- cr.melt.ext2.sor %>% left_join(., u.gust, by = c("Var2" = "Image_Metadata_BROAD_ID"))
 dx2 <- dx %>% left_join(., u.cdrp, by = c("Var1" = "Metadata_broad_sample"))
 
 n <- dx$match %>% sum
-D.tst <- dx2 %>% 
+D.tst <- dx2 %>%
   dplyr::select(match, value, cr.x, cr.y) %>%
   dplyr::rename(rep.cor.bbbc = cr.x,
                 rep.cor.cdrp = cr.y,
                 signature.cor = value) %>%
   dplyr::mutate(min.rep.cor = ifelse(rep.cor.bbbc < rep.cor.cdrp, rep.cor.bbbc, rep.cor.cdrp))
 
-D <- D.tst %>% 
+D <- D.tst %>%
   dplyr::group_by(match) %>%
-  dplyr::sample_n(n) 
+  dplyr::sample_n(n)
 
-g <- ggplot(D, aes(x = min.rep.cor, y = signature.cor, color = match)) + 
-  geom_point(stat = "identity") + 
+g <- ggplot(D, aes(x = min.rep.cor, y = signature.cor, color = match)) +
+  geom_point(stat = "identity") +
   ylab("Signatures correlation for a compound pair") +
   xlab("Minimum of replicate correlation for a compound pair")
 
 ggsave("charac_plot.pdf", g)
 
-fn <- function(rep.cor.bbbc, 
-               rep.cor.cdrp, 
-               signature.cor, 
-               sig.cor.thr, 
-               rep.cor.thr.bbbc, 
+fn <- function(rep.cor.bbbc,
+               rep.cor.cdrp,
+               signature.cor,
+               sig.cor.thr,
+               rep.cor.thr.bbbc,
                rep.cor.thr.cdrp) {
-  
+
   return(rep.cor.bbbc > rep.cor.thr.bbbc &
          rep.cor.cdrp > rep.cor.thr.cdrp &
          signature.cor > sig.cor.thr)
 }
 
-evaluate.thrs <- function(rep.cor.thr.bbbc, 
-                          rep.cor.thr.cdrp, 
+evaluate.thrs <- function(rep.cor.thr.bbbc,
+                          rep.cor.thr.cdrp,
                           sig.cor.thr) {
   t <- D.tst %>%
     filter(fn(rep.cor.bbbc, rep.cor.cdrp, signature.cor, sig.cor.thr, rep.cor.thr.bbbc, rep.cor.thr.cdrp))
-  
+
   n <- D.tst %>%
     filter(!fn(rep.cor.bbbc, rep.cor.cdrp, signature.cor, sig.cor.thr, rep.cor.thr.bbbc, rep.cor.thr.cdrp))
-  
+
   tp <-  t %>%
     select(match) %>%
     as.matrix() %>%
@@ -700,7 +700,7 @@ evaluate.thrs <- function(rep.cor.thr.bbbc,
     as.matrix() %>%
     as.vector() %>%
     sum
-  
+
   fp <- t %>%
     select(match) %>%
     mutate(match = !match) %>%
@@ -713,7 +713,7 @@ evaluate.thrs <- function(rep.cor.thr.bbbc,
     as.matrix() %>%
     as.vector() %>%
     sum
-  
+
   tpr <- tp/(tp + fn)
   fpr <- fp/(fp + tn)
   precision <- tp/(tp + fp)
@@ -721,12 +721,12 @@ evaluate.thrs <- function(rep.cor.thr.bbbc,
   specificity <- tn/(tn + fp)
   f.score <- 2*tp/(2*tp + fp + fn)
 
-  return(f.score)  
+  return(f.score)
 #   return(list(tpr = tpr,
-#               fpr = fpr, 
+#               fpr = fpr,
 #               precision = precision,
 #               sensitivity = sensitivity,
-#               specificity = specificity, 
+#               specificity = specificity,
 #               f.score = f.score))
 }
 
@@ -736,22 +736,22 @@ sq <- seq(from = 0.2, to = 0.7, by = 0.02)
 
 final.opt <- function(sig.cor.thr) {
   d.eval <- outer(sq, sq, function(x, y) evaluate.thrs(x, y, sig.cor.thr))
-  
+
   rownames(d.eval) <- sq
   colnames(d.eval) <- sq
   d.eval.melt <- d.eval %>% reshape2::melt()
-  
+
   opt <- d.eval.melt %>%
     arrange(-value) %>%
     slice(1) %>%
-    select(Var1, Var2, value) 
+    select(Var1, Var2, value)
   return(opt)
 }
 
 l <- foreach (x = sq) %dopar% {
   final.opt(x)[3]
 }
-  
+
 l <- unlist(l)
 
 s.max <- max(l)
@@ -768,55 +768,55 @@ print(sprintf("optimal f.score : %f", s.max))
 ```{r co-clustering}
 
 
-# cr1 <- cor(Pf.repurp$data[,Pf.repurp$feat_cols] %>% t, 
+# cr1 <- cor(Pf.repurp$data[,Pf.repurp$feat_cols] %>% t,
 #            method = corr.type)
-# 
+#
 # colnames(cr1) <- Pf.repurp$data$Metadata_pert_iname
 # rownames(cr1) <- Pf.repurp$data$Metadata_pert_iname
-# 
+#
 # cr.melt1 <- cr1 %>% melt
 # cr.melt1 <- cr.melt1 %>% group_by(Var1, Var2) %>% dplyr::summarise(value = mean(value, na.rm = T))
-# 
+#
 # crx1 <- cr.melt1 %>% reshape2::dcast(Var1 ~ Var2)
-# crx1 <- crx1 %>% 
+# crx1 <- crx1 %>%
 #   tibble::column_to_rownames(., var = "Var1")
-# 
-# crx2 <- cor(Pf.cdrp$data[,Pf.cdrp$feat_cols] %>% t, 
+#
+# crx2 <- cor(Pf.cdrp$data[,Pf.cdrp$feat_cols] %>% t,
 #            method = corr.type)
 # colnames(crx2) <- Pf.cdrp$data$Metadata_broad_sample
 # rownames(crx2) <- Pf.cdrp$data$Metadata_broad_sample
-# 
-# cdrp <- Pf.cdrp$data$Metadata_broad_sample %>% unique 
-# repurp <- Pf.repurp$data$Metadata_pert_iname %>% unique 
-# 
-# cr.tot <- rbind(cbind(crx1[repurp, repurp], crx[repurp, cdrp]), 
+#
+# cdrp <- Pf.cdrp$data$Metadata_broad_sample %>% unique
+# repurp <- Pf.repurp$data$Metadata_pert_iname %>% unique
+#
+# cr.tot <- rbind(cbind(crx1[repurp, repurp], crx[repurp, cdrp]),
 #                 cbind(t(crx[repurp, cdrp]), crx2[cdrp, cdrp]))
-# 
+#
 # hcl <- hclust(as.dist(1 - cr.tot), method = "complete")
 # ct <- cutree(hcl, h = 1 - 0.35)
-# 
+#
 # sm <- 0
 # for (i in 1:max(ct)) {
 #   nm <- names(which(ct == i))
 #   cdrp.cpd <- Pf.cdrp$data %>%
-#     dplyr::ungroup(.) %>% 
-#     dplyr::filter(Metadata_broad_sample %in% nm) %>% 
+#     dplyr::ungroup(.) %>%
+#     dplyr::filter(Metadata_broad_sample %in% nm) %>%
 #     dplyr::select(CPD_NAME, MOA) %>%
-#     dplyr::rename(name = CPD_NAME) %>% 
+#     dplyr::rename(name = CPD_NAME) %>%
 #     dplyr::mutate(type = "cdrp") %>%
-#     unique 
-# 
+#     unique
+#
 #   repurp.cpd <- Pf.repurp$data %>%
-#     dplyr::ungroup(.) %>% 
-#     dplyr::filter(Metadata_pert_iname %in% nm) %>% 
+#     dplyr::ungroup(.) %>%
+#     dplyr::filter(Metadata_pert_iname %in% nm) %>%
 #     dplyr::select(Metadata_pert_iname, Metadata_moa) %>%
-#     dplyr::rename(name = Metadata_pert_iname, MOA = Metadata_moa) %>% 
+#     dplyr::rename(name = Metadata_pert_iname, MOA = Metadata_moa) %>%
 #     dplyr::mutate(type = "repurp") %>%
-#     unique 
-#   
+#     unique
+#
 #   if (NROW(cdrp.cpd) > 0 && NROW(repurp.cpd) > 0) {
-#     ot <- outer(setdiff(unique(cdrp.cpd$MOA), NA), 
-#                 setdiff(unique(repurp.cpd$MOA), NA), 
+#     ot <- outer(setdiff(unique(cdrp.cpd$MOA), NA),
+#                 setdiff(unique(repurp.cpd$MOA), NA),
 #                 matching.moas)
 #     if (any(ot)) {
 #       rbind(cdrp.cpd, repurp.cpd) %>% print #htmlTable::htmlTable()
@@ -824,11 +824,11 @@ print(sprintf("optimal f.score : %f", s.max))
 #     }
 #   }
 # }
-# 
+#
 # print(sm)
 
 # library("blockcluster")
-# cl <- cocluster(crx %>% as.matrix(), 
+# cl <- cocluster(crx %>% as.matrix(),
 #           datatype = "continuous",
 #           nbcocluster = c(50, 40))
 # quartz(width = 15, height = 10)
@@ -838,26 +838,26 @@ print(sprintf("optimal f.score : %f", s.max))
 
 ```{r}
 
-cdrp.dat <- Pf.cdrp$data %>% 
-  dplyr::select(Metadata_broad_sample, CPD_NAME) %>% 
+cdrp.dat <- Pf.cdrp$data %>%
+  dplyr::select(Metadata_broad_sample, CPD_NAME) %>%
   unique %>%
   dplyr::rename(Metadata_pert_iname = CPD_NAME)
 
-gust.dat <- Pf.gust$data %>% 
-  dplyr::select(Image_Metadata_BROAD_ID, Image_Metadata_SOURCE_COMPOUND_NAME) %>% 
+gust.dat <- Pf.gust$data %>%
+  dplyr::select(Image_Metadata_BROAD_ID, Image_Metadata_SOURCE_COMPOUND_NAME) %>%
   unique %>%
   dplyr::rename(Metadata_broad_sample = Image_Metadata_BROAD_ID,
                 Metadata_pert_iname = Image_Metadata_SOURCE_COMPOUND_NAME)
-  
+
 source("read_dataset.R")
 cdrp <- read.dataset("CDRP")
 gust <- read.dataset("BBBC022")
 
-cdrp.dat2 <- cdrp.dat %>% 
+cdrp.dat2 <- cdrp.dat %>%
   left_join(., unique(cdrp$data[,c("Metadata_Well", "Metadata_Plate", "Metadata_broad_sample")]),
             by = c("Metadata_broad_sample"))
 
-gust.dat2 <- gust.dat %>% 
+gust.dat2 <- gust.dat %>%
   left_join(., unique(gust$data[,c("Metadata_Well", "Metadata_Plate", "Metadata_broad_sample")]),
             by = c("Metadata_broad_sample"))
 

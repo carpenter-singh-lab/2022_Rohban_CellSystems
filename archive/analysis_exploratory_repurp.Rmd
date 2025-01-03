@@ -20,12 +20,12 @@ load("../input/TA/Initial_analysis_workspace.RData")
 Pf.ta <- Pf_org.org.collapsed
 Pf.ta.all <- Pf_org.org
 strong.trt <- Pf.trt.strong.collapsed$data$Treatment
-data.annot <- Pf.strong %>% dplyr::filter(Treatment %in% strong.trt) %>% dplyr::select(one_of(c("Treatment", "Pathway", "Gene", "AlleleDesc"))) %>% 
-  dplyr::mutate(Pathway = str_replace(Pathway, "Canonical ", "")) %>% 
-  dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2)) 
+data.annot <- Pf.strong %>% dplyr::filter(Treatment %in% strong.trt) %>% dplyr::select(one_of(c("Treatment", "Pathway", "Gene", "AlleleDesc"))) %>%
+  dplyr::mutate(Pathway = str_replace(Pathway, "Canonical ", "")) %>%
+  dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2))
 desired.ta <- data.annot$Treatment
-Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(Treatment %in% c(as.character(desired.ta), "EMPTY_")) 
-Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta) 
+Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(Treatment %in% c(as.character(desired.ta), "EMPTY_"))
+Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta)
 
 Pf.gene <- Pf.ta
 Pf.gene.all <- Pf.ta.all
@@ -44,7 +44,7 @@ m.list <- data.frame(moa = m.list)
 rownames(m.list) <- m.list$moa[pr]
 m.list.p <- lapply(x$Metadata_moa, function(x) m.list[(x %>% as.character()), "moa"]) %>% unlist
 if (permute.moas) {
-  x$Metadata_moa <- m.list.p  
+  x$Metadata_moa <- m.list.p
 }
 
 x <- cbind(x, data.frame(Metadata_Treatment = paste(x$Metadata_pert_id, x$Metadata_mg_per_ml, sep = "@")))
@@ -61,7 +61,7 @@ all.cmpd <- lapply(u$Metadata_Treatment, function(x) str_split(x, "@")[[1]][1]) 
 sprintf("Hit ratio (compounds) : %f%%", round(length(strong.cmpd)/length(all.cmpd) * 100))
 x.all <- x
 x <- x %>% dplyr::filter(Metadata_Treatment %in% strong.trt)
-x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa, Metadata_pert_id) %>% 
+x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa, Metadata_pert_id) %>%
   dplyr::select(one_of(c(feats, "Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa", "Metadata_pert_id"))) %>% dplyr::summarise_each(funs("mean")) %>% dplyr::ungroup() %>% dplyr::filter(!is.na(Metadata_pert_iname))
 
 Pf.cmpd <- list(data = x.collapsed, feat_cols = feats, factor_cols = c("Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa", "Metadata_pert_id"))
@@ -134,17 +134,17 @@ colnames(cr) <- Pf.gene$data$Treatment
 
 for (i in 1:6) {
   d <- Pf.cmpd$data %>% dplyr::group_by(Metadata_pert_iname) %>% dplyr::slice(i) %>% dplyr::ungroup()
-  
+
   x <- d[,Pf.cmpd$feat_cols]
   y <- Pf.gene$data[,Pf.gene$feat_cols]
-  
-  cri <- cor(x %>% t, y %>% t, method = corr.type) 
+
+  cri <- cor(x %>% t, y %>% t, method = corr.type)
   rownames(cri) <- d$Metadata_pert_iname
   colnames(cri) <- Pf.gene$data$Treatment
-  
+
   crj <- cr * NA
-  crj[rownames(cri), colnames(cri)] <- cri 
-  
+  crj[rownames(cri), colnames(cri)] <- cri
+
   if (is.null(cr.melt.all)) {
     cr.melt.all <- crj %>% melt
   } else {
@@ -174,33 +174,33 @@ for (gn in genes) {
   print (sprintf("Gene : %s", gn))
 for (conn.type in c("pos", "neg")) {
   sgn.conn <- ifelse(conn.type == "pos", -1, 1)
-  
+
   entr <- function(x) {
     x <- abs(x)
     x[which(x < 0.2)] <- 0
     x <- x/sum(x)
     return(sum(-x[which(x != 0)] * log(x[which(x != 0)])))
   }
-  
+
   ent <- apply(cr1, 1, function(x) entr(x))
   ent <- data.frame(Compound = names(ent), Specificity = ent)
   ent$Specificity <- lapply(ent$Specificity, function(x) (1 - ecdf(ent$Specificity)(x))) %>% unlist
   rownames(ent) <- NULL
-  
+
   # %in% cls[[1]]
   #cr[rownames(cr), colnames(cr)] <- cr1[rownames(cr), colnames(cr)]
-  u <- cr1.melt %>% dplyr::filter(Var2 == gn) %>% dplyr::group_by(Var1) %>% dplyr::summarise(value = mean(value)) %>% dplyr::arrange(sgn.conn * value) %>% head(., 50) %>%  dplyr::mutate(Compound = Var1, Corr = value) %>% dplyr::select(one_of("Compound", "Corr")) %>% dplyr::mutate(Corr = round(Corr, 2)) 
+  u <- cr1.melt %>% dplyr::filter(Var2 == gn) %>% dplyr::group_by(Var1) %>% dplyr::summarise(value = mean(value)) %>% dplyr::arrange(sgn.conn * value) %>% head(., 50) %>%  dplyr::mutate(Compound = Var1, Corr = value) %>% dplyr::select(one_of("Compound", "Corr")) %>% dplyr::mutate(Corr = round(Corr, 2))
   u <- plyr::join(u, ent, "Compound") %>% dplyr::mutate(Specificity = round(Specificity, 2)) %>% dplyr::filter(Specificity >= 0.4)
-  
+
   name.to.brd <- Pf.cmpd$data[,c("Metadata_pert_id", "Metadata_pert_iname", "Metadata_moa")] %>% unique()
   colnames(name.to.brd) <- c("Broad.ID", "Compound", "MOA")
   u <- plyr::join(u, name.to.brd, by = "Compound")
   if (NROW(u) > 0) {
-    v <- c(v, list(u %>% htmlTable::htmlTable()))  
+    v <- c(v, list(u %>% htmlTable::htmlTable()))
   } else {
-    v <- c(v, list(NULL))  
+    v <- c(v, list(NULL))
   }
-  
+
   u$Compound %>% as.character() %>% cat(., sep = "\n")
 }
 }

@@ -24,7 +24,7 @@ all.cmpd <- lapply(u$Metadata_Treatment, function(x) str_split(x, "@")[[1]][1]) 
 sprintf("Hit ratio (compounds) : %f%%", round(length(strong.cmpd)/length(all.cmpd) * 100))
 x <- x %>% dplyr::filter(Metadata_Treatment %in% strong.trt)
 
-x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %>% 
+x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %>%
   dplyr::select(one_of(c(feats, "Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa"))) %>% dplyr::summarise_each(funs("mean")) %>% dplyr::ungroup() %>% dplyr::filter(!is.na(Metadata_pert_iname))
 
 metadata.sel <- colnames(x.collapsed)
@@ -49,7 +49,7 @@ for (i in dose.indx) {
     x1 <- x.collapsed %>% dplyr::group_by(Metadata_pert_iname) %>% dplyr::slice(i) %>% dplyr::ungroup()
     x2 <- x.collapsed %>% dplyr::group_by(Metadata_pert_iname) %>% dplyr::slice(j) %>% dplyr::ungroup()
     cr.i.j <- cor(x1[,feats] %>% t, x2[,feats] %>% t)
-    
+
     rownames(cr.i.j) <- x1$Metadata_pert_iname
     colnames(cr.i.j) <- x2$Metadata_pert_iname
     z <- rep(NA, length(all.cmpd))
@@ -58,7 +58,7 @@ for (i in dose.indx) {
     cr[rownames(cr.i.j), colnames(cr.i.j)] <- cr.i.j
     diag(cr) <- NA
     if (!is.null(cr.melt.all)) {
-      cr.melt.all <- cbind(cr.melt.all, melt(cr)[,3])  
+      cr.melt.all <- cbind(cr.melt.all, melt(cr)[,3])
     } else {
       cr.melt.all <- melt(cr)
     }
@@ -105,19 +105,19 @@ cmpd.moa.s <- cmpd.moa.s %>%
   mutate(Metadata_moa = str_replace_all(Metadata_moa, "\\[", "_")) %>%
   mutate(Metadata_moa = str_replace_all(Metadata_moa, "\\]", "_"))
 
-cr.melt.ext <- cr.melt %>% 
+cr.melt.ext <- cr.melt %>%
   left_join(., cmpd.moa.s, by = c("Var1" = "Metadata_pert_iname")) %>%
   left_join(., cmpd.moa.s, by = c("Var2" = "Metadata_pert_iname")) %>%
   mutate(same.moa = (str_detect(Metadata_moa.x, Metadata_moa.y) | str_detect(Metadata_moa.y, Metadata_moa.x)))
 
-cr <- cr.melt.ext %>% 
-  select(Var1, Var2, value) %>% 
+cr <- cr.melt.ext %>%
+  select(Var1, Var2, value) %>%
   tidyr::spread(., Var1, value) %>%
   tibble::remove_rownames() %>%
   tibble::column_to_rownames(., var = "Var2")
 
-gr <- cr.melt.ext %>% 
-  select(Var1, Var2, same.moa) %>% 
+gr <- cr.melt.ext %>%
+  select(Var1, Var2, same.moa) %>%
   mutate(same.moa = ifelse(same.moa, 1, 0)) %>%
   tidyr::spread(., Var1, same.moa) %>%
   tibble::remove_rownames() %>%

@@ -34,14 +34,14 @@ cr.1 <- Pf.1$data %>%
   dplyr::select(one_of(ft)) %>%
   cor %>%
   reshape2::melt() %>%
-  dplyr::filter(as.character(Var1) != as.character(Var2)) 
+  dplyr::filter(as.character(Var1) != as.character(Var2))
 
 cr.2 <- Pf.2$data %>%
   dplyr::filter(Metadata_pert_iname == "dmso") %>%
   dplyr::select(one_of(ft)) %>%
   cor %>%
   reshape2::melt() %>%
-  dplyr::filter(as.character(Var1) != as.character(Var2)) 
+  dplyr::filter(as.character(Var1) != as.character(Var2))
 
 cr <- cr.1 %>%
   dplyr::left_join(., cr.2, by = c("Var1", "Var2"))

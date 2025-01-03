@@ -43,14 +43,14 @@ screen_internal <- read_csv("input/puma_assay_data_CBIP_2139-01.csv.gz")
 ```
 
 ```{r}
-screen_internal %>% 
-  ggplot(aes(RESULT_VALUE, fill = as.factor(Class))) + 
-  geom_histogram(bins = 100) + 
-  facet_wrap(~Class, ncol = 1, scales = "free_y") 
+screen_internal %>%
+  ggplot(aes(RESULT_VALUE, fill = as.factor(Class))) +
+  geom_histogram(bins = 100) +
+  facet_wrap(~Class, ncol = 1, scales = "free_y")
 ```
 
 From the paper:
-> Compounds with high or low correlations of their Cell Painting profiles to PPARGC1A overexpression were chosen for further study (hence all samples are below ~ -0.35 or above ~0.35 on the X axis). 
+> Compounds with high or low correlations of their Cell Painting profiles to PPARGC1A overexpression were chosen for further study (hence all samples are below ~ -0.35 or above ~0.35 on the X axis).
 
 ```{r}
 screen_internal_connections <-
@@ -137,19 +137,19 @@ screen_internal_connections %>%
 
 
 ```{r}
-with(screen_internal_connections, 
+with(screen_internal_connections,
      fisher.test(
-       morphology_similarity_level, 
-       assay_activity_level_simple1, 
+       morphology_similarity_level,
+       assay_activity_level_simple1,
        alternative = "greater")) %>%
   broom::tidy()
 ```
 
 ```{r}
-with(screen_internal_connections, 
+with(screen_internal_connections,
      fisher.test(
-       morphology_similarity_level, 
-       assay_activity_level_simple2, 
+       morphology_similarity_level,
+       assay_activity_level_simple2,
        alternative = "greater")) %>%
   broom::tidy()
 ```

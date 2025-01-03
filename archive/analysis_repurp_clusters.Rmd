@@ -18,13 +18,13 @@ load("../input/TA/Initial_analysis_workspace.RData")
 Pf.ta <- Pf_org.org.collapsed
 Pf.ta.all <- Pf_org.org
 strong.trt <- Pf.trt.strong.collapsed$data$Treatment
-data.annot <- Pf.strong %>% dplyr::filter(Treatment %in% strong.trt) %>% dplyr::select(one_of(c("Treatment", "Pathway", "Gene", "AlleleDesc"))) %>% 
+data.annot <- Pf.strong %>% dplyr::filter(Treatment %in% strong.trt) %>% dplyr::select(one_of(c("Treatment", "Pathway", "Gene", "AlleleDesc"))) %>%
   dplyr::mutate(Pathway = str_replace(Pathway, "Canonical ", ""))
 desired.ta <- data.annot$Treatment
-Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(Treatment %in% c(as.character(desired.ta), "EMPTY_")) 
-Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta) 
+Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(Treatment %in% c(as.character(desired.ta), "EMPTY_"))
+Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta)
 
-Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta) 
+Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta)
 #Pf.ta$data$Treatment <- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, "_")[[1]][1])) %>% unlist
 Pf.gene <- Pf.ta
 Pf.gene.all <- Pf.ta.all
@@ -43,7 +43,7 @@ m.list <- data.frame(moa = m.list)
 rownames(m.list) <- m.list$moa[pr]
 m.list.p <- lapply(x$Metadata_moa, function(x) m.list[(x %>% as.character()), "moa"]) %>% unlist
 if (permute.moas) {
-  x$Metadata_moa <- m.list.p  
+  x$Metadata_moa <- m.list.p
 }
 
 x <- cbind(x, data.frame(Metadata_Treatment = paste(x$Metadata_pert_id, x$Metadata_mg_per_ml, sep = "@")))
@@ -60,7 +60,7 @@ all.cmpd <- lapply(u$Metadata_Treatment, function(x) str_split(x, "@")[[1]][1]) 
 sprintf("Hit ratio (compounds) : %f%%", round(length(strong.cmpd)/length(all.cmpd) * 100))
 x.all <- x
 x <- x %>% dplyr::filter(Metadata_Treatment %in% strong.trt)
-x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %>% 
+x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %>%
   dplyr::select(one_of(c(feats, "Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa"))) %>% dplyr::summarise_each(funs("mean")) %>% dplyr::ungroup() %>% dplyr::filter(!is.na(Metadata_pert_iname))
 
 Pf.cmpd <- list(data = x.collapsed, feat_cols = feats, factor_cols = c("Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa"))
@@ -155,20 +155,20 @@ summarize_cr <- function(cri, trts) {
 
 for (i in 1:6) {
   d <- Pf.cmpd$data %>% dplyr::group_by(Metadata_pert_iname) %>% dplyr::slice(i) %>% dplyr::ungroup()
-  
+
   x <- d[,Pf.cmpd$feat_cols]
   y <- Pf.gene$data[,Pf.gene$feat_cols]
-  
-  cri <- cor(x %>% t, y %>% t, method = corr.type) 
+
+  cri <- cor(x %>% t, y %>% t, method = corr.type)
   rownames(cri) <- d$Metadata_pert_iname
   colnames(cri) <- Pf.gene$data$Treatment
   u <- lapply(cls, function(x) summarize_cr(cri, x))
   us <- do.call(rbind, u) %>% t
   colnames(us) <- 1:length(cls)
-  
+
   crj <- cr * NA
-  crj[rownames(us), colnames(us)] <- us 
-  
+  crj[rownames(us), colnames(us)] <- us
+
   if (is.null(cr.melt.all)) {
     cr.melt.all <- crj %>% melt
   } else {

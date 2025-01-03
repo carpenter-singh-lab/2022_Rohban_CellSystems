@@ -23,7 +23,7 @@ u <- rep.cor(list(data = x, feat_col = feats, factor_col = metadata), "Metadata_
 strong.trt <- u$Metadata_Treatment[which(u$cr > thr)]
 
 x <- x %>% dplyr::filter(Metadata_Treatment %in% strong.trt)
-x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa, Metadata_Treatment) %>% 
+x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa, Metadata_Treatment) %>%
   dplyr::select(one_of(c(feats, "Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa", "Metadata_Treatment"))) %>% dplyr::summarise_each(funs("mean")) %>% dplyr::ungroup() %>% dplyr::filter(!is.na(Metadata_pert_iname))
 
 Pf.cmpd <- list(data = x.collapsed, feat_cols = feats, factor_cols = c("Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa", "Metadata_Treatment"))
@@ -43,7 +43,7 @@ cr <- Pf.cmpd$data %>%
 
 rownames(cr) <- Pf.cmpd$data$Metadata_pert_iname
 colnames(cr) <- Pf.cmpd$data$Metadata_pert_iname
-cr.melt <- cr %>% 
+cr.melt <- cr %>%
   reshape2::melt()
 
 ```
@@ -52,16 +52,16 @@ cr.melt <- cr %>%
 
 cr.melt2 <- cr.melt %>%
   group_by(Var1, Var2) %>%
-  summarise(mn = min(value), mx = max(value)) 
+  summarise(mn = min(value), mx = max(value))
 
-cr.melt2 <- cr.melt2 %>% 
-  mutate(value = ifelse(-mn > mx, mn, mx)) 
+cr.melt2 <- cr.melt2 %>%
+  mutate(value = ifelse(-mn > mx, mn, mx))
 
 ```
 
 ```{r making the plot}
 
-moas <- Pf.cmpd$data %>% 
+moas <- Pf.cmpd$data %>%
   select(Metadata_pert_iname, Metadata_moa) %>%
   unique
 
@@ -84,13 +84,13 @@ is.matching <- function(x) {
   return(any(l1 %in% l2) | any(l2 %in% l1) | any(x[,"Metadata_moa.x"] == x[,"Metadata_moa.y"]))
 }
 
-res <- cr.melt %>% 
+res <- cr.melt %>%
   arrange(-value) %>%
   group_by(Var1, Metadata_moa.x) %>%
   do(data.frame(has.a.match = is.matching(.[1:k,]))) %>%
-  dplyr::filter(has.a.match) %>% 
-  dplyr::select(-has.a.match) %>% 
-  dplyr::arrange(Metadata_moa.x) 
+  dplyr::filter(has.a.match) %>%
+  dplyr::select(-has.a.match) %>%
+  dplyr::arrange(Metadata_moa.x)
 
 res %>%
   htmlTable::htmlTable()
@@ -99,14 +99,14 @@ print(sprintf("ratio of compounds with a same MOA compound being in their %d-NN 
 
 acc <- c()
 for (i in 1:100) {
-  res <- cr.melt %>% 
+  res <- cr.melt %>%
     arrange(-value) %>%
     group_by(Var1, MOA.x) %>%
     do(data.frame(has.a.match = is.matching(.[sample(1:NROW(cr), k),]))) %>%
-    dplyr::filter(has.a.match) %>% 
-    dplyr::select(-has.a.match) %>% 
-    dplyr::arrange(MOA.x) 
-  
+    dplyr::filter(has.a.match) %>%
+    dplyr::select(-has.a.match) %>%
+    dplyr::arrange(MOA.x)
+
   acc <- c(acc, NROW(res)/NROW(cr))
 }
 
@@ -121,7 +121,7 @@ print(quantile(acc, 0.99))
 N <- 10
 ks <- 1:40
 
-moas <- Pf.cmpd$data %>% 
+moas <- Pf.cmpd$data %>%
   select(Metadata_pert_iname, Metadata_moa) %>%
   unique
 
@@ -146,30 +146,30 @@ is.matching <- function(x) {
 
 D <- data.frame(k = c(0, 0), meas = c(0, 0), type = c("data", "null"), ci = c(0, 0))
 
-cr.arr.grp <- cr.melt %>% 
+cr.arr.grp <- cr.melt %>%
       arrange(-value) %>%
       group_by(Var1, Metadata_moa.x)
- 
+
 for (k in ks) {
   res <- cr.arr.grp %>%
     do(data.frame(has.a.match = is.matching(.[1:k,]))) %>%
     dplyr::filter(has.a.match)
-  
+
   D <- rbind(D, data.frame(k = k, meas = NROW(res)/length(unique(Pf.cmpd$data$Metadata_pert_iname)), type = "data", ci = 0))
-  
+
   baseline <- foreach (i = 1:N) %dopar% {
     res <- cr.arr.grp %>%
       do(data.frame(has.a.match = is.matching(.[sample(1:length(unique(Pf.cmpd$data$Metadata_pert_iname)), k),]))) %>%
-      dplyr::filter(has.a.match) 
-    
+      dplyr::filter(has.a.match)
+
     NROW(res)/length(unique(Pf.cmpd$data$Metadata_pert_iname))
   }
   baseline <- unlist(baseline)
-  D <- rbind(D, data.frame(k = k, meas = mean(baseline), type = "null", ci = sd(baseline)/(N^0.5)))  
+  D <- rbind(D, data.frame(k = k, meas = mean(baseline), type = "null", ci = sd(baseline)/(N^0.5)))
 }
 
-g <- ggplot(D, aes(x = k, y = meas, color = type)) + 
-  ggplot2::geom_line() + 
+g <- ggplot(D, aes(x = k, y = meas, color = type)) +
+  ggplot2::geom_line() +
   ggplot2::geom_errorbar(aes(ymin = meas - ci, ymax = meas + ci), width = 0.1) +
   ggplot2::ylab("ratio of same MOA compound pairs")
 

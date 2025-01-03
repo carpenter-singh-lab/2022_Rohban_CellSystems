@@ -17,10 +17,10 @@ cmpd.name.to.cid <- function(name) {
 }
 
 if (!file.exists("../results/manual/cmpd_cid.rds")) {
-  cmpds <- Pf.cmpd$data$Image_Metadata_SOURCE_COMPOUND_NAME 
+  cmpds <- Pf.cmpd$data$Image_Metadata_SOURCE_COMPOUND_NAME
   cmpd.cid <- data.frame(Image_Metadata_SOURCE_COMPOUND_NAME = c(), PubMedIDs = c())
   a <- progress::progress_bar$new(total = length(cmpds))
-  
+
   for (cmpd in cmpds) {
     x <- -1
     while(x == -1) {
@@ -29,7 +29,7 @@ if (!file.exists("../results/manual/cmpd_cid.rds")) {
     cmpd.cid <- rbind(cmpd.cid, data.frame(Image_Metadata_SOURCE_COMPOUND_NAME = cmpd, PubMedIDs = x))
     a$tick()
   }
-  
+
   saveRDS(cmpd.cid, "cmpd_cid.rds")
 } else {
   cmpd.cid <- readRDS("../results/manual/cmpd_cid.rds")

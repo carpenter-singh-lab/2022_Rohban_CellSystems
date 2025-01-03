@@ -16,26 +16,26 @@ doParallel::registerDoParallel(cores = 3)
 
 Pf <- readRDS("../results/master/2017-04-20_425d653/Pf_bio_new.rds")
 
-feat <- Pf %>% 
-          dplyr::select(-dplyr::contains("Metadata_")) %>% 
+feat <- Pf %>%
+          dplyr::select(-dplyr::contains("Metadata_")) %>%
           colnames()
 
 metadata.ext <- readr::read_csv("../input/CDP2/cdrp.cpd.meta.csv")
 brd.full <- unique(Pf$Metadata_broad_sample)
 brds <- lapply(brd.full, function(x) paste(str_split(x,
-                                                                             "-")[[1]][1:2], 
+                                                                             "-")[[1]][1:2],
                                                    sep = "-", collapse = "-")) %>% unlist()
-brd.mapping <- data.frame(BROAD_CPD_ID = brds, 
+brd.mapping <- data.frame(BROAD_CPD_ID = brds,
                           Image_Metadata_BROAD_ID = brd.full)
-metadata.ext %<>% 
-  dplyr::select(BROAD_CPD_ID, CPD_NAME) %>% 
+metadata.ext %<>%
+  dplyr::select(BROAD_CPD_ID, CPD_NAME) %>%
   dplyr::filter(BROAD_CPD_ID %in% brds) %>%
   dplyr::mutate(CPD_NAME = ifelse(str_detect(CPD_NAME, "BRD-"), "", CPD_NAME)) %>%
   dplyr::inner_join(., brd.mapping, by = "BROAD_CPD_ID") %>%
   dplyr::select(-BROAD_CPD_ID)
 
 metadata <- data.frame(Metadata_broad_sample = unique(Pf$Metadata_broad_sample))
-metadata %<>% 
+metadata %<>%
   dplyr::left_join(., metadata.ext, by = c("Metadata_broad_sample" = "Image_Metadata_BROAD_ID"))
 
 Pf %<>% dplyr::left_join(., metadata, by = "Metadata_broad_sample")
@@ -48,15 +48,15 @@ Pf %<>% dplyr::mutate(CPD_NAME = str_to_lower(CPD_NAME))
 Pf %<>% dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME, "-", "")) %>%
   dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, " ", "")) %>%
   dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, "\\(", "")) %>%
-  dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, "\\)", "")) 
-  
+  dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, "\\)", ""))
+
 
 MOA <- read.csv("../input/moas.txt", sep = "\t")
 MOA %<>% dplyr::mutate(Name = str_to_lower(Name)) %>%
   dplyr::mutate(Name_san = str_replace_all(Name, "-", "")) %>%
   dplyr::mutate(Name_san = str_replace_all(Name_san, " ", "")) %>%
   dplyr::mutate(Name_san = str_replace_all(Name_san, "\\(", "")) %>%
-  dplyr::mutate(Name_san = str_replace_all(Name_san, "\\)", "")) 
+  dplyr::mutate(Name_san = str_replace_all(Name_san, "\\)", ""))
 
 Pf %<>% dplyr::left_join(., MOA, by = c("CPD_NAME_san" = "Name_san"))
 meta.col <- setdiff(colnames(Pf), feat)
@@ -74,7 +74,7 @@ Pf %<>% dplyr::filter(!is.na(MOA) & CPD_NAME != "")
 moas <- Pf[, c("CPD_NAME", "MOA")]
 moas_smooth <- read.csv("../input/CDP2/moas_smooth.csv")
 
-moas <- moas %>% 
+moas <- moas %>%
   left_join(., moas_smooth, by = "MOA")
 
 if (use.snf) {
@@ -87,7 +87,7 @@ if (use.snf) {
     af <- SNFtool::affinityMatrix(1 - cri, K = 10, sigma = 0.8)
     afs <- c(afs, list(af))
   }
-  
+
   df.graph <- SNFtool::SNF(afs, K = 10, t = 20)
   cr <- df.graph
   rownames(cr) <- Pf$CPD_NAME
@@ -95,7 +95,7 @@ if (use.snf) {
 } else {
   cr <- Pf[,feat] %>% t %>% cor
   rownames(cr) <- Pf$CPD_NAME
-  colnames(cr) <- Pf$CPD_NAME    
+  colnames(cr) <- Pf$CPD_NAME
 }
 
 cr.melt <- cr %>% melt %>% dplyr::filter(Var1 != Var2)
@@ -130,23 +130,23 @@ moas.unique <- Pf$MOA %>% unique
 r <- rep(1, length(moas.unique))
 names(r) <- moas.unique
 R <- outer(r, r)
-R.e <- R %>% 
+R.e <- R %>%
   reshape2::melt() %>%
   dplyr::mutate(match = consistent(Var1, Var2)) %>%
   select(-value)
 
-cr.arr.grp <- cr.melt %>% 
+cr.arr.grp <- cr.melt %>%
   left_join(., R.e, by = c("MOA.x" = "Var1", "MOA.y" = "Var2")) %>%
   arrange(-value) %>%
   group_by(Var1)
 
 evaluate <- function(cr.arr.grp, thr, n, cmpd) {
   cr.arr.grp <- cr.arr.grp %>% dplyr::filter(Var1 == cmpd)
-  a <- cr.arr.grp %>% 
+  a <- cr.arr.grp %>%
     filter(value >= thr)
-  b <- cr.arr.grp %>% 
+  b <- cr.arr.grp %>%
     filter(value < thr)
-  
+
   v11 <- a$match %>% sum
   v12 <- NROW(a) - v11
   v21 <- b$match %>% sum
@@ -165,9 +165,9 @@ roc <- function(cmpd) {
   D <- c()
   low.end <- min(cr.arr.grp$value)
   high.end <- max(cr.arr.grp$value)
-  
+
   step.size <- (high.end - low.end)/2/100
-  
+
   D <- foreach (thr = seq(from = low.end, to = high.end, by = step.size), .combine = rbind) %dopar% {
     d <- evaluate(cr.arr.grp = cr.arr.grp, thr = thr, n = NROW(cr), cmpd = cmpd)
     cbind(d, data.frame(thr = thr))
@@ -184,7 +184,7 @@ length(which(r >= 0.6))/length(which(!is.na(r))) %>% print
 
 D <- data.frame(compounds = cmpds, AUC = r %>% unlist)
 D <- D %>% dplyr::filter(! is.na(AUC))
-D %>% mutate(AUC = round(AUC, 2)) %>% arrange(-AUC) %>% 
+D %>% mutate(AUC = round(AUC, 2)) %>% arrange(-AUC) %>%
   left_join(., moas, by = c("compounds" = "CPD_NAME")) %>% select(-MOA.Group) %>% htmlTable::htmlTable()
 
 ```

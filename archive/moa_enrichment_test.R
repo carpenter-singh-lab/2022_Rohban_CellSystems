@@ -35,7 +35,7 @@ m.list <- data.frame(moa = m.list)
 rownames(m.list) <- m.list$moa[pr]
 m.list.p <- lapply(x$Metadata_moa, function(x) m.list[(x %>% as.character()), "moa"]) %>% unlist
 if (permute.moas) {
-  x$Metadata_moa <- m.list.p  
+  x$Metadata_moa <- m.list.p
 }
 
 x <- cbind(x, data.frame(Metadata_Treatment = paste(x$Metadata_pert_id, x$Metadata_mg_per_ml, sep = "@")))
@@ -57,7 +57,7 @@ strong.cmpd <- lapply(strong.trt, function(x) str_split(x, "@")[[1]][1]) %>% unl
 all.cmpd <- lapply(u$Metadata_Treatment, function(x) str_split(x, "@")[[1]][1]) %>% unlist %>% unique
 sprintf("Hit ratio (compounds) : %f%%", round(length(strong.cmpd)/length(all.cmpd) * 100))
 x.all <- x
-x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %>% 
+x.collapsed <- x %>% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %>%
   dplyr::select(one_of(c(feats, "Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa"))) %>% dplyr::summarise_each(funs("mean")) %>% dplyr::ungroup() %>% dplyr::filter(!is.na(Metadata_pert_iname))
 
 Pf.cmpd <- list(data = x.collapsed, feat_cols = feats, factor_cols = c("Metadata_pert_iname", "Metadata_pert_idose", "Metadata_moa"))
@@ -71,7 +71,7 @@ feats <- Pf.cmpd$feat_cols
 feats <- feats[which(str_detect(feats, ft.keyword))]
 Pf.cmpd$feat_cols <- feats
 
-distinct.moas <- lapply(Pf.cmpd$data$Metadata_moa, function(x) (str_split(x, "\\|")[[1]])) %>% unlist %>% 
+distinct.moas <- lapply(Pf.cmpd$data$Metadata_moa, function(x) (str_split(x, "\\|")[[1]])) %>% unlist %>%
   unique %>% setdiff(., NA)
 
 agg.fn <- function(x) return(ifelse(max(x) > -min(x), max(x), min(x)))
@@ -83,28 +83,28 @@ cons <- data.frame(MOA = c(), consistent = c(), sig.strn = c(), thresh = c(), n.
 n.sample <- 100
 
 cons <- foreach(moa = distinct.moas) %dopar% {
-  Px <- Pf.cmpd$data %>% dplyr::filter(stri_detect_fixed(Metadata_moa, moa)) 
+  Px <- Pf.cmpd$data %>% dplyr::filter(stri_detect_fixed(Metadata_moa, moa))
   cr <- cor(Px[,Pf.cmpd$feat_cols] %>% t, method = corr.type)
   colnames(cr) <- Px$Metadata_pert_iname
   rownames(cr) <- Px$Metadata_pert_iname
-  
-  cr1 <- cr %>% reshape2::melt() %>% 
+
+  cr1 <- cr %>% reshape2::melt() %>%
     dplyr::group_by(Var1, Var2) %>% dplyr::summarise(agg.value = agg.fn(value)) %>%
     reshape2::acast(Var1 ~ Var2, value.var = "agg.value")
-  
+
   smp <- c()
-  
+
   i <- 1
   while (i <= n.sample) {
     cmpd.sm <- sample(Pf.cmpd$data$Metadata_pert_iname %>% unique, NROW(cr1))
-    Px <- Pf.cmpd$data %>% dplyr::filter(Metadata_pert_iname %in% cmpd.sm) 
+    Px <- Pf.cmpd$data %>% dplyr::filter(Metadata_pert_iname %in% cmpd.sm)
     if (length(unique(setdiff(Px$Metadata_moa, NA))) < length((setdiff(Px$Metadata_moa, NA)))) {
       next
     }
     i <- i + 1
-    
+
     cr <- cor(Px[,Pf.cmpd$feat_cols] %>% t, method = corr.type)
-    cr1.tmp <- cr %>% reshape2::melt() %>% 
+    cr1.tmp <- cr %>% reshape2::melt() %>%
       dplyr::group_by(Var1, Var2) %>% dplyr::summarise(agg.value = agg.fn(value)) %>%
       reshape2::acast(Var1 ~ Var2, value.var = "agg.value")
     smp <- c(smp, cr1.tmp %>% as.dist() %>% median(., na.rm = T))

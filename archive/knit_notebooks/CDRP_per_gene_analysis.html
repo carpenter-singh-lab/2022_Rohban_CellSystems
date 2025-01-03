@@ -271,17 +271,17 @@ if (LUAD) {
   Pf.ta &lt;- Pf_org.org.collapsed
   Pf.ta.all &lt;- Pf_org.org
   strong.trt &lt;- Pf.trt.strong.collapsed$data$Treatment
-  data.annot &lt;- Pf.strong %&gt;% dplyr::filter(Treatment %in% strong.trt) %&gt;% dplyr::select(one_of(c(&quot;Treatment&quot;, &quot;Pathway&quot;, &quot;Gene&quot;, &quot;AlleleDesc&quot;))) %&gt;% 
-    dplyr::mutate(Pathway = str_replace(Pathway, &quot;Canonical &quot;, &quot;&quot;)) %&gt;% 
+  data.annot &lt;- Pf.strong %&gt;% dplyr::filter(Treatment %in% strong.trt) %&gt;% dplyr::select(one_of(c(&quot;Treatment&quot;, &quot;Pathway&quot;, &quot;Gene&quot;, &quot;AlleleDesc&quot;))) %&gt;%
+    dplyr::mutate(Pathway = str_replace(Pathway, &quot;Canonical &quot;, &quot;&quot;)) %&gt;%
     dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2)) %&gt;%
     dplyr::filter(AlleleDesc == &quot;WT&quot;) %&gt;% dplyr::group_by(Gene) %&gt;% dplyr::slice(1) %&gt;%
-    dplyr::ungroup() 
+    dplyr::ungroup()
   desired.ta &lt;- data.annot$Treatment
-  Pf.ta.all$data &lt;- Pf.ta.all$data %&gt;% dplyr::filter(Treatment %in% c(as.character(desired.ta), &quot;EMPTY_&quot;)) 
-  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta) 
+  Pf.ta.all$data &lt;- Pf.ta.all$data %&gt;% dplyr::filter(Treatment %in% c(as.character(desired.ta), &quot;EMPTY_&quot;))
+  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta)
 
-  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta) 
-  Pf.ta$data$Treatment &lt;- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, &quot;_&quot;)[[1]][1])) %&gt;% unlist 
+  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta)
+  Pf.ta$data$Treatment &lt;- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, &quot;_&quot;)[[1]][1])) %&gt;% unlist
 }
 
 Pf.gene &lt;- Pf.ta
@@ -300,7 +300,7 @@ if (!just.bioactives) {
   Pf.2 &lt;- readRDS(&quot;../results/master/2017-04-20_425d653/Pf_DOS_new.rds&quot;)
   Pf &lt;- rbind(Pf.1, Pf.2)
 } else {
-  Pf &lt;- Pf.1 
+  Pf &lt;- Pf.1
 }
 
 u &lt;- rep.cor(list(data = Pf, feat_cols = Pf.cmpd$feat_cols, factor_cols = Pf.cmpd$factor_cols), grp.var = &quot;Metadata_broad_sample&quot;, feat.var = Pf.cmpd$feat_cols)
@@ -315,17 +315,17 @@ up &lt;- readr::read_csv(&quot;../results/master/2017-04-21_425d6537/Cell_counts
 ## )
 </code></pre>
 
-<pre><code class="r">x &lt;- Pf %&gt;% 
+<pre><code class="r">x &lt;- Pf %&gt;%
   left_join(., u, by = &quot;Metadata_broad_sample&quot;) %&gt;%
   left_join(., up, by = c(&quot;Metadata_Plate&quot; = &quot;Image_Metadata_Plate&quot;, &quot;Metadata_Well&quot; = &quot;Image_Metadata_Well&quot;)) %&gt;%
   select(Metadata_broad_sample, cr, Image_Count_Cells) %&gt;%
   group_by(Metadata_broad_sample) %&gt;%
   summarise_each(funs(mean))
 
-Pf.cmpd$data %&lt;&gt;% 
+Pf.cmpd$data %&lt;&gt;%
   right_join(., x, by = &quot;Metadata_broad_sample&quot;) %&gt;%
   mutate(rep.corr = round(cr, 2), Mean_Cells_Count = round(Image_Count_Cells, 2)) %&gt;%
-  select(-cr, -Image_Count_Cells) 
+  select(-cr, -Image_Count_Cells)
 
 Pf.cmpd$factor_cols &lt;- c(Pf.cmpd$factor_cols, &quot;rep.corr&quot;, &quot;Mean_Cells_Count&quot;)
 Pf.cmpd$data$Mean_Cells_Count &lt;- round(scale(Pf.cmpd$data$Mean_Cells_Count), 2)
@@ -338,7 +338,7 @@ f &lt;- intersect(f1, f2)
 fs &lt;- c()
 
 for (ft.k in feat.keyword.keep) {
-  f.t &lt;- f[which(str_detect(f, ft.k))]  
+  f.t &lt;- f[which(str_detect(f, ft.k))]
   fs &lt;- c(fs, f.t)
 }
 f &lt;- unique(fs)
@@ -417,7 +417,7 @@ if (use.snf) {
   colnames(cr) &lt;- Pf.gene$data$Treatment
 }
 
-#cr &lt;- diag(apply(abs(cr), 1, sum)^-1) %*% cr 
+#cr &lt;- diag(apply(abs(cr), 1, sum)^-1) %*% cr
 rownames(cr) &lt;- Pf.cmpd$data$CPD_NAME
 colnames(cr) &lt;- Pf.gene$data$Treatment
 
@@ -447,10 +447,10 @@ meta.ta.cmap &lt;- meta.ta.cmap %&gt;% as.data.frame()
 genes.ta.cmap &lt;- meta.ta.cmap$x_genesymbol_mutation
 ids.ta.cmap &lt;- meta.ta.cmap$pert_id
 meta.ta.cmap[, &quot;det_well&quot;] &lt;- tolower(meta.ta.cmap$det_well)
-treatment.meta &lt;- Pf_org$data %&gt;% 
+treatment.meta &lt;- Pf_org$data %&gt;%
   dplyr::filter(Type == &quot;Treated&quot;) %&gt;%
   dplyr::select(Well, Treatment) %&gt;%
-  unique %&gt;% 
+  unique %&gt;%
   dplyr::left_join(., meta.ta.cmap, by = c(&quot;Well&quot; = &quot;det_well&quot;))
 
 treatment.meta &lt;- treatment.meta %&gt;% dplyr::filter(!Treatment %in% c(&quot;CYLD_WT&quot;, &quot;ERG_truncated&quot;))
@@ -501,7 +501,7 @@ get.interacting.proteins &lt;- function(protein.name) {
   }
 
   tbl &lt;- read.table(sprintf(&quot;http://webservice.thebiogrid.org/interactions/?searchNames=true&amp;geneList=%s&amp;taxId=9606&amp;includeHeader=true&amp;accesskey=ca950b072394ce1897811022f7757222&quot;, protein.name), sep=&quot;\t&quot;, header = FALSE, fill = T)
-  tbl &lt;- tbl[, c(8, 9, 12, 13, 14)] 
+  tbl &lt;- tbl[, c(8, 9, 12, 13, 14)]
   colnames(tbl) &lt;- c(&quot;Protein.1&quot;, &quot;Protein.2&quot;, &quot;Method&quot;, &quot;Type&quot;, &quot;Evidence&quot;)
   saveRDS(tbl, f.name)
   return(tbl)
@@ -519,7 +519,7 @@ get.all.interacting.proteins &lt;- function(protein.name) {
  V &lt;- matrix(0, 2, 2)
 
 shuffle.cr.melt &lt;- function(cr.melt, var) {
-  #reshape2::  
+  #reshape2::
 }
 
 sample.tot &lt;- function(Pf.cmpd, Pf.gene, cr.melt, verbose = F, cor.thr = 0.5, how.many = 5) {
@@ -542,14 +542,14 @@ sample.tot &lt;- function(Pf.cmpd, Pf.gene, cr.melt, verbose = F, cor.thr = 0.5,
   pb &lt;- progress::progress_bar$new(total = length(Pf.gene$data$Treatment))
   for (gene in Pf.gene$data$Treatment) {
     if (verbose) {
-      pb$tick()  
+      pb$tick()
     }
     gn &lt;- gn.map[gene] %&gt;% as.matrix() %&gt;% as.vector()
 
-    u.res &lt;- cr.melt %&gt;% 
+    u.res &lt;- cr.melt %&gt;%
       dplyr::filter(Var2 == gn) %&gt;%
       dplyr::arrange(-value) %&gt;%
-      dplyr::mutate(value = round(value, 5)) %&gt;% dplyr::filter((value) &gt; cor.thr) 
+      dplyr::mutate(value = round(value, 5)) %&gt;% dplyr::filter((value) &gt; cor.thr)
       up.reg &lt;- u.res %&gt;% head(., how.many) %&gt;% dplyr::filter(value &gt; 0) %&gt;% dplyr::select(Var1) %&gt;% as.matrix() %&gt;% as.vector()
       down.reg &lt;- u.res %&gt;% tail(., how.many) %&gt;% dplyr::filter(value &lt; 0) %&gt;% dplyr::select(Var1) %&gt;% as.matrix() %&gt;% as.vector()
 
@@ -558,11 +558,11 @@ sample.tot &lt;- function(Pf.cmpd, Pf.gene, cr.melt, verbose = F, cor.thr = 0.5,
     u.res.lim &lt;- u.res %&gt;% dplyr::filter(Var1 %in% reg) %&gt;% dplyr::mutate(CPD_NAME = Var1) %&gt;% dplyr::mutate(Corr. = value) %&gt;% dplyr::select(one_of(c(&quot;CPD_NAME&quot;, &quot;Corr.&quot;)))
 
     rest &lt;- setdiff(Pf.cmpd$data$CPD_NAME %&gt;% unique, reg)
-    v &lt;- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% reg], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .) 
+    v &lt;- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% reg], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .)
     if (length(v) == 0) {
       next
     }
-    u &lt;- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% rest], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .) 
+    u &lt;- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% rest], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .)
 
     main.targ &lt;- data.frame(gene = v) %&gt;% dplyr::group_by(gene) %&gt;% tally() %&gt;% dplyr::filter(gene != &quot;&quot;) %&gt;% dplyr::arrange(-n) %&gt;% dplyr::select(gene) %&gt;% as.matrix() %&gt;% as.vector()
     rest.targ &lt;- data.frame(gene = u) %&gt;% dplyr::group_by(gene) %&gt;% tally() %&gt;% dplyr::filter(gene != &quot;&quot;) %&gt;% dplyr::arrange(-n) %&gt;% dplyr::select(gene) %&gt;% as.matrix() %&gt;% as.vector()
@@ -591,7 +591,7 @@ sample.tot &lt;- function(Pf.cmpd, Pf.gene, cr.melt, verbose = F, cor.thr = 0.5,
         (ppi %&gt;% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %&gt;% unique %&gt;% head(., 20)) %&gt;% htmlTable::htmlTable() %&gt;% cat
         cat(&quot;&lt;br&gt; &lt;hr&gt;&quot;)
       }
-    } 
+    }
 
     if (verbose) {
       cr.l1000.melt &lt;- cr.l1000 %&gt;% reshape2::melt(.) %&gt;% dplyr::filter(Var2 == gene)
@@ -608,7 +608,7 @@ sample.tot &lt;- function(Pf.cmpd, Pf.gene, cr.melt, verbose = F, cor.thr = 0.5,
 
 <pre><code class="r">system(&quot;rm predictions.html&quot;)
 if (LUAD || LUAD.mut) {
-  res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, cr.melt = cr.melt, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)  
+  res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, cr.melt = cr.melt, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)
 } else {
   res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, cr.melt = cr.melt, verbose = T, cor.thr = cor.thr, how.many = no.top.matches)
 }
@@ -659,7 +659,7 @@ alternative hypothesis: true odds ratio is greater than 1
 95 percent confidence interval:
  5.87571     Inf
 sample estimates:
-odds ratio 
+odds ratio
   7.662897 </p>
 
 <p><br></p>
@@ -1052,7 +1052,7 @@ alternative hypothesis: true odds ratio is greater than 1
 95 percent confidence interval:
  4.988131      Inf
 sample estimates:
-odds ratio 
+odds ratio
   10.25744 </p>
 
 <p><br></p>
@@ -1305,16 +1305,16 @@ odds ratio
 <pre><code class="r">print(f)
 </code></pre>
 
-<pre><code>## 
+<pre><code>##
 ##  Fisher&#39;s Exact Test for Count Data
-## 
+##
 ## data:  res$V
 ## p-value = 6.029e-07
 ## alternative hypothesis: true odds ratio is greater than 1
 ## 95 percent confidence interval:
 ##  1.461032      Inf
 ## sample estimates:
-## odds ratio 
+## odds ratio
 ##   1.755288
 </code></pre>
 
@@ -1322,8 +1322,8 @@ odds ratio
 </code></pre>
 
 <pre><code>## $genes
-## [1] &quot;CDKN1A&quot; &quot;KRAS&quot;  
-## 
+## [1] &quot;CDKN1A&quot; &quot;KRAS&quot;
+##
 ## $V
 ##      [,1]   [,2]
 ## [1,]   95  27927
@@ -1352,15 +1352,15 @@ library(doMC)
 doMC::registerDoMC(cores = 62)
 
 nl &lt;- foreach (i = 1:N) %dopar% {
-  cr.tmp &lt;- cr.melt %&gt;% 
-    tidyr::spread(Var2, value) %&gt;% 
-    tibble::remove_rownames(.) %&gt;% 
-    tibble::column_to_rownames(var = &quot;Var1&quot;) 
+  cr.tmp &lt;- cr.melt %&gt;%
+    tidyr::spread(Var2, value) %&gt;%
+    tibble::remove_rownames(.) %&gt;%
+    tibble::column_to_rownames(var = &quot;Var1&quot;)
   rn &lt;- rownames(cr.tmp)
   cl &lt;- colnames(cr.tmp)
   rownames(cr.tmp) &lt;- rn#[permute::shuffle(length(rn))]
   colnames(cr.tmp) &lt;- cl[permute::shuffle(length(cl))]
-  cr.melt.shfl &lt;- cr.tmp %&gt;% 
+  cr.melt.shfl &lt;- cr.tmp %&gt;%
     tibble::rownames_to_column(var = &quot;Var1&quot;) %&gt;%
     tidyr::gather(Var2, value, -Var1)
   res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, cr.melt.shfl, verbose = F, cor.thr = cor.thr, how.many = no.top.matches)
@@ -1378,7 +1378,7 @@ print(mean(nl))
 <pre><code class="r">print(quantile(nl, 0.95))
 </code></pre>
 
-<pre><code>## 95% 
+<pre><code>## 95%
 ##   1
 </code></pre>
 

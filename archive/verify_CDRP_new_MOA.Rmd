@@ -18,31 +18,31 @@ Pf.1 %<>% dplyr::filter(Metadata_ASSAY_WELL_ROLE != "mock")
 #Pf <- rbind(Pf.1, Pf.2)
 Pf <- Pf.1
 
-feat <- Pf %>% 
-          dplyr::select(-dplyr::contains("Metadata_")) %>% 
+feat <- Pf %>%
+          dplyr::select(-dplyr::contains("Metadata_")) %>%
           colnames()
 
 metadata.ext <- readr::read_csv("../input/CDP2/cdrp.cpd.meta.csv")
 brd.full <- unique(Pf$Metadata_broad_sample)
 brds <- lapply(brd.full, function(x) paste(str_split(x,
-                                                                             "-")[[1]][1:2], 
+                                                                             "-")[[1]][1:2],
                                                    sep = "-", collapse = "-")) %>% unlist()
-brd.mapping <- data.frame(BROAD_CPD_ID = brds, 
+brd.mapping <- data.frame(BROAD_CPD_ID = brds,
                           Image_Metadata_BROAD_ID = brd.full)
-metadata.ext %<>% 
-  dplyr::select(BROAD_CPD_ID, CPD_NAME) %>% 
+metadata.ext %<>%
+  dplyr::select(BROAD_CPD_ID, CPD_NAME) %>%
   dplyr::filter(BROAD_CPD_ID %in% brds) %>%
   dplyr::mutate(CPD_NAME = ifelse(str_detect(CPD_NAME, "BRD-"), "", CPD_NAME)) %>%
   dplyr::inner_join(., brd.mapping, by = "BROAD_CPD_ID") %>%
   dplyr::select(-BROAD_CPD_ID)
 
 #metadata.ext2 <- read_csv("../input/Gustafsdottir/manual/metadata.csv")
-#metadata.ext2 %<>% 
-#  dplyr::select(Image_Metadata_BROAD_ID, Image_Metadata_SOURCE_COMPOUND_NAME) %>% 
+#metadata.ext2 %<>%
+#  dplyr::select(Image_Metadata_BROAD_ID, Image_Metadata_SOURCE_COMPOUND_NAME) %>%
 #  dplyr::filter(Image_Metadata_BROAD_ID %in% Pf$Metadata_broad_sample) %>% unique()
 
 metadata <- data.frame(Metadata_broad_sample = unique(Pf$Metadata_broad_sample))
-metadata %<>% 
+metadata %<>%
   dplyr::left_join(., metadata.ext, by = c("Metadata_broad_sample" = "Image_Metadata_BROAD_ID"))
 
 Pf %<>% dplyr::left_join(., metadata, by = "Metadata_broad_sample")
@@ -57,15 +57,15 @@ Pf %<>% dplyr::mutate(CPD_NAME = str_to_lower(CPD_NAME))
 Pf %<>% dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME, "-", "")) %>%
   dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, " ", "")) %>%
   dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, "\\(", "")) %>%
-  dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, "\\)", "")) 
-  
+  dplyr::mutate(CPD_NAME_san = str_replace_all(CPD_NAME_san, "\\)", ""))
+
 
 MOA <- read.csv("../input/moas.txt", sep = "\t")
 MOA %<>% dplyr::mutate(Name = str_to_lower(Name)) %>%
   dplyr::mutate(Name_san = str_replace_all(Name, "-", "")) %>%
   dplyr::mutate(Name_san = str_replace_all(Name_san, " ", "")) %>%
   dplyr::mutate(Name_san = str_replace_all(Name_san, "\\(", "")) %>%
-  dplyr::mutate(Name_san = str_replace_all(Name_san, "\\)", "")) 
+  dplyr::mutate(Name_san = str_replace_all(Name_san, "\\)", ""))
 
 Pf %<>% dplyr::left_join(., MOA, by = c("CPD_NAME_san" = "Name_san"))
 meta.col <- setdiff(colnames(Pf), feat)
@@ -90,7 +90,7 @@ cr.melt %<>% dplyr::left_join(., moas, by = c("Var1" = "CPD_NAME")) %>%
 
 valid <- apply(cr.melt, 1, function(x) (any(setdiff(str_split(x["MOA.x"], ", ")[[1]], NA) %in% setdiff(str_split(x["MOA.y"], ", ")[[1]], NA)) |
         any(setdiff(str_split(x["MOA.y"], ", ")[[1]], NA) %in% setdiff(str_split(x["MOA.x"], ", ")[[1]], NA))))
-        
+
 cr.melt.val <- cr.melt %>% dplyr::mutate(valid = valid)
 
 thr <- cr.melt.val$value %>% quantile(., 1 - top.percentage)
@@ -103,14 +103,14 @@ V <- rbind(c(v11, v12), c(v21, v22))
 
 fisher.test(V, alternative = "greater") %>% print
 
-cr.melt.val %>% dplyr::filter((value) > thr & valid) %>% 
+cr.melt.val %>% dplyr::filter((value) > thr & valid) %>%
   arrange(MOA.x) %>% htmlTable::htmlTable()
 
 tot <- cr.melt.val %>% group_by(MOA.x) %>% tally %>% dplyr::select(MOA.x, n)
 colnames(tot)[2] <- "total.n"
 
-cr.melt.val %>% dplyr::filter((value) > thr & valid) %>% 
-  group_by(MOA.x) %>% tally %>% arrange(-n) %>% 
+cr.melt.val %>% dplyr::filter((value) > thr & valid) %>%
+  group_by(MOA.x) %>% tally %>% arrange(-n) %>%
   dplyr::left_join(., tot, by = "MOA.x") %>% htmlTable::htmlTable()
 
 rownames(V) <- c("top 5 percent", "remainder")

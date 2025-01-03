@@ -23,19 +23,19 @@ screen <- read_csv("https://pubchem.ncbi.nlm.nih.gov/assay/pcget.cgi?query=downl
 
 ```{r}
 set.seed(42)
-screen %>% 
+screen %>%
   sample_n(10)
 ```
 
 
 ```{r}
 screen %>%
-  ggplot(aes(PUBCHEM_ACTIVITY_SCORE, fill = PUBCHEM_ACTIVITY_OUTCOME)) + 
-  geom_histogram(bins = 100) + 
+  ggplot(aes(PUBCHEM_ACTIVITY_SCORE, fill = PUBCHEM_ACTIVITY_OUTCOME)) +
+  geom_histogram(bins = 100) +
   theme(legend.position = "bottom")
 
 screen %>%
-  ggplot(aes(PUBCHEM_ACTIVITY_OUTCOME, PUBCHEM_ACTIVITY_SCORE, )) + 
+  ggplot(aes(PUBCHEM_ACTIVITY_OUTCOME, PUBCHEM_ACTIVITY_SCORE, )) +
   geom_boxplot()
 
 
