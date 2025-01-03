@@ -201,21 +201,21 @@ hr {
 </head>
 
 <body>
-<pre><code class="r">## 
+<pre><code class="r">##
 library(dplyr)
 </code></pre>
 
-<pre><code>## 
+<pre><code>##
 ## Attaching package: &#39;dplyr&#39;
 </code></pre>
 
 <pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
+##
 ##     filter, lag
 </code></pre>
 
 <pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
+##
 ##     intersect, setdiff, setequal, union
 </code></pre>
 
@@ -224,29 +224,29 @@ library(magrittr)
 library(tidyr)
 </code></pre>
 
-<pre><code>## 
+<pre><code>##
 ## Attaching package: &#39;tidyr&#39;
 </code></pre>
 
 <pre><code>## The following object is masked from &#39;package:magrittr&#39;:
-## 
+##
 ##     extract
 </code></pre>
 
 <pre><code class="r">library(purrr)
 </code></pre>
 
-<pre><code>## 
+<pre><code>##
 ## Attaching package: &#39;purrr&#39;
 </code></pre>
 
 <pre><code>## The following object is masked from &#39;package:magrittr&#39;:
-## 
+##
 ##     set_names
 </code></pre>
 
 <pre><code>## The following objects are masked from &#39;package:dplyr&#39;:
-## 
+##
 ##     contains, order_by
 </code></pre>
 
@@ -258,12 +258,12 @@ library(tidyr)
 ## http://www.revolutionanalytics.com
 </code></pre>
 
-<pre><code>## 
+<pre><code>##
 ## Attaching package: &#39;foreach&#39;
 </code></pre>
 
 <pre><code>## The following objects are masked from &#39;package:purrr&#39;:
-## 
+##
 ##     accumulate, when
 </code></pre>
 
@@ -280,12 +280,12 @@ library(tidyr)
 source(&quot;rep.corr.func.R&quot;)
 </code></pre>
 
-<pre><code>## 
+<pre><code>##
 ## Attaching package: &#39;reshape2&#39;
 </code></pre>
 
 <pre><code>## The following object is masked from &#39;package:tidyr&#39;:
-## 
+##
 ##     smiths
 </code></pre>
 
@@ -299,15 +299,15 @@ process.plate &lt;- function(plate.data, normalize.data = F) {
   c &lt;- plate.data
   c %&lt;&gt;% unique
 
-  feats &lt;- colnames(c) %&gt;% 
+  feats &lt;- colnames(c) %&gt;%
             data.frame(features = .) %&gt;%
             dplyr::filter(!str_detect(features, &quot;Metadata_&quot;)) %&gt;%
             as.matrix() %&gt;% as.vector()
   metas &lt;- setdiff(colnames(c), feats)
 
-  feats.to.retain  &lt;- c %&gt;% 
-                        dplyr::select(one_of(feats)) %&gt;% 
-                        purrr::map(function(x) (sd(x) == 0 | any(is.na(x)))) %&gt;% 
+  feats.to.retain  &lt;- c %&gt;%
+                        dplyr::select(one_of(feats)) %&gt;%
+                        purrr::map(function(x) (sd(x) == 0 | any(is.na(x)))) %&gt;%
                         as.data.frame() %&gt;%
                         tidyr::gather(key = &quot;feature&quot;) %&gt;%
                         dplyr::filter(!value) %&gt;%
@@ -317,20 +317,20 @@ process.plate &lt;- function(plate.data, normalize.data = F) {
   c %&lt;&gt;% dplyr::select(one_of(c(feats.to.retain, metas)))
   feats &lt;- feats.to.retain
 
-  c %&gt;% select(one_of(feats)) %&gt;% 
+  c %&gt;% select(one_of(feats)) %&gt;%
     apply(., 1, function(x) any(is.na(x) | is.infinite(x) | is.nan(x))) %&gt;%
     any %&gt;%
     ifelse(., &quot;some bad rows&quot;, &quot;all ok.&quot;) %&gt;%
     print
 
-  v &lt;- c %&gt;% 
+  v &lt;- c %&gt;%
     dplyr::filter(Metadata_ASSAY_WELL_ROLE == &quot;mock&quot;) %&gt;%
     dplyr::select(one_of(feats)) %&gt;%
     purrr::map(function(x) c(mean(x, na.rm = T), sd(x, na.rm = T))) %&gt;% as.data.frame %&gt;% as.matrix()
 
   c.nrm &lt;- c
   if (normalize.data) {
-      c.nrm[,feats] &lt;- c[,feats] %&gt;% 
+      c.nrm[,feats] &lt;- c[,feats] %&gt;%
         scale(., center = (v[1, feats]), scale = as.vector(v[2, feats]))
   }
 
@@ -347,33 +347,33 @@ profiles &lt;- foreach (i = lst[2:length(lst)]) %dopar% {
   pl &lt;- pl[length(pl)]
   fl &lt;- sprintf(&quot;%s/%s_augmented.csv&quot;, i, pl)
   if (file.exists(fl)) {
-    c &lt;- readr::read_csv(fl)  
+    c &lt;- readr::read_csv(fl)
     process.plate(c, normalize.data)
   } else {
     return(NULL)
   }
 }
 
-feat.comm &lt;- lapply(profiles, function(x) colnames(x)) %&gt;% 
+feat.comm &lt;- lapply(profiles, function(x) colnames(x)) %&gt;%
   unlist() %&gt;%
-  data.frame(feature = .) %&gt;% 
-  group_by(feature) %&gt;% 
+  data.frame(feature = .) %&gt;%
+  group_by(feature) %&gt;%
   tally %&gt;%
   filter(n == max(n)) %&gt;%
-  select(feature) %&gt;% 
+  select(feature) %&gt;%
   as.matrix() %&gt;%
   as.vector()
 
 profiles.mat &lt;- lapply(profiles, function(x) x[,feat.comm]) %&gt;% do.call(rbind, .)
 
-feats &lt;- colnames(profiles.mat) %&gt;% 
+feats &lt;- colnames(profiles.mat) %&gt;%
           data.frame(features = .) %&gt;%
           dplyr::filter(!str_detect(features, &quot;Metadata_&quot;)) %&gt;%
           as.matrix() %&gt;% as.vector()
 metas &lt;- setdiff(colnames(profiles.mat), feats)
 
 Pf &lt;- list(data = profiles.mat, feat_cols = feats, factor_cols = metas)
-#feats.to.remove &lt;- Pf$data[,Pf$feat_cols] %&gt;% 
+#feats.to.remove &lt;- Pf$data[,Pf$feat_cols] %&gt;%
 #                      cor %&gt;%
 #                      caret::findCorrelation(., 0.9)
 
@@ -384,12 +384,12 @@ Pf$feat_cols &lt;- feats
 Pf$data &lt;- Pf$data[,c(Pf$feat_cols, Pf$factor_cols)]
 
 if (just.strongs) {
-u.cntrl &lt;- Pf$data %&gt;% dplyr::filter(Metadata_ASSAY_WELL_ROLE == &quot;mock&quot;) %&gt;% dplyr::group_by(Metadata_Plate_Map_Name, Metadata_pert_well) %&gt;% do(data.frame(cr = median(as.dist(cor(t(.[,Pf$feat_cols]))), na.rm = T))) 
+u.cntrl &lt;- Pf$data %&gt;% dplyr::filter(Metadata_ASSAY_WELL_ROLE == &quot;mock&quot;) %&gt;% dplyr::group_by(Metadata_Plate_Map_Name, Metadata_pert_well) %&gt;% do(data.frame(cr = median(as.dist(cor(t(.[,Pf$feat_cols]))), na.rm = T)))
 u.cntrl$cr %&gt;% quantile(., na.rm = T) %&gt;% print
 }
 
 if (remove.untreated) {
-  Pf$data %&lt;&gt;% dplyr::filter(Metadata_ASSAY_WELL_ROLE == &quot;treated&quot;)  
+  Pf$data %&lt;&gt;% dplyr::filter(Metadata_ASSAY_WELL_ROLE == &quot;treated&quot;)
 }
 
 Pf.bio &lt;- Pf
@@ -408,7 +408,7 @@ print(hit.rate)
 }
 
 if (just.strongs) {
-Pf.bio$data %&gt;% 
+Pf.bio$data %&gt;%
   dplyr::filter(Metadata_broad_sample %in% u.strong$Metadata_broad_sample) %&gt;%
   saveRDS(., &quot;Pf_bio_new.rds&quot;)
 } else {
@@ -439,11 +439,11 @@ Pf.nonbio$data %&gt;%
 Pf.old$feat_cols &lt;- setdiff(Pf.old$feat_cols, &quot;Cells_CellCount&quot;)
 Pf.old$data &lt;- Pf.old$data[,c(Pf.old$feat_cols, Pf.old$factor_cols)]
 
-brds &lt;- Pf$data$Metadata_broad_sample %&gt;% unique 
-Pf.old$data &lt;- Pf.old$data %&gt;% 
+brds &lt;- Pf$data$Metadata_broad_sample %&gt;% unique
+Pf.old$data &lt;- Pf.old$data %&gt;%
   dplyr::filter(Image_Metadata_BroadID %in% brds)
 
-feats.to.remove &lt;- Pf.old$data[,Pf.old$feat_cols] %&gt;% 
+feats.to.remove &lt;- Pf.old$data[,Pf.old$feat_cols] %&gt;%
                       cor %&gt;%
                       caret::findCorrelation(., 0.9)
 feats &lt;- setdiff(Pf.old$feat_cols, Pf.old$feat_cols[feats.to.remove])
@@ -453,7 +453,7 @@ Pf.old$data &lt;- Pf.old$data[,c(Pf.old$feat_cols, Pf.old$factor_cols)]
 u1 &lt;- rep.cor(Pf.old, &quot;Image_Metadata_BroadID&quot;, Pf.old$feat_cols)
 v1 &lt;- non.rep.cor(Pf.old, &quot;Image_Metadata_BroadID&quot;, Pf.old$feat_cols)
 
-hit.rate1 &lt;- (u1 %&gt;% dplyr::filter(cr &gt; v1) %&gt;% NROW)/(u1 %&gt;% NROW) 
+hit.rate1 &lt;- (u1 %&gt;% dplyr::filter(cr &gt; v1) %&gt;% NROW)/(u1 %&gt;% NROW)
 print(hit.rate1)
 
 u2 &lt;- u1 %&gt;% dplyr::inner_join(., u, by = c(&quot;Image_Metadata_BroadID&quot; = &quot;Metadata_broad_sample&quot;))
@@ -464,19 +464,19 @@ D.tot &lt;- rbind(D, D1)
 D.tot$type &lt;- as.factor(D.tot$type)
 
 ggplot2::ggplot(D.tot, aes(x = type, fill = type, y = rep.cor)) +
-  ggplot2::geom_violin() + 
+  ggplot2::geom_violin() +
   ggplot2::geom_hline(yintercept = v, color = &quot;#F8766D&quot;, linetype = 2) +
-  ggplot2::geom_hline(yintercept = v1, color = &quot;#00BFC4&quot;, linetype = 2) + 
+  ggplot2::geom_hline(yintercept = v1, color = &quot;#00BFC4&quot;, linetype = 2) +
   ggplot2::xlab(&quot;&quot;) +
   ggplot2::ylab(&quot;replicate correlation&quot;) +
   ggplot2::scale_fill_discrete(guide=FALSE)
 
 D &lt;- data.frame(old.cor = u2$cr.x, new.cor = u2$cr.y)
-ggplot2::ggplot(D, aes(x = old.cor, y = new.cor)) + 
+ggplot2::ggplot(D, aes(x = old.cor, y = new.cor)) +
   ggplot2::geom_point() +
-  ggplot2::geom_hline(yintercept = v, linetype = 2, color = &quot;red&quot;) + 
+  ggplot2::geom_hline(yintercept = v, linetype = 2, color = &quot;red&quot;) +
   ggplot2::geom_vline(xintercept = v1, linetype = 2, color = &quot;red&quot;) +
-  ggplot2::xlab(&quot;rep. corr. (old)&quot;) + 
+  ggplot2::xlab(&quot;rep. corr. (old)&quot;) +
   ggplot2::ylab(&quot;rep. corr. (new)&quot;)
 </code></pre>
 

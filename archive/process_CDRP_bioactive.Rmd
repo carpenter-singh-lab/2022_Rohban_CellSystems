@@ -1,6 +1,6 @@
 ```{r}
 
-## 
+##
 library(dplyr)
 library(stringr)
 library(magrittr)
@@ -19,16 +19,16 @@ doMC::registerDoMC(64)
 process.plate <- function(plate.data, normalize.data = F) {
   c <- plate.data
   c %<>% unique
-  
-  feats <- colnames(c) %>% 
+
+  feats <- colnames(c) %>%
             data.frame(features = .) %>%
             dplyr::filter(!str_detect(features, "Metadata_")) %>%
             as.matrix() %>% as.vector()
   metas <- setdiff(colnames(c), feats)
-  
-  feats.to.retain  <- c %>% 
-                        dplyr::select(one_of(feats)) %>% 
-                        purrr::map(function(x) (sd(x) == 0 | any(is.na(x)))) %>% 
+
+  feats.to.retain  <- c %>%
+                        dplyr::select(one_of(feats)) %>%
+                        purrr::map(function(x) (sd(x) == 0 | any(is.na(x)))) %>%
                         as.data.frame() %>%
                         tidyr::gather(key = "feature") %>%
                         dplyr::filter(!value) %>%
@@ -37,27 +37,27 @@ process.plate <- function(plate.data, normalize.data = F) {
                         as.vector()
   c %<>% dplyr::select(one_of(c(feats.to.retain, metas)))
   feats <- feats.to.retain
-  
-  c %>% select(one_of(feats)) %>% 
+
+  c %>% select(one_of(feats)) %>%
     apply(., 1, function(x) any(is.na(x) | is.infinite(x) | is.nan(x))) %>%
     any %>%
     ifelse(., "some bad rows", "all ok.") %>%
     print
-  
-  v <- c %>% 
+
+  v <- c %>%
     dplyr::filter(Metadata_ASSAY_WELL_ROLE == "mock") %>%
     dplyr::select(one_of(feats)) %>%
     purrr::map(function(x) c(mean(x, na.rm = T), sd(x, na.rm = T))) %>% as.data.frame %>% as.matrix()
-  
+
   c.nrm <- c
   if (normalize.data) {
-	  c.nrm[,feats] <- c[,feats] %>% 
+	  c.nrm[,feats] <- c[,feats] %>%
 	    scale(., center = (v[1, feats]), scale = as.vector(v[2, feats]))
   }
 
   i <- c.nrm[,feats] %>% apply(., 2, function(x) !any(is.na(x)))
   c.nrm <- c.nrm[,c(feats[i], metas)]
-  
+
   return(c.nrm)
 }
 
@@ -71,33 +71,33 @@ profiles <- foreach (i = lst[2:length(lst)]) %dopar% {
   pl <- pl[length(pl)]
   fl <- sprintf("%s/%s_augmented.csv", i, pl)
   if (file.exists(fl)) {
-    c <- readr::read_csv(fl)  
+    c <- readr::read_csv(fl)
     process.plate(c, normalize.data)
   } else {
     return(NULL)
   }
 }
 
-feat.comm <- lapply(profiles, function(x) colnames(x)) %>% 
+feat.comm <- lapply(profiles, function(x) colnames(x)) %>%
   unlist() %>%
-  data.frame(feature = .) %>% 
-  group_by(feature) %>% 
+  data.frame(feature = .) %>%
+  group_by(feature) %>%
   tally %>%
   filter(n == max(n)) %>%
-  select(feature) %>% 
+  select(feature) %>%
   as.matrix() %>%
   as.vector()
 
 profiles.mat <- lapply(profiles, function(x) x[,feat.comm]) %>% do.call(rbind, .)
 
-feats <- colnames(profiles.mat) %>% 
+feats <- colnames(profiles.mat) %>%
           data.frame(features = .) %>%
           dplyr::filter(!str_detect(features, "Metadata_")) %>%
           as.matrix() %>% as.vector()
 metas <- setdiff(colnames(profiles.mat), feats)
 
 Pf <- list(data = profiles.mat, feat_cols = feats, factor_cols = metas)
-#feats.to.remove <- Pf$data[,Pf$feat_cols] %>% 
+#feats.to.remove <- Pf$data[,Pf$feat_cols] %>%
 #                      cor %>%
 #                      caret::findCorrelation(., 0.9)
 
@@ -108,12 +108,12 @@ Pf$feat_cols <- feats
 Pf$data <- Pf$data[,c(Pf$feat_cols, Pf$factor_cols)]
 
 if (just.strongs) {
-u.cntrl <- Pf$data %>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "mock") %>% dplyr::group_by(Metadata_Plate_Map_Name, Metadata_pert_well) %>% do(data.frame(cr = median(as.dist(cor(t(.[,Pf$feat_cols]))), na.rm = T))) 
+u.cntrl <- Pf$data %>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "mock") %>% dplyr::group_by(Metadata_Plate_Map_Name, Metadata_pert_well) %>% do(data.frame(cr = median(as.dist(cor(t(.[,Pf$feat_cols]))), na.rm = T)))
 u.cntrl$cr %>% quantile(., na.rm = T) %>% print
 }
 
 if (remove.untreated) {
-  Pf$data %<>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "treated")  
+  Pf$data %<>% dplyr::filter(Metadata_ASSAY_WELL_ROLE == "treated")
 }
 
 Pf.bio <- Pf
@@ -132,7 +132,7 @@ print(hit.rate)
 }
 
 if (just.strongs) {
-Pf.bio$data %>% 
+Pf.bio$data %>%
   dplyr::filter(Metadata_broad_sample %in% u.strong$Metadata_broad_sample) %>%
   saveRDS(., "Pf_bio_new.rds")
 } else {
@@ -166,11 +166,11 @@ Pf.old <- readRDS("../input/CDP2/Pf.rds")
 Pf.old$feat_cols <- setdiff(Pf.old$feat_cols, "Cells_CellCount")
 Pf.old$data <- Pf.old$data[,c(Pf.old$feat_cols, Pf.old$factor_cols)]
 
-brds <- Pf$data$Metadata_broad_sample %>% unique 
-Pf.old$data <- Pf.old$data %>% 
+brds <- Pf$data$Metadata_broad_sample %>% unique
+Pf.old$data <- Pf.old$data %>%
   dplyr::filter(Image_Metadata_BroadID %in% brds)
 
-feats.to.remove <- Pf.old$data[,Pf.old$feat_cols] %>% 
+feats.to.remove <- Pf.old$data[,Pf.old$feat_cols] %>%
                       cor %>%
                       caret::findCorrelation(., 0.9)
 feats <- setdiff(Pf.old$feat_cols, Pf.old$feat_cols[feats.to.remove])
@@ -180,7 +180,7 @@ Pf.old$data <- Pf.old$data[,c(Pf.old$feat_cols, Pf.old$factor_cols)]
 u1 <- rep.cor(Pf.old, "Image_Metadata_BroadID", Pf.old$feat_cols)
 v1 <- non.rep.cor(Pf.old, "Image_Metadata_BroadID", Pf.old$feat_cols)
 
-hit.rate1 <- (u1 %>% dplyr::filter(cr > v1) %>% NROW)/(u1 %>% NROW) 
+hit.rate1 <- (u1 %>% dplyr::filter(cr > v1) %>% NROW)/(u1 %>% NROW)
 print(hit.rate1)
 
 u2 <- u1 %>% dplyr::inner_join(., u, by = c("Image_Metadata_BroadID" = "Metadata_broad_sample"))
@@ -191,21 +191,21 @@ D.tot <- rbind(D, D1)
 D.tot$type <- as.factor(D.tot$type)
 
 ggplot2::ggplot(D.tot, aes(x = type, fill = type, y = rep.cor)) +
-  ggplot2::geom_violin() + 
+  ggplot2::geom_violin() +
   ggplot2::geom_hline(yintercept = v, color = "#F8766D", linetype = 2) +
-  ggplot2::geom_hline(yintercept = v1, color = "#00BFC4", linetype = 2) + 
+  ggplot2::geom_hline(yintercept = v1, color = "#00BFC4", linetype = 2) +
   ggplot2::xlab("") +
   ggplot2::ylab("replicate correlation") +
   ggplot2::scale_fill_discrete(guide=FALSE)
 
 D <- data.frame(old.cor = u2$cr.x, new.cor = u2$cr.y)
-ggplot2::ggplot(D, aes(x = old.cor, y = new.cor)) + 
+ggplot2::ggplot(D, aes(x = old.cor, y = new.cor)) +
   ggplot2::geom_point() +
-  ggplot2::geom_hline(yintercept = v, linetype = 2, color = "red") + 
+  ggplot2::geom_hline(yintercept = v, linetype = 2, color = "red") +
   ggplot2::geom_vline(xintercept = v1, linetype = 2, color = "red") +
-  ggplot2::xlab("rep. corr. (old)") + 
+  ggplot2::xlab("rep. corr. (old)") +
   ggplot2::ylab("rep. corr. (new)")
-  
+
 
 ```
 

@@ -11,28 +11,28 @@ hist.chr <- Vectorize(function(x) {
                         lvls <- unique(y)
                         hist.vec <- rep(0, length(lvls))
                         names(hist.vec) <- lvls
-                        
+
                         for (i in 1:length(y)) {
                           hist.vec[y[i]] <- hist.vec[y[i]] + 1
                         }
-                        
+
                         hist.vec <- sort(hist.vec, decreasing = T)
                         paste0(names(hist.vec), " (", unname(hist.vec), ")", collapse = ", ")
                       })
 
-cmpd.annot <- gene.compound.cr.pr %>% 
-   group_by(Var2) %>% 
+cmpd.annot <- gene.compound.cr.pr %>%
+   group_by(Var2) %>%
    slice(1:k) %>%
-   filter(valid >= 1) %>% 
-   ungroup() %>% 
+   filter(valid >= 1) %>%
+   ungroup() %>%
    arrange(-valid) %>%
    mutate(Var1 = paste0(Var1, " (", valid, ", ", sign.chr(value), ")")) %>%
    mutate(MOA = paste0(MOA, " (", valid, ")")) %>%
    group_by(Var2) %>%
-   summarise(Name = paste0(unique(Var1), collapse = ", "), 
-             MOA = paste0(unique(MOA), collapse = ", "), 
-             Target = hist.chr(paste0(Target, collapse = ", "))) 
-   
+   summarise(Name = paste0(unique(Var1), collapse = ", "),
+             MOA = paste0(unique(MOA), collapse = ", "),
+             Target = hist.chr(paste0(Target, collapse = ", ")))
+
 
 data.frame(gene = .gene, p.value = p.vals) %>%
   filter(!gene %in% gene.blacklist) %>%
@@ -46,9 +46,9 @@ data.frame(gene = .gene, p.value = p.vals) %>%
   htmlTable::htmlTable()
 
 data.frame(gene = .gene, p.value = p.vals) %>%
-  filter(!gene %in% gene.blacklist) %>% 
-  left_join(., Pf_org$data %>% 
-              select(Gene, Pathway) %>% 
+  filter(!gene %in% gene.blacklist) %>%
+  left_join(., Pf_org$data %>%
+              select(Gene, Pathway) %>%
               unique, by = c("gene" = "Gene")) %>%
   mutate(p.value = round(p.adjust(p.value, "BH"), 4)) %>%
   arrange(p.value) %>%

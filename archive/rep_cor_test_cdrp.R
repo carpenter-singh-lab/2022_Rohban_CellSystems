@@ -5,7 +5,7 @@ source("rep.corr.func.R")
 
 Pf <- readRDS("../results/master/2017-09-05_e2847e98/Pf_DOS_new_all.rds")
 
-Pf <- Pf %>% 
+Pf <- Pf %>%
   filter(Metadata_broad_sample != "DMSO")
 
 ft <- colnames(Pf)

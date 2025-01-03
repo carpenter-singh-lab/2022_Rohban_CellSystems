@@ -20,7 +20,7 @@ cdrp.all <- rbind(cdrp.bio, cdrp.DOS)
 feat.cols <- colnames(cdrp.all)
 feat.cols <- feat.cols[which(!str_detect(feat.cols, "Metadata"))]
 metadata.cols <- setdiff(colnames(cdrp.all), feat.cols)
-  
+
 Px <- cdrp.all %>%
   group_by(Metadata_broad_sample, Metadata_Plate_Map_Name) %>%
   summarise_at(.vars = feat.cols, .funs = "mean") %>%
@@ -36,7 +36,7 @@ metadata.cols <- c(metadata.cols, "Metadata_Treatment")
 hits <- c("BRD-K26994486", "BRD-K91354313")
 
 has.hits <- function(x) {
-  any(str_detect(x, hits))  
+  any(str_detect(x, hits))
 }
 
 has.hits <- Vectorize(has.hits)
@@ -44,13 +44,13 @@ has.hits <- Vectorize(has.hits)
 hits.canonical <- Px %>%
   filter(has.hits(Metadata_broad_sample)) %>%
   select(Metadata_broad_sample) %>%
-  as.matrix() %>% 
+  as.matrix() %>%
   as.vector()
-  
+
 rownames(Px) <- Px$Metadata_broad_sample
 
 cr <- cor(Px %>% filter(Metadata_broad_sample %in% hits.canonical) %>% select(one_of(feat.cols)) %>% t %>% as.matrix(), Px[, feat.cols] %>% t %>% as.matrix())
-  
+
 rownames(cr) <- hits.canonical
 colnames(cr) <- Px$Metadata_broad_sample
 
@@ -64,11 +64,11 @@ cr.melt <- cr %>%
   select(-CPD_NAME) %>%
   filter(!is.na(Name))
 
-x <- cr.melt %>% 
+x <- cr.melt %>%
   group_by(Var1) %>%
   slice(1:10) %>%
   ungroup() %>%
-  arrange(Var1) 
+  arrange(Var1)
 
 x %>%
   htmlTable::htmlTable()
@@ -76,7 +76,7 @@ x %>%
 cmpd.matches <- x %>%
   select(Var2) %>%
   as.matrix() %>%
-  as.vector() 
+  as.vector()
 
 ```
 
@@ -87,27 +87,27 @@ gene.matches <- c("BRD-K59184148-001-10-9", "BRD-K93051667-001-01-8", "BRD-K6830
 Px.sub <- Px %>%
   filter(Metadata_broad_sample %in% gene.matches)
 
-cr.sub <- Px.sub %>% 
+cr.sub <- Px.sub %>%
   select(one_of(feat.cols)) %>%
   t %>%
-  cor 
-  
+  cor
+
 y <- Rtsne::Rtsne(Px %>% select(one_of(feat.cols)), perplexity = 20)
-  
+
 z <- as.data.frame(y$Y)
 
 z <- cbind(z, Px %>% select(Metadata_broad_sample)) %>%
   filter(Metadata_broad_sample %in% gene.matches) %>%
   mutate(compound =  ifelse(Metadata_broad_sample == "BRD-K59184148-001-10-9",
-                            "SB-216763", 
-                            ifelse(str_detect(Metadata_broad_sample, hits[1]), hits[1], 
+                            "SB-216763",
+                            ifelse(str_detect(Metadata_broad_sample, hits[1]), hits[1],
                                    ifelse(str_detect(Metadata_broad_sample, hits[2]), hits[2],
                                           "other compound matches")))) %>%
   mutate(size = 2) %>%
   mutate(Metadata_broad_sample = str_sub(Metadata_broad_sample, 1, 13))
 
 g <- ggplot(z, aes(x = V1, y = V2, colour = compound, label = Metadata_broad_sample)) +
-  geom_text_repel(size = 3.5, segment.size = 0) 
+  geom_text_repel(size = 3.5, segment.size = 0)
 
 ggsave("tsne_gsk3_matches.png", g, width = 12, height = 10)
 
@@ -118,7 +118,7 @@ ggsave("tsne_gsk3_matches.png", g, width = 12, height = 10)
 cr.cmpd.gene <- readRDS("../results/master/2017-10-11_7d18c89d/cr_melt_cp.rds")
 
 cmpd <- hits[1]
-cr.cmpd.gene %>% 
+cr.cmpd.gene %>%
   filter(str_detect(Var1, cmpd)) %>%
   arrange(value) %>%
   head %>%
@@ -126,7 +126,7 @@ cr.cmpd.gene %>%
   htmlTable::htmlTable()
 
 cmpd <- hits[2]
-cr.cmpd.gene %>% 
+cr.cmpd.gene %>%
   filter(str_detect(Var1, cmpd)) %>%
   arrange(value) %>%
   head %>%

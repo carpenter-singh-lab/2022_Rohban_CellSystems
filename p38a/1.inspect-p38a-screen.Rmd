@@ -12,7 +12,7 @@ library(tidyverse)
 Read data and drop `AdjP` because it was computed incorrectly.
 
 ```{r}
-screen_data <- 
+screen_data <-
   read_csv("input/p38_data.csv") %>%
   select(-AdjP)
 ```
@@ -27,7 +27,7 @@ screen_data <-
 
 - `is_rndm` indicates if the compounds is a Cell Painting negative control (based on correlation to the ORF)
 - `medTLR5` is the ratio of the median of the p38 imaging readout wrt DMSO for that compound (mean across the n=4 replicates)
-- `Broad` is the Cell Painting correlation with the ORF 
+- `Broad` is the Cell Painting correlation with the ORF
 
 ```{r}
 screen_data
@@ -41,8 +41,8 @@ screen_data %>%
 Create new variables
 
 ```{r}
-screen_data <- 
-  screen_data %>% 
+screen_data <-
+  screen_data %>%
   mutate(is_inhibitor = medTLR5 < 1)  %>%
   mutate(is_cp_negcon = as.factor(isrndm))
 ```
@@ -64,7 +64,7 @@ p <-
     alpha = 0.5,
     size = 3
   ) +
-  
+
   geom_hline(yintercept = -log10(0.05), linetype = "dotted") +
   coord_cartesian(clip = "off") +
   xlab("Cell Painting Correlation") +
@@ -79,16 +79,16 @@ ggsave("output/p38_figure_pvalue.png", width = 6, height = 4)
 Plot ratio of medians of compounds:DMSO vs Cell Painting correlation
 
 ```{r}
-p <- 
+p <-
   screen_data %>%
-  ggplot(aes(Broad, medTLR5, shape = is_cp_negcon, color = is_inhibitor)) + 
-  geom_point() + 
+  ggplot(aes(Broad, medTLR5, shape = is_cp_negcon, color = is_inhibitor)) +
+  geom_point() +
   geom_text(
     aes(label = sprintf("%0.02f", medTLR5)), data = screen_data %>% filter(is_inhibitor)
   ) +
   coord_cartesian(clip = "off") +
   xlab("Cell Painting Correlation") +
-  ylab("Ratio of medians") + 
+  ylab("Ratio of medians") +
   theme_bw()
 
 print(p)

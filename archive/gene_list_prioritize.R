@@ -9,7 +9,7 @@ res.all <- readRDS("../results/master/2017-05-31_c813eb9f/gene_compound_all.rds"
 #res.all <- readRDS("../results/master/2017-05-17_e971110f/gene_compound_all.rds") ## all
 
 split <- function(x, i) {
-  str_split(x, "_")[[1]][i]  
+  str_split(x, "_")[[1]][i]
 }
 
 split <- Vectorize(split)
@@ -23,9 +23,9 @@ get.interacting.proteins <- function(protein.name) {
   if (file.exists(f.name)) {
     return(readRDS(f.name))
   }
-  
+
   tbl <- read.table(sprintf("http://webservice.thebiogrid.org/interactions/?searchNames=true&geneList=%s&taxId=9606&includeHeader=true&accesskey=ca950b072394ce1897811022f7757222", protein.name), sep="\t", header = FALSE, fill = T)
-  tbl <- tbl[, c(8, 9, 12, 13, 14)] 
+  tbl <- tbl[, c(8, 9, 12, 13, 14)]
   colnames(tbl) <- c("Protein.1", "Protein.2", "Method", "Type", "Evidence")
   saveRDS(tbl, f.name)
   return(tbl)
@@ -44,20 +44,20 @@ interacts_with <- function(gene, targets) {
   if (is.na(targets)) {
     return(FALSE)
   }
-  
+
   tg <- str_split(targets, ", ")[[1]]
-  p1 <- get.all.interacting.proteins(tg)  
+  p1 <- get.all.interacting.proteins(tg)
   p2 <- get.all.interacting.proteins(gene)
   p1 <- c(p1$Protein.1 %>% as.character(), p1$Protein.2 %>% as.character()) %>% unique
   p2 <- c(p2$Protein.1 %>% as.character(), p2$Protein.2 %>% as.character()) %>% unique
-  
+
   return((gene %in% p1) | (any(tg %in% p2)))
 }
 
 interacts_with <- Vectorize(interacts_with)
 
-res <- res.all %>% 
-  dplyr::mutate(is.wt = str_detect(gene, "_WT")) %>% 
+res <- res.all %>%
+  dplyr::mutate(is.wt = str_detect(gene, "_WT")) %>%
   dplyr::mutate(gene.name = split(gene, 1)) %>%
   dplyr::mutate(allele.name = split(gene, 2)) %>%
   dplyr::mutate(allele.name = ifelse(is.wt, "WT", allele.name)) %>%
@@ -65,28 +65,28 @@ res <- res.all %>%
 
 res.sm <- res %>%
   dplyr::group_by(gene.name, allele.name) %>%
-  dplyr::summarise(no.high.corr.in.l1000 = sum(l1000.score > 0.97, na.rm = T), 
-                   avg.cell.count = mean(Mean_Cells_Count), 
+  dplyr::summarise(no.high.corr.in.l1000 = sum(l1000.score > 0.97, na.rm = T),
+                   avg.cell.count = mean(Mean_Cells_Count),
                    avg.validated = sum(validated, na.rm = T),
                    max.CP.mimics.score = max(Corr.),
-                   max.CP.antimimics.score = min(Corr.), 
-                   highest.specificity = max(specificity)) 
+                   max.CP.antimimics.score = min(Corr.),
+                   highest.specificity = max(specificity))
 
 res.sm %>% dplyr::mutate(avg.cell.count = round(avg.cell.count, 2)) %>% htmlTable::htmlTable()
 
 res %>% write.csv(., "all_cons.csv", row.names = F)
 
-res.lim <- res %>% 
+res.lim <- res %>%
   mutate(abs.score = abs(Corr.)) %>%
   mutate(high.l1000.score = ifelse(is.na(l1000.score), F,
                                    l1000.score > 0.97)) %>%
-  mutate(category = ifelse(high.l1000.score, 
+  mutate(category = ifelse(high.l1000.score,
                            ifelse(validated, "High in L1000 - Validated (PPI)",
-                                  "High in L1000 - non-validated"), 
+                                  "High in L1000 - non-validated"),
                            ifelse(validated, "Low in L1000 - Validated (PPI)",
                                   "Low in L1000 - non-validated")))
 
-g <- ggplot(res.lim, aes(x = specificity, 
-                    y = abs.score, 
+g <- ggplot(res.lim, aes(x = specificity,
+                    y = abs.score,
                     color = category)) + geom_point(size = 0.8)
 ggsave("scatter.png", g, width = 8, height = 5)

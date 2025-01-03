@@ -205,17 +205,17 @@ hr {
 library(dplyr)
 </code></pre>
 
-<pre><code>## 
+<pre><code>##
 ## Attaching package: &#39;dplyr&#39;
 </code></pre>
 
 <pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
+##
 ##     filter, lag
 </code></pre>
 
 <pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
+##
 ##     intersect, setdiff, setequal, union
 </code></pre>
 
@@ -303,23 +303,23 @@ if (LUAD) {
   strong.trt &lt;- Pf.trt.strong.collapsed$data$Treatment
   r.cor &lt;- rep.cor(Pf = Pf.trt, grp.var = &quot;Treatment&quot;, feat.var = Pf.trt$feat_cols)
 
-  data.annot &lt;- Pf.strong %&gt;% 
-    dplyr::filter(Treatment %in% strong.trt) %&gt;% 
+  data.annot &lt;- Pf.strong %&gt;%
+    dplyr::filter(Treatment %in% strong.trt) %&gt;%
     dplyr::left_join(., r.cor, by = &quot;Treatment&quot;) %&gt;%
-    dplyr::select(one_of(c(&quot;Treatment&quot;, &quot;Pathway&quot;, &quot;Gene&quot;, &quot;AlleleDesc&quot;, &quot;cr&quot;))) %&gt;% 
-    dplyr::mutate(Pathway = str_replace(Pathway, &quot;Canonical &quot;, &quot;&quot;)) %&gt;% 
+    dplyr::select(one_of(c(&quot;Treatment&quot;, &quot;Pathway&quot;, &quot;Gene&quot;, &quot;AlleleDesc&quot;, &quot;cr&quot;))) %&gt;%
+    dplyr::mutate(Pathway = str_replace(Pathway, &quot;Canonical &quot;, &quot;&quot;)) %&gt;%
     dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2)) %&gt;%
     dplyr::arrange(-cr) %&gt;%
-    dplyr::group_by(Gene) %&gt;% 
-    dplyr::ungroup() 
+    dplyr::group_by(Gene) %&gt;%
+    dplyr::ungroup()
 
   data.annot %&gt;% htmlTable::htmlTable()
 
   desired.ta &lt;- data.annot$Treatment
-  Pf.ta.all$data &lt;- Pf.ta.all$data %&gt;% dplyr::filter(Treatment %in% c(as.character(desired.ta), &quot;EMPTY_&quot;)) 
-  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta) 
+  Pf.ta.all$data &lt;- Pf.ta.all$data %&gt;% dplyr::filter(Treatment %in% c(as.character(desired.ta), &quot;EMPTY_&quot;))
+  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta)
 
-  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta) 
+  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta)
 }
 
 Pf.gene &lt;- Pf.ta
@@ -338,7 +338,7 @@ if (!just.bioactives) {
   Pf.2 &lt;- readRDS(&quot;../results/master/2017-04-20_425d653/Pf_DOS_new.rds&quot;)
   Pf &lt;- rbind(Pf.1, Pf.2)
 } else {
-  Pf &lt;- Pf.1 
+  Pf &lt;- Pf.1
 }
 
 u &lt;- rep.cor(list(data = Pf, feat_cols = Pf.cmpd$feat_cols, factor_cols = Pf.cmpd$factor_cols), grp.var = &quot;Metadata_broad_sample&quot;, feat.var = Pf.cmpd$feat_cols)
@@ -353,17 +353,17 @@ up &lt;- readr::read_csv(&quot;../results/master/2017-04-21_425d6537/Cell_counts
 ## )
 </code></pre>
 
-<pre><code class="r">x &lt;- Pf %&gt;% 
+<pre><code class="r">x &lt;- Pf %&gt;%
   left_join(., u, by = &quot;Metadata_broad_sample&quot;) %&gt;%
   left_join(., up, by = c(&quot;Metadata_Plate&quot; = &quot;Image_Metadata_Plate&quot;, &quot;Metadata_Well&quot; = &quot;Image_Metadata_Well&quot;)) %&gt;%
   dplyr::select(Metadata_broad_sample, cr, Image_Count_Cells) %&gt;%
   dplyr::group_by(Metadata_broad_sample) %&gt;%
   summarise_each(funs(mean))
 
-Pf.cmpd$data %&lt;&gt;% 
+Pf.cmpd$data %&lt;&gt;%
   right_join(., x, by = &quot;Metadata_broad_sample&quot;) %&gt;%
   mutate(rep.corr = round(cr, 2), Mean_Cells_Count = round(Image_Count_Cells, 2)) %&gt;%
-  select(-cr, -Image_Count_Cells) 
+  select(-cr, -Image_Count_Cells)
 
 Pf.cmpd$factor_cols &lt;- c(Pf.cmpd$factor_cols, &quot;rep.corr&quot;, &quot;Mean_Cells_Count&quot;)
 Pf.cmpd$data$Mean_Cells_Count &lt;- round(scale(Pf.cmpd$data$Mean_Cells_Count), 2)
@@ -423,7 +423,7 @@ print(length(Pf.cmpd$feat_cols))
   }
 
   tbl &lt;- read.table(sprintf(&quot;http://webservice.thebiogrid.org/interactions/?searchNames=true&amp;geneList=%s&amp;taxId=9606&amp;includeHeader=true&amp;accesskey=ca950b072394ce1897811022f7757222&quot;, protein.name), sep=&quot;\t&quot;, header = FALSE, fill = T)
-  tbl &lt;- tbl[, c(8, 9, 12, 13, 14)] 
+  tbl &lt;- tbl[, c(8, 9, 12, 13, 14)]
   colnames(tbl) &lt;- c(&quot;Protein.1&quot;, &quot;Protein.2&quot;, &quot;Method&quot;, &quot;Type&quot;, &quot;Evidence&quot;)
   saveRDS(tbl, f.name)
   return(tbl)
@@ -439,7 +439,7 @@ get.all.interacting.proteins &lt;- function(protein.name) {
 }
 
 connectivity &lt;- function(pathway, MOA.q) {
-  pathway.genes &lt;- Pf.gene$data %&gt;% 
+  pathway.genes &lt;- Pf.gene$data %&gt;%
     dplyr::filter(str_detect(Pathway, pathway)) %&gt;%
     dplyr::select(Treatment) %&gt;%
     dplyr::group_by(Treatment) %&gt;%
@@ -502,18 +502,18 @@ if (random.shuffle) {
   annot &lt;- rbind(Pf.gene$data[,c(&quot;Treatment&quot;, &quot;Pathway&quot;)] %&gt;% as.matrix(),
                Pf.cmpd.res$data[,c(&quot;CPD_NAME&quot;, &quot;MOA&quot;)] %&gt;% as.matrix())
 }
-annot %&lt;&gt;% as.data.frame 
+annot %&lt;&gt;% as.data.frame
 colnames(annot) &lt;- c(&quot;Treatment&quot;, &quot;Pathway&quot;)
 annot &lt;- cbind(annot, data.frame(Type = c(rep(&quot;gene&quot;, NROW(Pf.gene$data)),
                                           rep(&quot;compound&quot;, NROW(Pf.cmpd.res$data)))))
 data.all &lt;- cbind(annot, data)
-data.all %&lt;&gt;% 
+data.all %&lt;&gt;%
   dplyr::group_by(Treatment) %&gt;%
   dplyr::slice(1) %&gt;%
   dplyr::ungroup(.)
-write.table(data.all, 
+write.table(data.all,
             file = &quot;gene_compound.txt&quot;,
-            sep = &quot;\t&quot;, 
+            sep = &quot;\t&quot;,
             row.names = F)
 
 cr &lt;- data.all[,4:NCOL(data.all)] %&gt;%
@@ -521,9 +521,9 @@ cr &lt;- data.all[,4:NCOL(data.all)] %&gt;%
   cor %&gt;%
   abs
 
-write.table(cr, 
+write.table(cr,
             file = &quot;cr.txt&quot;,
-            sep = &quot;\t&quot;, 
+            sep = &quot;\t&quot;,
             row.names = T)
 
 rownames(cr) &lt;- data.all$Treatment
@@ -536,13 +536,13 @@ genes &lt;- Pf.gene$data$Treatment
 cmpds &lt;- Pf.cmpd$data$CPD_NAME
 sm &lt;- 0
 for (i in 1:max(ct)) {
-  cl &lt;- which(ct == i) %&gt;% names  
+  cl &lt;- which(ct == i) %&gt;% names
   w &lt;- which(genes %in% cl)
   y &lt;- which(cmpds %in% cl)
   if (length(w) &gt; 0 &amp;&amp; length(y) &gt; 0) {
-    annot.cls &lt;- annot %&gt;% 
+    annot.cls &lt;- annot %&gt;%
         dplyr::filter(Treatment %in% cl) %&gt;%
-        dplyr::select(Treatment, Pathway)  
+        dplyr::select(Treatment, Pathway)
 
     if (!random.shuffle) {
         annot.cls %&gt;%
@@ -554,12 +554,12 @@ for (i in 1:max(ct)) {
     rownames(cr.d) &lt;- NULL
     colnames(cr.d) &lt;- NULL
     corrplot::corrplot(cr.d)
-#     
+#
 #     pathways &lt;- Pf.gene$data$Pathway[Pf.gene$data$Treatment %in% genes[w]] %&gt;% unique
 #     pathways &lt;- lapply(pathways, function(x) str_replace_all(x, &quot;Canonical &quot;, &quot;&quot;)) %&gt;% unlist
 #     MOAs &lt;- annot.cls$Pathway[which(!annot.cls$Treatment %in% genes[w])] %&gt;% unique
 #     MOAs &lt;- setdiff(MOAs, &quot;&quot;)
-#     
+#
 #     mn &lt;- mean(outer(pathways, MOAs, connectivity), na.rm = T)
 #     if (!is.na(mn) &amp;&amp; mn &gt; 0.03) {
 #       sm &lt;- sm + 1
@@ -696,10 +696,10 @@ meta.ta.cmap &lt;- meta.ta.cmap %&gt;% as.data.frame()
 genes.ta.cmap &lt;- meta.ta.cmap$x_genesymbol_mutation
 ids.ta.cmap &lt;- meta.ta.cmap$pert_id
 meta.ta.cmap[, &quot;det_well&quot;] &lt;- tolower(meta.ta.cmap$det_well)
-treatment.meta &lt;- Pf_org$data %&gt;% 
+treatment.meta &lt;- Pf_org$data %&gt;%
   dplyr::filter(Type == &quot;Treated&quot;) %&gt;%
   dplyr::select(Well, Treatment) %&gt;%
-  unique %&gt;% 
+  unique %&gt;%
   dplyr::left_join(., meta.ta.cmap, by = c(&quot;Well&quot; = &quot;det_well&quot;))
 </code></pre>
 
@@ -771,30 +771,30 @@ sample.tot &lt;- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.g
 
   for (gene in Pf.gene$data$Treatment) {
     if (verbose) {
-      pb$tick()  
+      pb$tick()
     }
     gn &lt;- gn.map[gene] %&gt;% as.matrix() %&gt;% as.vector()
     if (!random.shuffle) {
-      u.res &lt;- cr.melt %&gt;% 
+      u.res &lt;- cr.melt %&gt;%
         dplyr::filter(Var2 == gn) %&gt;%
         dplyr::arrange(-value) %&gt;%
         #dplyr::mutate(value = round(value, 2)) %&gt;%
-        dplyr::filter(abs(value) &gt; cor.thr) 
+        dplyr::filter(abs(value) &gt; cor.thr)
 
-        up.reg &lt;- u.res %&gt;% left_join(., specificity.data, by = c(&quot;Var1&quot;, &quot;Var2&quot;)) %&gt;% 
+        up.reg &lt;- u.res %&gt;% left_join(., specificity.data, by = c(&quot;Var1&quot;, &quot;Var2&quot;)) %&gt;%
           dplyr::filter(!is.na(spec.)) %&gt;%
           head(., how.many) %&gt;% dplyr::filter(value &gt; 0) %&gt;% dplyr::select(Var1) %&gt;% as.matrix() %&gt;% as.vector()
-        down.reg &lt;- u.res %&gt;% left_join(., specificity.data, by = c(&quot;Var1&quot;, &quot;Var2&quot;)) %&gt;% 
+        down.reg &lt;- u.res %&gt;% left_join(., specificity.data, by = c(&quot;Var1&quot;, &quot;Var2&quot;)) %&gt;%
           dplyr::filter(!is.na(spec.)) %&gt;% tail(., how.many) %&gt;% dplyr::filter(value &lt; 0) %&gt;% dplyr::select(Var1) %&gt;% as.matrix() %&gt;% as.vector()
 
     } else {
-      u.res &lt;- cr.melt %&gt;% 
+      u.res &lt;- cr.melt %&gt;%
         dplyr::filter(Var2 == gn) %&gt;%
         sample_n(NROW(.)) %&gt;%
         #dplyr::mutate(value = round(value, 2))
-      up.reg &lt;- u.res %&gt;% left_join(., specificity.data, by = c(&quot;Var1&quot;, &quot;Var2&quot;)) %&gt;% 
+      up.reg &lt;- u.res %&gt;% left_join(., specificity.data, by = c(&quot;Var1&quot;, &quot;Var2&quot;)) %&gt;%
           dplyr::filter(!is.na(spec.)) %&gt;% head(., how.many) %&gt;% dplyr::select(Var1) %&gt;% as.matrix() %&gt;% as.vector()
-      down.reg &lt;- u.res %&gt;% left_join(., specificity.data, by = c(&quot;Var1&quot;, &quot;Var2&quot;)) %&gt;% 
+      down.reg &lt;- u.res %&gt;% left_join(., specificity.data, by = c(&quot;Var1&quot;, &quot;Var2&quot;)) %&gt;%
           dplyr::filter(!is.na(spec.)) %&gt;% tail(., how.many) %&gt;% dplyr::select(Var1) %&gt;% as.matrix() %&gt;% as.vector()
     }
 
@@ -804,11 +804,11 @@ sample.tot &lt;- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.g
     u.res.lim &lt;- u.res %&gt;% dplyr::filter(Var1 %in% reg) %&gt;% dplyr::mutate(CPD_NAME = Var1) %&gt;% dplyr::mutate(Corr. = value) %&gt;% dplyr::select(one_of(c(&quot;CPD_NAME&quot;, &quot;Corr.&quot;)))
 
     rest &lt;- setdiff(Pf.cmpd$data$CPD_NAME %&gt;% unique, reg)
-    v &lt;- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% reg], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .) 
+    v &lt;- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% reg], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .)
     if (length(v) == 0) {
       next
     }
-    u &lt;- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% rest], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .) 
+    u &lt;- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% rest], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .)
 
     main.targ &lt;- data.frame(gene = v) %&gt;% dplyr::group_by(gene) %&gt;% tally() %&gt;% dplyr::filter(gene != &quot;&quot;) %&gt;% dplyr::arrange(-n) %&gt;% dplyr::select(gene) %&gt;% as.matrix() %&gt;% as.vector()
     rest.targ &lt;- data.frame(gene = u) %&gt;% dplyr::group_by(gene) %&gt;% tally() %&gt;% dplyr::filter(gene != &quot;&quot;) %&gt;% dplyr::arrange(-n) %&gt;% dplyr::select(gene) %&gt;% as.matrix() %&gt;% as.vector()
@@ -841,26 +841,26 @@ sample.tot &lt;- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.g
         (ppi %&gt;% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %&gt;% unique %&gt;% head(., 20)) %&gt;% htmlTable::htmlTable() %&gt;% cat
         cat(&quot;&lt;br&gt; &lt;hr&gt;&quot;)
       }
-    } 
+    }
 
     if (verbose) {
       cr.l1000.melt &lt;- cr.l1000 %&gt;% reshape2::melt(.) %&gt;% dplyr::filter(Var2 == gene)
       cat(gene, file = &quot;predictions.html&quot;, append = T)
       cat(&quot;&lt;br&gt;&quot;, file = &quot;predictions.html&quot;, append = T)
 
-      res.out &lt;- Pf.cmpd$data %&gt;% 
-        dplyr::filter(CPD_NAME %in% reg) %&gt;% 
-        dplyr::select(one_of(c(&quot;CPD_NAME&quot;, &quot;MOA&quot;, &quot;Target&quot;, 
-                               &quot;rep.corr&quot;, &quot;Mean_Cells_Count&quot;))) %&gt;% 
-        dplyr::inner_join(., u.res.lim, by = &quot;CPD_NAME&quot;) %&gt;% 
+      res.out &lt;- Pf.cmpd$data %&gt;%
+        dplyr::filter(CPD_NAME %in% reg) %&gt;%
+        dplyr::select(one_of(c(&quot;CPD_NAME&quot;, &quot;MOA&quot;, &quot;Target&quot;,
+                               &quot;rep.corr&quot;, &quot;Mean_Cells_Count&quot;))) %&gt;%
+        dplyr::inner_join(., u.res.lim, by = &quot;CPD_NAME&quot;) %&gt;%
         dplyr::mutate(Var2 = gene) %&gt;%
-        dplyr::left_join(., specificity.data, by = c(&quot;CPD_NAME&quot; = &quot;Var1&quot;, 
+        dplyr::left_join(., specificity.data, by = c(&quot;CPD_NAME&quot; = &quot;Var1&quot;,
                                                      &quot;Var2&quot; = &quot;Var2&quot;)) %&gt;%
         dplyr::left_join(., cr.l1000.melt, by = c(&quot;Metadata_broad_sample&quot; = &quot;Var1&quot;)) %&gt;%
-        arrange(Corr.) %&gt;% 
-        dplyr::mutate(value = round(value, 3)) %&gt;% 
-        dplyr::rename(l1000.score = value) %&gt;% 
-        dplyr::rename(specificity = spec.) %&gt;% 
+        arrange(Corr.) %&gt;%
+        dplyr::mutate(value = round(value, 3)) %&gt;%
+        dplyr::rename(l1000.score = value) %&gt;%
+        dplyr::rename(specificity = spec.) %&gt;%
         dplyr::select(-Var2.x, -Var2.y) %&gt;%
         unique
 
@@ -879,27 +879,27 @@ sample.tot &lt;- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.g
 rownames(gene.to.cluster) &lt;- Pf.gene$data$Treatment
 for (i in 1:length(cls)) {
   cl &lt;- intersect(Pf.gene$data$Treatment, cls[[i]])
-  gene.to.cluster[cl, 1] &lt;- i 
+  gene.to.cluster[cl, 1] &lt;- i
 }
 
 singletons &lt;- gene.to.cluster[,1] == 0
 mx &lt;- max(gene.to.cluster[,1] + 1)
 gene.to.cluster[which(singletons), 1] &lt;- mx:(mx + sum(singletons) - 1)
 cr.melt.ext &lt;- cr.melt %&gt;%
-  mutate(cluster.id = gene.to.cluster[Var2,1]) 
+  mutate(cluster.id = gene.to.cluster[Var2,1])
 
 specificity &lt;- function(vals, pos.matches) {
-  vals.sorted &lt;- vals %&gt;% 
+  vals.sorted &lt;- vals %&gt;%
     arrange(ifelse(pos.matches, -1, 1) * value)
 
   best.clst &lt;- vals.sorted %&gt;%
     slice(1) %&gt;%
     select(cluster.id, value, Var2)
 
-  sec.best.clst &lt;- vals.sorted %&gt;% 
+  sec.best.clst &lt;- vals.sorted %&gt;%
     filter(cluster.id != best.clst$cluster.id) %&gt;%
     slice(1) %&gt;%
-    select(cluster.id, value) 
+    select(cluster.id, value)
 
   df &lt;- data.frame(spec. = (best.clst$value - sec.best.clst$value)/(best.clst$value),
              Var2 = best.clst$Var2)
@@ -907,38 +907,38 @@ specificity &lt;- function(vals, pos.matches) {
 }
 
 make.match.pos &lt;- function(x) {
-  y &lt;- x %&gt;% 
+  y &lt;- x %&gt;%
     arrange(-value) %&gt;%
     slice(1) %&gt;%
-    select(Var2, cluster.id, value) 
+    select(Var2, cluster.id, value)
   return(y)
 }
 
 make.match.neg &lt;- function(x) {
-  y &lt;- x %&gt;% 
+  y &lt;- x %&gt;%
     arrange(value) %&gt;%
     slice(1) %&gt;%
-    select(Var2, cluster.id, value) 
+    select(Var2, cluster.id, value)
   return(y)
 }
 
-matches.pos &lt;- cr.melt.ext %&gt;% 
-  group_by(Var1) %&gt;% 
+matches.pos &lt;- cr.melt.ext %&gt;%
+  group_by(Var1) %&gt;%
   do(data.frame(make.match.pos(.)))
 
-matches.neg &lt;- cr.melt.ext %&gt;% 
-  group_by(Var1) %&gt;% 
-  do(data.frame(make.match.neg(.))) 
+matches.neg &lt;- cr.melt.ext %&gt;%
+  group_by(Var1) %&gt;%
+  do(data.frame(make.match.neg(.)))
 
 pos.t &lt;- cr.melt.ext %&gt;%
   group_by(Var1) %&gt;%
   do(data.frame(specificity(.[,c(&quot;value&quot;, &quot;cluster.id&quot;, &quot;Var2&quot;)], pos.matches = T))) %&gt;%
   arrange(-spec.) %&gt;%
-  dplyr::left_join(., Pf.cmpd$data[, c(&quot;CPD_NAME&quot;, &quot;MOA&quot;)], by = c(&quot;Var1&quot; = &quot;CPD_NAME&quot;)) %&gt;% 
-  dplyr::left_join(., matches.pos, by = &quot;Var1&quot;) %&gt;% 
+  dplyr::left_join(., Pf.cmpd$data[, c(&quot;CPD_NAME&quot;, &quot;MOA&quot;)], by = c(&quot;Var1&quot; = &quot;CPD_NAME&quot;)) %&gt;%
+  dplyr::left_join(., matches.pos, by = &quot;Var1&quot;) %&gt;%
   dplyr::rename(corr = value) %&gt;%
-  filter(abs(corr) &gt; 0.4) %&gt;% 
-  #dplyr::mutate(spec. = round(spec., 2), 
+  filter(abs(corr) &gt; 0.4) %&gt;%
+  #dplyr::mutate(spec. = round(spec., 2),
   #              corr = round(corr, 2)) %&gt;%
   dplyr::rename(Var2 = Var2.x) %&gt;%
   dplyr::select(Var1, Var2, spec.)
@@ -956,11 +956,11 @@ pos.t &lt;- cr.melt.ext %&gt;%
   group_by(Var1) %&gt;%
   do(data.frame(specificity(.[,c(&quot;value&quot;, &quot;cluster.id&quot;, &quot;Var2&quot;)], pos.matches = F))) %&gt;%
   arrange(-spec.) %&gt;%
-  dplyr::left_join(., Pf.cmpd$data[, c(&quot;CPD_NAME&quot;, &quot;MOA&quot;)], by = c(&quot;Var1&quot; = &quot;CPD_NAME&quot;)) %&gt;% 
-  dplyr::left_join(., matches.neg, by = &quot;Var1&quot;) %&gt;% 
+  dplyr::left_join(., Pf.cmpd$data[, c(&quot;CPD_NAME&quot;, &quot;MOA&quot;)], by = c(&quot;Var1&quot; = &quot;CPD_NAME&quot;)) %&gt;%
+  dplyr::left_join(., matches.neg, by = &quot;Var1&quot;) %&gt;%
   dplyr::rename(corr = value) %&gt;%
-  filter(abs(corr) &gt; 0.4) %&gt;% 
-  #dplyr::mutate(spec. = round(spec., 2), 
+  filter(abs(corr) &gt; 0.4) %&gt;%
+  #dplyr::mutate(spec. = round(spec., 2),
   #              corr = round(corr, 2)) %&gt;%
   dplyr::rename(Var2 = Var2.x) %&gt;%
   dplyr::select(Var1, Var2, spec.)
@@ -3203,16 +3203,16 @@ res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, r
 <pre><code class="r">print(f)
 </code></pre>
 
-<pre><code>## 
+<pre><code>##
 ##  Fisher&#39;s Exact Test for Count Data
-## 
+##
 ## data:  res$V
 ## p-value = 1
 ## alternative hypothesis: true odds ratio is greater than 1
 ## 95 percent confidence interval:
 ##    0 Inf
 ## sample estimates:
-## odds ratio 
+## odds ratio
 ##          0
 </code></pre>
 
@@ -3221,12 +3221,12 @@ res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, r
 
 <pre><code>## $genes
 ## NULL
-## 
+##
 ## $V
 ##      [,1]    [,2]
 ## [1,]    0   23514
 ## [2,]    0 3632852
-## 
+##
 ## $res.all
 ##       Metadata_broad_sample
 ## 1    BRD-K29512681-001-05-1
@@ -10741,7 +10741,7 @@ res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, r
 ## 700                                                                                                                                                                                                               &lt;NA&gt;
 ## 701                                                                                                                                                                                                               &lt;NA&gt;
 ## 702                                                                                                                                                                                                               &lt;NA&gt;
-## 703                                                                                                                                                                                                                   
+## 703
 ## 704                                                                                                                                                                                                               &lt;NA&gt;
 ## 705                                                                                                                                                                                                               &lt;NA&gt;
 ## 706                                                                                                                                                                                                               &lt;NA&gt;
@@ -10842,7 +10842,7 @@ res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, r
 ## 801                                                                                                                                                                                                               &lt;NA&gt;
 ## 802                                                                                                                                                                                                               &lt;NA&gt;
 ## 803                                                                                                                                                                                                               &lt;NA&gt;
-## 804                                                                                                                                                                                                                   
+## 804
 ## 805                                                                                                                                                                                                               &lt;NA&gt;
 ## 806                                                                                                                                                                                                               &lt;NA&gt;
 ## 807                                                                                                                                                                                                               &lt;NA&gt;
@@ -10875,13 +10875,13 @@ res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, r
 ## 834                                                                                                                                                                                                               &lt;NA&gt;
 ## 835                                                                                                                                                                                                               &lt;NA&gt;
 ## 836                                                                                                                                                                                                               &lt;NA&gt;
-## 837                                                                                                                                                                                                                   
-## 838                                                                                                                                                                                                                   
+## 837
+## 838
 ## 839                                                                                                                                                                                                               &lt;NA&gt;
 ## 840                                                                                                                                                                                                               &lt;NA&gt;
 ## 841                                                                                                                                                                                                               &lt;NA&gt;
-## 842                                                                                                                                                                                                                   
-## 843                                                                                                                                                                                                                   
+## 842
+## 843
 ## 844                                                                                                                                                                                                               &lt;NA&gt;
 ## 845                                                                                                                                                                                                               &lt;NA&gt;
 ## 846                                                                                                                                                                                                               &lt;NA&gt;
@@ -10919,7 +10919,7 @@ res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, r
 ## 878                                                                                                                                                                                                               &lt;NA&gt;
 ## 879                                                                                                                                                                                                               &lt;NA&gt;
 ## 880                                                                                                                                                                                          ANO1, CLCN2, CLCN7, TRPA1
-## 881                                                                                                                                                                                                                   
+## 881
 ## 882                                                                                                                                                                                                               &lt;NA&gt;
 ## 883                                                                                                                                                                                                       ADRB1, ADRB2
 ## 884                                                                                                                                                                                                               &lt;NA&gt;
@@ -11048,7 +11048,7 @@ res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, r
 ## 1007                                                                                                                                                                                                              &lt;NA&gt;
 ## 1008                                                                                                                                                                                                              &lt;NA&gt;
 ## 1009                                                                                                                                                                                                              &lt;NA&gt;
-## 1010                                                                                                                                                                                                                  
+## 1010
 ## 1011                                                                                                                                                                                                              &lt;NA&gt;
 ## 1012                                                                                                                                                                                                              &lt;NA&gt;
 ## 1013                                                                                                                                                                                                              &lt;NA&gt;
@@ -11227,7 +11227,7 @@ res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, r
 ## 1186                                                                                                                                                                                                              &lt;NA&gt;
 ## 1187                                                                                                                                                                                                              &lt;NA&gt;
 ## 1188                                                                                                                                                                                                              &lt;NA&gt;
-## 1189                                                                                                                                                                                                                  
+## 1189
 ## 1190                                                                                                                                                                                                              &lt;NA&gt;
 ## 1191                                                                                                                                                                                                              &lt;NA&gt;
 ## 1192                                                                                                                                                                                                              &lt;NA&gt;
@@ -11696,7 +11696,7 @@ res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, r
 ## 1655                                                                                                                                                                                                              &lt;NA&gt;
 ## 1656                                                                                                                                                                                                              &lt;NA&gt;
 ## 1657                                                                                                                                                                                                              &lt;NA&gt;
-## 1658                                                                                                                                                                                                                  
+## 1658
 ## 1659                                                                                                                                                                                                              &lt;NA&gt;
 ## 1660                                                                                                                                                                                                              &lt;NA&gt;
 ## 1661                                                                                                                                                                                                              &lt;NA&gt;
@@ -11719,7 +11719,7 @@ res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, r
 ## 1678                                                                                                                                                                                                              &lt;NA&gt;
 ## 1679                                                                                                                                                                                                              &lt;NA&gt;
 ## 1680                                                                                                                                                                                                              &lt;NA&gt;
-## 1681                                                                                                                                                                                                                  
+## 1681
 ## 1682                                                                                                                                                                                                              &lt;NA&gt;
 ## 1683                                                                                                                                                                                                              &lt;NA&gt;
 ## 1684                                                                                                                                                                                                              &lt;NA&gt;
@@ -12257,7 +12257,7 @@ res &lt;- sample.tot(Pf.cmpd = Pf.cmpd, Pf.gene = Pf.gene, random.shuffle = F, r
 ## 2216                                                                                                                                                                                                              &lt;NA&gt;
 ## 2217                                                                                                                                                                                                              &lt;NA&gt;
 ## 2218                                                                                                                                                                                                              &lt;NA&gt;
-## 2219                                                                                                                                                                                                                  
+## 2219
 ## 2220                                                                                                                                                                                                              &lt;NA&gt;
 ## 2221                                                                                                                                                                                                              &lt;NA&gt;
 ## 2222                                                                                                                                                                                                              &lt;NA&gt;
@@ -16864,28 +16864,28 @@ cr.melt.n &lt;- melt(cr.n)
 df &lt;- cr.melt.n %&gt;%
   filter(Var2 %in% c(&quot;KRAS_WT.1&quot;, &quot;KRAS_G12V&quot;, &quot;HRAS_G12V&quot;)) %&gt;%
   group_by(Var1) %&gt;%
-  do(data.frame(WT_score = as.vector(.[which(.[,&quot;Var2&quot;] == &quot;KRAS_WT.1&quot;), &quot;value&quot;]), 
-                MUT1_score = as.vector(.[which(.[,&quot;Var2&quot;] == &quot;KRAS_G12V&quot;), &quot;value&quot;]), 
+  do(data.frame(WT_score = as.vector(.[which(.[,&quot;Var2&quot;] == &quot;KRAS_WT.1&quot;), &quot;value&quot;]),
+                MUT1_score = as.vector(.[which(.[,&quot;Var2&quot;] == &quot;KRAS_G12V&quot;), &quot;value&quot;]),
                 MUT2_score = as.vector(.[which(.[,&quot;Var2&quot;] == &quot;HRAS_G12V&quot;), &quot;value&quot;]))) %&gt;%
-  dplyr::rename(WT_score = value, 
+  dplyr::rename(WT_score = value,
                 MUT_KRAS_score = value.1,
-                MUT_HRAS_score = value.2) %&gt;% 
+                MUT_HRAS_score = value.2) %&gt;%
   dplyr::arrange(-WT_score+(MUT_KRAS_score+MUT_HRAS_score)/2) %&gt;%
-  dplyr::mutate(WT_score = round(WT_score, 2), 
-                MUT_KRAS_score = round(MUT_KRAS_score, 2), 
+  dplyr::mutate(WT_score = round(WT_score, 2),
+                MUT_KRAS_score = round(MUT_KRAS_score, 2),
                 MUT_HRAS_score = round(MUT_HRAS_score, 2)) %&gt;%
   dplyr::left_join(., Pf.cmpd$data[, c(&quot;Metadata_broad_sample&quot;, &quot;MOA&quot;, &quot;CPD_NAME&quot;)], by = c(&quot;Var1&quot; = &quot;Metadata_broad_sample&quot;)) %&gt;%
   dplyr::mutate(MUT_Score = (MUT_KRAS_score + MUT_HRAS_score)/2)
 
 
-df %&gt;% 
-  filter(MUT_Score  &gt; 0.35 &amp; WT_score &lt; 0.25 | 
-           MUT_Score &lt; -0.35 &amp; WT_score &gt; -0.25) %&gt;% 
+df %&gt;%
+  filter(MUT_Score  &gt; 0.35 &amp; WT_score &lt; 0.25 |
+           MUT_Score &lt; -0.35 &amp; WT_score &gt; -0.25) %&gt;%
   print
 
-df %&gt;% 
-  filter(MUT_Score  &lt; 0.25 &amp; WT_score &gt; 0.35 | 
-           MUT_Score &gt; -0.25 &amp; WT_score &lt; -0.35) %&gt;% 
+df %&gt;%
+  filter(MUT_Score  &lt; 0.25 &amp; WT_score &gt; 0.35 |
+           MUT_Score &gt; -0.25 &amp; WT_score &lt; -0.35) %&gt;%
   print
 
 g &lt;- ggplot(df, aes(y = MUT_Score, x = WT_score)) + geom_point()
@@ -16901,28 +16901,28 @@ ggsave(&quot;WT_vs_Mut.png&quot;, g)
   return(d)
 }
 
-kras.wt &lt;- Pf.gene$data %&gt;% 
+kras.wt &lt;- Pf.gene$data %&gt;%
   filter(Treatment == &quot;KRAS_WT.1&quot;) %&gt;% select(one_of(Pf.gene$feat_cols)) %&gt;%
   t %&gt;%
   as.data.frame() %&gt;%
   tibble::rownames_to_column(&quot;feature&quot;) %&gt;%
   dplyr::rename(value_kras_wt = V1)
 
-kras.g12v &lt;- Pf.gene$data %&gt;% 
+kras.g12v &lt;- Pf.gene$data %&gt;%
   filter(Treatment == &quot;KRAS_G12V&quot;) %&gt;% select(one_of(Pf.gene$feat_cols)) %&gt;%
   t %&gt;%
   as.data.frame() %&gt;%
   tibble::rownames_to_column(&quot;feature&quot;) %&gt;%
   dplyr::rename(value_kras_mt = V1)
 
-hras.g12v &lt;- Pf.gene$data %&gt;% 
+hras.g12v &lt;- Pf.gene$data %&gt;%
   filter(Treatment == &quot;HRAS_G12V&quot;) %&gt;% select(one_of(Pf.gene$feat_cols)) %&gt;%
   t %&gt;%
   as.data.frame() %&gt;%
   tibble::rownames_to_column(&quot;feature&quot;) %&gt;%
   dplyr::rename(value_hras_mt = V1)
 
-u &lt;- kras.wt %&gt;% 
+u &lt;- kras.wt %&gt;%
   left_join(., kras.g12v, by = &quot;feature&quot;) %&gt;%
   left_join(., hras.g12v, by = &quot;feature&quot;)
 
@@ -16930,36 +16930,36 @@ for (i in 2:4) {
   u[,i] &lt;- u[,i]/(sum(abs(u[,i]))) * NROW(u)
 }
 
-ft.mt &lt;- u %&gt;% 
+ft.mt &lt;- u %&gt;%
   arrange(-abs(value_kras_wt)) %&gt;%
   filter(abs(value_kras_mt) &gt; 1 &amp; value_kras_wt/value_kras_mt &lt; 0.1) %&gt;%
   select(feature) %&gt;%
   as.matrix() %&gt;%
   as.vector()
 #ft.rest &lt;- setdiff(u$feature, ft.mt)
-ft.rest &lt;- u %&gt;% 
+ft.rest &lt;- u %&gt;%
   arrange(-abs(value_kras_wt)) %&gt;%
   filter(abs(value_kras_mt) &gt; 1 &amp; value_kras_wt/value_kras_mt &gt; 0.8) %&gt;%
   select(feature) %&gt;%
   as.matrix() %&gt;%
   as.vector()
 
-u %&gt;% 
-  filter(feature %in% ft.mt) %&gt;% 
-  arrange(-abs(value_kras_mt)) %&gt;% 
-  select(-value_hras_mt) %&gt;% 
+u %&gt;%
+  filter(feature %in% ft.mt) %&gt;%
+  arrange(-abs(value_kras_mt)) %&gt;%
+  select(-value_hras_mt) %&gt;%
   mutate(value_kras_mt = round(value_kras_mt, 2),
-         value_kras_wt = round(value_kras_wt, 2)) %&gt;% 
-  as.data.frame() %&gt;% 
+         value_kras_wt = round(value_kras_wt, 2)) %&gt;%
+  as.data.frame() %&gt;%
   htmlTable::htmlTable()
 
-u %&gt;% 
-  filter(feature %in% ft.rest) %&gt;% 
-  arrange(-abs(value_kras_mt)) %&gt;% 
-  select(-value_hras_mt) %&gt;% 
+u %&gt;%
+  filter(feature %in% ft.rest) %&gt;%
+  arrange(-abs(value_kras_mt)) %&gt;%
+  select(-value_hras_mt) %&gt;%
   mutate(value_kras_mt = round(value_kras_mt, 2),
-         value_kras_wt = round(value_kras_wt, 2)) %&gt;% 
-  as.data.frame() %&gt;% 
+         value_kras_wt = round(value_kras_wt, 2)) %&gt;%
+  as.data.frame() %&gt;%
   htmlTable::htmlTable()
 
 cr.n &lt;- (cos.d(Pf.cmpd$data[,ft.mt] %&gt;% t, Pf.gene$data[which(Pf.gene$data$Treatment == &quot;KRAS_G12V&quot;),ft.mt] %&gt;% t))
@@ -16974,12 +16974,12 @@ colnames(cr.p) &lt;- &quot;score.comm&quot;
 cr.n &lt;- cr.n %&gt;% as.data.frame() %&gt;% tibble::rownames_to_column(&quot;compound ID&quot;)
 cr.p &lt;- cr.p %&gt;% as.data.frame() %&gt;% tibble::rownames_to_column(&quot;compound ID&quot;)
 
-cr.all &lt;- cr.n %&gt;% 
-  left_join(cr.p, by = &quot;compound ID&quot;) %&gt;% 
+cr.all &lt;- cr.n %&gt;%
+  left_join(cr.p, by = &quot;compound ID&quot;) %&gt;%
   mutate(score = score.spec.mt - sign(score.spec.mt) * score.comm) %&gt;%
   left_join(., Pf.cmpd$data[,c(&quot;Metadata_broad_sample&quot;, &quot;CPD_NAME&quot;, &quot;MOA&quot;)], by = c(&quot;compound ID&quot; = &quot;Metadata_broad_sample&quot;))
 
-cr.all &lt;- cr.all %&gt;% 
+cr.all &lt;- cr.all %&gt;%
   filter(abs(score.comm) &lt; 0.1)
 
 cr.all %&gt;% filter(abs(score) &gt; 0.5) %&gt;% htmlTable::htmlTable()

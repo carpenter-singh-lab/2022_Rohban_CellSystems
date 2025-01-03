@@ -28,7 +28,7 @@ x <- x %>%
 
 y <- x %>%
   group_by(Broad.ID) %>%
-  summarise(Corr..Sign = paste0(Corr..Sign, collapse = "; "), 
+  summarise(Corr..Sign = paste0(Corr..Sign, collapse = "; "),
             Compound.Type = ifelse(any(Compound.Type == "Bioactive"), "Bioactive", "DOS"),
             match.to = paste0(match.to, collapse = "; "),
             Compound.Name = Compound.Name[1],

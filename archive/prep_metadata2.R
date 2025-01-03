@@ -17,9 +17,9 @@ meta1 <- meta1 %>% dplyr::mutate(isControl = ifelse(ASSAY_WELL_ROLE == "mock", T
 meta1 <- meta1 %>% dplyr::mutate(ASSAY_WELL_ROLE = ifelse(isControl, "mock", "treated"))
 meta1 <- meta1 %>% dplyr::mutate(well_position = str_to_lower(CPD_WELL_POSITION))
 meta1 <- meta1 %>% dplyr::mutate(CPD_Plate_Map_Name = CPD_PLATE_MAP_NAME)
-meta1 <- meta1 %>% dplyr::select(-isControl, -CPD_WELL_POSITION, 
+meta1 <- meta1 %>% dplyr::select(-isControl, -CPD_WELL_POSITION,
                                  -CPD_WELL_POSITION_1, -Wave, -Site, -CLSID, -UserStem,
-                                 -Time, -CPD_PLATE_MAP_NAME, -CPD_MMOL_CONC, -PlateID_1, 
+                                 -Time, -CPD_PLATE_MAP_NAME, -CPD_MMOL_CONC, -PlateID_1,
                                  -PlateID, -CPD_WELL_POSITION)
 meta1 <- meta1 %>% unique
 

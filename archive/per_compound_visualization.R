@@ -5,10 +5,10 @@ library(stringr)
 
 load("../results/master/2017-12-12_b75637fc/workspace_MOApred.RData")
 
-pthw <- gene.compound.cr.pr %>% 
-  select(Var1, Name, MOA, Target) %>% 
+pthw <- gene.compound.cr.pr %>%
+  select(Var1, Name, MOA, Target) %>%
   unique()
-  
+
 data.frame(compound = .compound, p.value = p.vals) %>%
   filter(!compound %in% compound.blacklist) %>%
   mutate(p.value = p.adjust(p.value, "BH")) %>%

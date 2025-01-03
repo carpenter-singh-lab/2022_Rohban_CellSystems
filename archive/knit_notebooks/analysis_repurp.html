@@ -51,9 +51,9 @@ code {
   color: inherit;
   background-color: rgba(0, 0, 0, 0.04);
 }
-img { 
-  max-width:100%; 
-  height: auto; 
+img {
+  max-width:100%;
+  height: auto;
 }
 </style>
 <div class="container-fluid main-container">
@@ -63,13 +63,13 @@ img {
 
 <pre class="r"><code>rm(list = ls())
 library(dplyr)</code></pre>
-<pre><code>## 
+<pre><code>##
 ## Attaching package: 'dplyr'</code></pre>
 <pre><code>## The following objects are masked from 'package:stats':
-## 
+##
 ##     filter, lag</code></pre>
 <pre><code>## The following objects are masked from 'package:base':
-## 
+##
 ##     intersect, setdiff, setequal, union</code></pre>
 <pre class="r"><code>library(stringr)
 library(plyr)</code></pre>
@@ -78,10 +78,10 @@ library(plyr)</code></pre>
 ## If you need functions from both plyr and dplyr, please load plyr first, then dplyr:
 ## library(plyr); library(dplyr)</code></pre>
 <pre><code>## -------------------------------------------------------------------------</code></pre>
-<pre><code>## 
+<pre><code>##
 ## Attaching package: 'plyr'</code></pre>
 <pre><code>## The following objects are masked from 'package:dplyr':
-## 
+##
 ##     arrange, count, desc, failwith, id, mutate, rename, summarise,
 ##     summarize</code></pre>
 <pre class="r"><code>library(reshape2)
@@ -99,16 +99,16 @@ load(&quot;../input/TA/Initial_analysis_workspace.RData&quot;)
 Pf.ta &lt;- Pf_org.org.collapsed
 Pf.ta.all &lt;- Pf_org.org
 strong.trt &lt;- Pf.trt.strong.collapsed$data$Treatment
-data.annot &lt;- Pf.strong %&gt;% dplyr::filter(Treatment %in% strong.trt) %&gt;% dplyr::select(one_of(c(&quot;Treatment&quot;, &quot;Pathway&quot;, &quot;Gene&quot;, &quot;AlleleDesc&quot;))) %&gt;% 
-  dplyr::mutate(Pathway = str_replace(Pathway, &quot;Canonical &quot;, &quot;&quot;)) %&gt;% 
+data.annot &lt;- Pf.strong %&gt;% dplyr::filter(Treatment %in% strong.trt) %&gt;% dplyr::select(one_of(c(&quot;Treatment&quot;, &quot;Pathway&quot;, &quot;Gene&quot;, &quot;AlleleDesc&quot;))) %&gt;%
+  dplyr::mutate(Pathway = str_replace(Pathway, &quot;Canonical &quot;, &quot;&quot;)) %&gt;%
   dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2)) %&gt;%
   dplyr::filter(AlleleDesc == &quot;WT&quot;) %&gt;% dplyr::group_by(Gene) %&gt;% dplyr::slice(1) %&gt;%
-  dplyr::ungroup() 
+  dplyr::ungroup()
 desired.ta &lt;- data.annot$Treatment
-Pf.ta.all$data &lt;- Pf.ta.all$data %&gt;% dplyr::filter(Treatment %in% c(as.character(desired.ta), &quot;EMPTY_&quot;)) 
-Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta) 
+Pf.ta.all$data &lt;- Pf.ta.all$data %&gt;% dplyr::filter(Treatment %in% c(as.character(desired.ta), &quot;EMPTY_&quot;))
+Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta)
 
-Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta) 
+Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta)
 Pf.ta$data$Treatment &lt;- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, &quot;_&quot;)[[1]][1])) %&gt;% unlist
 Pf.gene &lt;- Pf.ta
 Pf.gene.all &lt;- Pf.ta.all
@@ -127,7 +127,7 @@ m.list &lt;- data.frame(moa = m.list)
 rownames(m.list) &lt;- m.list$moa[pr]
 m.list.p &lt;- lapply(x$Metadata_moa, function(x) m.list[(x %&gt;% as.character()), &quot;moa&quot;]) %&gt;% unlist
 if (permute.moas) {
-  x$Metadata_moa &lt;- m.list.p  
+  x$Metadata_moa &lt;- m.list.p
 }
 
 x &lt;- cbind(x, data.frame(Metadata_Treatment = paste(x$Metadata_pert_id, x$Metadata_mg_per_ml, sep = &quot;@&quot;)))
@@ -146,7 +146,7 @@ sprintf(&quot;Hit ratio (compounds) : %f%%&quot;, round(length(strong.cmpd)/leng
 <pre><code>## [1] &quot;Hit ratio (compounds) : 98.000000%&quot;</code></pre>
 <pre class="r"><code>x.all &lt;- x
 x &lt;- x %&gt;% dplyr::filter(Metadata_Treatment %in% strong.trt)
-x.collapsed &lt;- x %&gt;% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %&gt;% 
+x.collapsed &lt;- x %&gt;% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %&gt;%
   dplyr::select(one_of(c(feats, &quot;Metadata_pert_iname&quot;, &quot;Metadata_pert_idose&quot;, &quot;Metadata_moa&quot;))) %&gt;% dplyr::summarise_each(funs(&quot;mean&quot;)) %&gt;% dplyr::ungroup() %&gt;% dplyr::filter(!is.na(Metadata_pert_iname))
 
 Pf.cmpd &lt;- list(data = x.collapsed, feat_cols = feats, factor_cols = c(&quot;Metadata_pert_iname&quot;, &quot;Metadata_pert_idose&quot;, &quot;Metadata_moa&quot;))
@@ -4253,17 +4253,17 @@ colnames(cr) &lt;- Pf.gene$data$Treatment
 
 for (i in 1:6) {
   d &lt;- Pf.cmpd$data %&gt;% dplyr::group_by(Metadata_pert_iname) %&gt;% dplyr::slice(i) %&gt;% dplyr::ungroup()
-  
+
   x &lt;- d[,Pf.cmpd$feat_cols]
   y &lt;- Pf.gene$data[,Pf.gene$feat_cols]
-  
-  cri &lt;- cor(x %&gt;% t, y %&gt;% t, method = corr.type) 
+
+  cri &lt;- cor(x %&gt;% t, y %&gt;% t, method = corr.type)
   rownames(cri) &lt;- d$Metadata_pert_iname
   colnames(cri) &lt;- Pf.gene$data$Treatment
-  
+
   crj &lt;- cr * NA
-  crj[rownames(cri), colnames(cri)] &lt;- cri 
-  
+  crj[rownames(cri), colnames(cri)] &lt;- cri
+
   if (is.null(cr.melt.all)) {
     cr.melt.all &lt;- crj %&gt;% melt
   } else {
@@ -4278,8 +4278,8 @@ v3 &lt;- apply(cbind(abs(v1), abs(v2)), 1, function(x) max(x, na.rm = T) * c(1, 
 cr.melt &lt;- melt(cr)
 cr.melt[,3] &lt;- v3</code></pre>
 <pre class="r"><code>str_ends &lt;- function(x, y) {
-  i &lt;- str_length(y)  
-  j &lt;- str_length(x)  
+  i &lt;- str_length(y)
+  j &lt;- str_length(x)
   return(str_sub(x, j - i + 1, j) == y)
 }
 
@@ -4291,8 +4291,8 @@ if (use.repurp.annots) {
     cmpd &lt;- Pf.cmpd$data$Metadata_pert_iname[which(Pf.cmpd$data$Metadata_moa %in% moa)] %&gt;% unique
     gene.chem.conn[cmpd, gene] &lt;- 1
   }
-  
-  d1 &lt;- gene.chem.conn %&gt;% melt 
+
+  d1 &lt;- gene.chem.conn %&gt;% melt
 } else {
   #annot &lt;- read.csv(&quot;../input/repurp/CTD_chem_gene_ixns.csv&quot;, skip = 29, header = F)
   annot &lt;- readRDS(&quot;../input/repurp/CTD_chem_gene_ixns.rds&quot;)
@@ -4305,9 +4305,9 @@ if (use.repurp.annots) {
 #     return(str_sub(v, 1, (str_length(v) - 1)))
 #   }
 #   cmpds.cid &lt;- lapply(cmpds, cmpd.name.to.cid) %&gt;% unlist
-    
+
   genes &lt;- Pf.gene$data$Treatment %&gt;% lapply(., function(x) str_split(x, &quot;_&quot;)[[1]][1]) %&gt;% unlist %&gt;% unique
-  
+
   annot.res &lt;- annot %&gt;% dplyr::filter(Organism == &quot;Homo sapiens&quot; &amp; str_to_lower(ChemicalName) %in% cmpds &amp; GeneSymbol %in% genes)
   intr.brief &lt;- annot.res$InteractionActions %&gt;% lapply(., function(x) paste(str_split(str_replace_all(x, &quot;\\|&quot;, &quot;\\^&quot;), &quot;\\^&quot;)[[1]][1:2], collapse = &quot;_&quot;)) %&gt;% unlist
   annot.res &lt;- cbind(annot.res, data.frame(InteractionBrief = intr.brief))
@@ -4319,20 +4319,20 @@ if (use.repurp.annots) {
     gn &lt;- annot.res$GeneSymbol[i] %&gt;% as.character()
     gene.chem.conn[cm, gn] &lt;- 1
   }
-  
+
   pro.compd &lt;- which((1 - apply(gene.chem.conn, 1, sum)/NCOL(gene.chem.conn)) &lt;= 0.90) %&gt;% names
 gene.chem.conn[pro.compd, ] &lt;- 0
 
-  d1 &lt;- gene.chem.conn %&gt;% melt 
+  d1 &lt;- gene.chem.conn %&gt;% melt
 }
 
-d2 &lt;- cr.melt 
+d2 &lt;- cr.melt
 colnames(d1)[3] &lt;- &quot;verified&quot;
 colnames(d2)[3] &lt;- &quot;corr&quot;
 
 d &lt;- plyr::join(d1, d2, by = c(&quot;Var1&quot;, &quot;Var2&quot;))
 
-v1 &lt;- d %&gt;% dplyr::filter(abs(corr) &gt; thr &amp; verified == 1) 
+v1 &lt;- d %&gt;% dplyr::filter(abs(corr) &gt; thr &amp; verified == 1)
 colnames(v1)[1] &lt;- &quot;Metadata_pert_iname&quot;
 v2 &lt;- plyr::join(v1, Pf.cmpd$data[,c(&quot;Metadata_pert_iname&quot;, &quot;Metadata_moa&quot;)] %&gt;% unique)</code></pre>
 <pre><code>## Joining by: Metadata_pert_iname</code></pre>
@@ -4373,18 +4373,18 @@ print(V)</code></pre>
 <pre class="r"><code>print(sprintf(&quot;correct discovery rate : %.1f%%&quot;, round(100 * v11/(v11 + v12), 1)))</code></pre>
 <pre><code>## [1] &quot;correct discovery rate : 0.5%&quot;</code></pre>
 <pre class="r"><code>fisher.test(V, alternative = &quot;greater&quot;)</code></pre>
-<pre><code>## 
+<pre><code>##
 ##  Fisher's Exact Test for Count Data
-## 
+##
 ## data:  V
 ## p-value = 0.01593
 ## alternative hypothesis: true odds ratio is greater than 1
 ## 95 percent confidence interval:
 ##  1.132128      Inf
 ## sample estimates:
-## odds ratio 
+## odds ratio
 ##   1.683925</code></pre>
-<pre class="r"><code>v1 &lt;- d.app %&gt;% dplyr::filter(abs(corr) &gt; thr &amp; verified == 1) 
+<pre class="r"><code>v1 &lt;- d.app %&gt;% dplyr::filter(abs(corr) &gt; thr &amp; verified == 1)
 colnames(v1)[1] &lt;- &quot;Metadata_pert_iname&quot;
 v2 &lt;- plyr::join(v1, Pf.cmpd$data[,c(&quot;Metadata_pert_iname&quot;, &quot;Metadata_moa&quot;)] %&gt;% unique)</code></pre>
 <pre><code>## Joining by: Metadata_pert_iname</code></pre>
@@ -5769,10 +5769,10 @@ tops &lt;- data.frame(top.conn, gene.compound = paste(top.conn$Var1, top.conn$Va
 rem.conn &lt;- ds %&gt;% dplyr::filter(!gene.compound %in% (tops$gene.compound))
 
 v11 &lt;- top.conn$verified %&gt;% sum
-v12 &lt;- NROW(top.conn) 
+v12 &lt;- NROW(top.conn)
 v21 &lt;- rem.conn$verified %&gt;% sum
 v22 &lt;- NROW(rem.conn)
-  
+
 V2 &lt;- rbind(c(v11, v12), c(v21, v22))
 rownames(V2) &lt;- c(&quot;highly correlated&quot;, &quot;remainder&quot;)
 colnames(V2) &lt;- c(&quot;verified&quot;, &quot;non-verified&quot;)
@@ -5784,18 +5784,18 @@ print(V2)</code></pre>
 <pre class="r"><code>print(sprintf(&quot;correct discovery rate : %.1f%%&quot;, round(100 * v11/(v11 + v12), 1)))</code></pre>
 <pre><code>## [1] &quot;correct discovery rate : 0.2%&quot;</code></pre>
 <pre class="r"><code>fisher.test(V2, alternative = &quot;greater&quot;)</code></pre>
-<pre><code>## 
+<pre><code>##
 ##  Fisher's Exact Test for Count Data
-## 
+##
 ## data:  V2
 ## p-value = 0.8516
 ## alternative hypothesis: true odds ratio is greater than 1
 ## 95 percent confidence interval:
 ##  0.02677853        Inf
 ## sample estimates:
-## odds ratio 
+## odds ratio
 ##   0.524204</code></pre>
-<pre class="r"><code>tp.cnn &lt;- top.conn %&gt;% dplyr::filter(verified == 1) 
+<pre class="r"><code>tp.cnn &lt;- top.conn %&gt;% dplyr::filter(verified == 1)
 tp.cnn &lt;- tp.cnn[,c(1, 2, 4)]
 colnames(tp.cnn)[1] &lt;- &quot;Metadata_pert_iname&quot;
 tp.cnn &lt;- plyr::join(as.data.frame(tp.cnn), as.data.frame(moa.list %&gt;% unique))</code></pre>

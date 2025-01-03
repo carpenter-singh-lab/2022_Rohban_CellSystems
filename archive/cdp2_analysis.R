@@ -13,18 +13,18 @@ if (cdp2) {
   med <- apply(Pf.cdp2$data[,Pf.cdp2$feat_cols], 2, median)
   md <- apply(Pf.cdp2$data[,Pf.cdp2$feat_cols], 2, mad)
   Pf.cdp2$data[,Pf.cdp2$feat_cols] <- scale(Pf.cdp2$data[,Pf.cdp2$feat_cols], center = med, scale = md)
-  
+
   all.cmpd <- Pf.cdp2$data$Image_Metadata_BroadID %>% unique
   rep.cor.list <- data.frame(trt = c(), rep.cor = c())
   nulls <- c()
-  
+
   for (cmpd in all.cmpd) {
     x <- Pf.cdp2$data %>% dplyr::filter(Image_Metadata_BroadID == cmpd)
     cr.med <- cor(x[,Pf.cdp2$feat_cols] %>% t) %>% as.dist %>% median
     cmpd.samp <- sample(all.cmpd, 2)
     y <- Pf.cdp2$data %>% dplyr::filter(Image_Metadata_BroadID %in% cmpd.samp)
     cr.med.null <- cor(y[,] %>% dplyr::group_by(Image_Metadata_BroadID) %>% slice(1) %>% dplyr::ungroup() %>% dplyr::select(one_of(Pf.cdp2$feat_cols)) %>% t) %>% as.dist
-    nulls <- c(nulls, cr.med.null)  
+    nulls <- c(nulls, cr.med.null)
     rep.cor.list <- rbind(rep.cor.list, data.frame(trt = cmpd, rep.cor = cr.med))
   }
   thr <- quantile(nulls, 0.95, na.rm = T)
@@ -36,7 +36,7 @@ if (cdp2) {
   i <- which(colnames(Pf.cdp2$data) == "Image_Metadata_BroadID")
   colnames(Pf.cdp2$data)[i] <- "Image_Metadata_BROAD_ID"
   Pf.cdp2$factor_cols <- c("Image_Metadata_BROAD_ID", setdiff(Pf.cdp2$factor_cols, "Image_Metadata_BroadID"))
-  
+
   Pf.cmpd <- Pf.cdp2
 } else if (gust) {
   load("../input/Gustafsdottir/Initial_analysis.RData")
@@ -101,7 +101,7 @@ if (!cdp2) {
   brd.to.cid <- Pf.cmpd$data[,c("Image_Metadata_BROAD_ID", "Image_Metadata_SOURCE_COMPOUND_NAME")]
   colnames(brd.to.cid) <- c("Broad.ID", "Compound.Name")
 } else {
-  brd.to.cid <- read.csv("../input/CDP2/brd.to.cid.csv")  
+  brd.to.cid <- read.csv("../input/CDP2/brd.to.cid.csv")
 }
 
 brd.to.cid <- brd.to.cid[,c("Broad.ID", "Compound.Name")]
@@ -127,7 +127,7 @@ ag.ant <- function(x, y) {
   x.s <- str_split(x, " ")[[1]]
   y.s <- str_split(y, " ")[[1]]
   res <- F
-  if (x.s[length(x.s)] == "agonist" && y.s[length(y.s)] == "antagonist" || 
+  if (x.s[length(x.s)] == "agonist" && y.s[length(y.s)] == "antagonist" ||
       x.s[length(x.s)] == "antagonist" && y.s[length(y.s)] == "agonist") {
     if (paste(x.s[1:(length(x.s)-1)], collapse = " ") == paste(y.s[1:(length(y.s)-1)], collapse = " ")) {
       res <- T
@@ -140,7 +140,7 @@ v <- rep(1, length(moa.list$Metadata_pert_id))
 same.moa <- outer(v, v, "*")
 rownames(same.moa) <- 1:length(moa.list$Metadata_pert_id)
 colnames(same.moa) <- 1:length(moa.list$Metadata_pert_id)
-same.moa.list <- same.moa %>% melt %>% dplyr::filter(moa.list$Metadata_pert_id[Var1] < moa.list$Metadata_pert_id[Var2]) 
+same.moa.list <- same.moa %>% melt %>% dplyr::filter(moa.list$Metadata_pert_id[Var1] < moa.list$Metadata_pert_id[Var2])
 same.moa.list[,3] <- apply(same.moa.list, 1, function(x) ag.ant(moa.list$Metadata_moa[x[1]], moa.list$Metadata_moa[x[2]]))
 same.moa <- outer(v, v, "*")
 rownames(same.moa) <- moa.list$Metadata_pert_id
@@ -170,7 +170,7 @@ if (!cdp2) {
   brd.to.cid <- Pf.cmpd$data[,c("Image_Metadata_BROAD_ID", "Image_Metadata_SOURCE_COMPOUND_NAME")]
   colnames(brd.to.cid) <- c("Broad.ID", "Compound.Name")
 } else {
-  brd.to.cid <- read.csv("../input/CDP2/brd.to.cid.csv")  
+  brd.to.cid <- read.csv("../input/CDP2/brd.to.cid.csv")
 }
 
 brd.to.cid <- brd.to.cid[,c("Broad.ID", "Compound.Name")]

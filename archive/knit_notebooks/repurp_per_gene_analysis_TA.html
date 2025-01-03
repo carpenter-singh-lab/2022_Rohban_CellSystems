@@ -51,9 +51,9 @@ code {
   color: inherit;
   background-color: rgba(0, 0, 0, 0.04);
 }
-img { 
-  max-width:100%; 
-  height: auto; 
+img {
+  max-width:100%;
+  height: auto;
 }
 </style>
 <div class="container-fluid main-container">
@@ -63,13 +63,13 @@ img {
 
 <pre class="r"><code>rm(list = ls())
 library(dplyr)</code></pre>
-<pre><code>## 
+<pre><code>##
 ## Attaching package: 'dplyr'</code></pre>
 <pre><code>## The following objects are masked from 'package:stats':
-## 
+##
 ##     filter, lag</code></pre>
 <pre><code>## The following objects are masked from 'package:base':
-## 
+##
 ##     intersect, setdiff, setequal, union</code></pre>
 <pre class="r"><code>library(stringr)
 library(plyr)</code></pre>
@@ -78,10 +78,10 @@ library(plyr)</code></pre>
 ## If you need functions from both plyr and dplyr, please load plyr first, then dplyr:
 ## library(plyr); library(dplyr)</code></pre>
 <pre><code>## -------------------------------------------------------------------------</code></pre>
-<pre><code>## 
+<pre><code>##
 ## Attaching package: 'plyr'</code></pre>
 <pre><code>## The following objects are masked from 'package:dplyr':
-## 
+##
 ##     arrange, count, desc, failwith, id, mutate, rename, summarise,
 ##     summarize</code></pre>
 <pre class="r"><code>library(reshape2)
@@ -119,17 +119,17 @@ if (LUAD) {
   Pf.ta &lt;- Pf_org.org.collapsed
   Pf.ta.all &lt;- Pf_org.org
   strong.trt &lt;- Pf.trt.strong.collapsed$data$Treatment
-  data.annot &lt;- Pf.strong %&gt;% dplyr::filter(Treatment %in% strong.trt) %&gt;% dplyr::select(one_of(c(&quot;Treatment&quot;, &quot;Pathway&quot;, &quot;Gene&quot;, &quot;AlleleDesc&quot;))) %&gt;% 
-    dplyr::mutate(Pathway = str_replace(Pathway, &quot;Canonical &quot;, &quot;&quot;)) %&gt;% 
+  data.annot &lt;- Pf.strong %&gt;% dplyr::filter(Treatment %in% strong.trt) %&gt;% dplyr::select(one_of(c(&quot;Treatment&quot;, &quot;Pathway&quot;, &quot;Gene&quot;, &quot;AlleleDesc&quot;))) %&gt;%
+    dplyr::mutate(Pathway = str_replace(Pathway, &quot;Canonical &quot;, &quot;&quot;)) %&gt;%
     dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2)) %&gt;%
     dplyr::filter(AlleleDesc == &quot;WT&quot;) %&gt;% dplyr::group_by(Gene) %&gt;% dplyr::slice(1) %&gt;%
-    dplyr::ungroup() 
+    dplyr::ungroup()
   desired.ta &lt;- data.annot$Treatment
-  Pf.ta.all$data &lt;- Pf.ta.all$data %&gt;% dplyr::filter(Treatment %in% c(as.character(desired.ta), &quot;EMPTY_&quot;)) 
-  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta) 
-  
-  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta) 
-  Pf.ta$data$Treatment &lt;- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, &quot;_&quot;)[[1]][1])) %&gt;% unlist 
+  Pf.ta.all$data &lt;- Pf.ta.all$data %&gt;% dplyr::filter(Treatment %in% c(as.character(desired.ta), &quot;EMPTY_&quot;))
+  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta)
+
+  Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta)
+  Pf.ta$data$Treatment &lt;- lapply(Pf.ta$data$Treatment, function(x) (str_split(x, &quot;_&quot;)[[1]][1])) %&gt;% unlist
 }
 
 Pf.gene &lt;- Pf.ta
@@ -149,7 +149,7 @@ m.list &lt;- data.frame(moa = m.list)
 rownames(m.list) &lt;- m.list$moa[pr]
 m.list.p &lt;- lapply(x$Metadata_moa, function(x) m.list[(x %&gt;% as.character()), &quot;moa&quot;]) %&gt;% unlist
 if (permute.moas) {
-  x$Metadata_moa &lt;- m.list.p  
+  x$Metadata_moa &lt;- m.list.p
 }
 
 x &lt;- cbind(x, data.frame(Metadata_Treatment = paste(x$Metadata_pert_id, x$Metadata_mg_per_ml, sep = &quot;@&quot;)))
@@ -168,7 +168,7 @@ sprintf(&quot;Hit ratio (compounds) : %f%%&quot;, round(length(strong.cmpd)/leng
 <pre><code>## [1] &quot;Hit ratio (compounds) : 98.000000%&quot;</code></pre>
 <pre class="r"><code>x.all &lt;- x
 x &lt;- x %&gt;% dplyr::filter(Metadata_Treatment %in% strong.trt)
-x.collapsed &lt;- x %&gt;% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %&gt;% 
+x.collapsed &lt;- x %&gt;% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa) %&gt;%
   dplyr::select(one_of(c(feats, &quot;Metadata_pert_iname&quot;, &quot;Metadata_pert_idose&quot;, &quot;Metadata_moa&quot;))) %&gt;% dplyr::summarise_each(funs(&quot;mean&quot;)) %&gt;% dplyr::ungroup() %&gt;% dplyr::filter(!is.na(Metadata_pert_iname))
 
 Pf.cmpd &lt;- list(data = x.collapsed, feat_cols = feats, factor_cols = c(&quot;Metadata_pert_iname&quot;, &quot;Metadata_pert_idose&quot;, &quot;Metadata_moa&quot;))
@@ -3874,17 +3874,17 @@ colnames(cr) &lt;- Pf.gene$data$Treatment
 
 for (i in 1:6) {
   d &lt;- Pf.cmpd$data %&gt;% dplyr::group_by(Metadata_pert_iname) %&gt;% dplyr::slice(i) %&gt;% dplyr::ungroup()
-  
+
   x &lt;- d[,Pf.cmpd$feat_cols]
   y &lt;- Pf.gene$data[,Pf.gene$feat_cols]
-  
-  cri &lt;- cor(x %&gt;% t, y %&gt;% t, method = corr.type) 
+
+  cri &lt;- cor(x %&gt;% t, y %&gt;% t, method = corr.type)
   rownames(cri) &lt;- d$Metadata_pert_iname
   colnames(cri) &lt;- Pf.gene$data$Treatment
-  
+
   crj &lt;- cr * NA
-  crj[rownames(cri), colnames(cri)] &lt;- cri 
-  
+  crj[rownames(cri), colnames(cri)] &lt;- cri
+
   if (is.null(cr.melt.all)) {
     cr.melt.all &lt;- crj %&gt;% melt
   } else {
@@ -3914,9 +3914,9 @@ get.interacting.proteins &lt;- function(protein.name) {
   if (file.exists(f.name)) {
     return(readRDS(f.name))
   }
-  
+
   tbl &lt;- read.table(sprintf(&quot;http://webservice.thebiogrid.org/interactions/?searchNames=true&amp;geneList=%s&amp;taxId=9606&amp;includeHeader=true&amp;accesskey=ca950b072394ce1897811022f7757222&quot;, protein.name), sep=&quot;\t&quot;, header = FALSE, fill = T)
-  tbl &lt;- tbl[, c(8, 9, 12, 13, 14)] 
+  tbl &lt;- tbl[, c(8, 9, 12, 13, 14)]
   colnames(tbl) &lt;- c(&quot;Protein.1&quot;, &quot;Protein.2&quot;, &quot;Method&quot;, &quot;Type&quot;, &quot;Evidence&quot;)
   saveRDS(tbl, f.name)
   return(tbl)
@@ -3954,7 +3954,7 @@ sample.tot &lt;- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.ma
   } else {
     names(gn.map) &lt;- gn.map
   }
-  
+
   all.targ &lt;- lapply(moas$Target[moas$Name %in% (Pf.cmpd$data$Metadata_pert_iname %&gt;% unique)], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .) %&gt;% unique
   path &lt;- sprintf(&quot;../results/manual/ppis&quot;)
   if (!dir.exists(path)) {
@@ -3966,36 +3966,36 @@ sample.tot &lt;- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.ma
     ppi.all &lt;- tryCatch(get.all.interacting.proteins(all.targ), error = function(e) {})
     saveRDS(ppi.all, sprintf(&quot;%s/all.rds&quot;, path))
   }
-  
+
   for (gene in Pf.gene$data$Treatment) {
     gn &lt;- gn.map[gene] %&gt;% as.matrix() %&gt;% as.vector()
-    u.res &lt;- cr.melt %&gt;% 
+    u.res &lt;- cr.melt %&gt;%
       dplyr::filter(Var2 == gn) %&gt;%
       dplyr::arrange(-value) %&gt;%
-      dplyr::mutate(value = round(value, 2)) %&gt;% dplyr::filter(abs(value) &gt; cor.thr) 
-    
+      dplyr::mutate(value = round(value, 2)) %&gt;% dplyr::filter(abs(value) &gt; cor.thr)
+
     up.reg &lt;- u.res %&gt;% head(., how.many) %&gt;% dplyr::filter(value &gt; 0) %&gt;% dplyr::select(Var1) %&gt;% as.matrix() %&gt;% as.vector()
     down.reg &lt;- u.res %&gt;% tail(., how.many) %&gt;% dplyr::filter(value &lt; 0) %&gt;% dplyr::select(Var1) %&gt;% as.matrix() %&gt;% as.vector()
     reg &lt;- c(up.reg, down.reg) %&gt;% unique
     u.res.lim &lt;- u.res %&gt;% dplyr::filter(Var1 %in% reg) %&gt;% dplyr::mutate(Name = Var1) %&gt;% dplyr::mutate(Corr. = value) %&gt;% dplyr::select(one_of(c(&quot;Name&quot;, &quot;Corr.&quot;)))
     rest &lt;- setdiff(Pf.cmpd$data$Metadata_pert_iname %&gt;% unique, reg)
-    v &lt;- lapply(moas$Target[moas$Name %in% reg], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .) 
+    v &lt;- lapply(moas$Target[moas$Name %in% reg], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .)
     if (length(v) == 0) {
       next
     }
-    u &lt;- lapply(moas$Target[moas$Name %in% rest], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .) 
-    
+    u &lt;- lapply(moas$Target[moas$Name %in% rest], function(x) str_split(x, &quot;, &quot;)[[1]]) %&gt;% do.call(c, .)
+
     main.targ &lt;- data.frame(gene = v) %&gt;% dplyr::group_by(gene) %&gt;% tally() %&gt;% dplyr::filter(gene != &quot;&quot;) %&gt;% dplyr::arrange(-n) %&gt;% dplyr::select(gene) %&gt;% as.matrix() %&gt;% as.vector()
     rest.targ &lt;- data.frame(gene = u) %&gt;% dplyr::group_by(gene) %&gt;% tally() %&gt;% dplyr::filter(gene != &quot;&quot;) %&gt;% dplyr::arrange(-n) %&gt;% dplyr::select(gene) %&gt;% as.matrix() %&gt;% as.vector()
-    
+
     ppi &lt;- ppi.all %&gt;% dplyr::filter(Protein.1 %in% main.targ | Protein.2 %in% main.targ)
     ppi2 &lt;- ppi.all %&gt;% dplyr::filter(Protein.1 %in% rest.targ | Protein.2 %in% rest.targ)
-    
+
     id &lt;- ppi %&gt;% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %&gt;% unique %&gt;% NROW
     id0 &lt;- ppi2 %&gt;% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %&gt;% unique %&gt;% NROW
     Vi &lt;- rbind(c(id, NROW(ppi %&gt;% unique) - id), c(id0, NROW(ppi2 %&gt;% unique) - id0))
     V &lt;- V + Vi
-    
+
     fsh &lt;- fisher.test(Vi, alternative = &quot;greater&quot;)
     if (fsh$p.value &lt; 0.05/NROW(Pf.gene$data$Treatment)) {
       gn.list &lt;- c(gn.list, gene)
@@ -4014,7 +4014,7 @@ sample.tot &lt;- function(random.shuffle = F, verbose = F, cor.thr = 0.5, how.ma
       }
     }
   }
-  
+
   return(list(genes = gn.list, V = V))
 }</code></pre>
 <pre class="r"><code>odds &lt;- c()
@@ -8422,21 +8422,21 @@ Li L (2014)
 <hr>
 <pre class="r"><code>f &lt;- fisher.test(res$V, alternative = &quot;greater&quot;)</code></pre>
 <pre class="r"><code>print(f)</code></pre>
-<pre><code>## 
+<pre><code>##
 ##  Fisher's Exact Test for Count Data
-## 
+##
 ## data:  res$V
 ## p-value &lt; 2.2e-16
 ## alternative hypothesis: true odds ratio is greater than 1
 ## 95 percent confidence interval:
 ##  2.41915     Inf
 ## sample estimates:
-## odds ratio 
+## odds ratio
 ##   2.552688</code></pre>
 <pre class="r"><code>print(res)</code></pre>
 <pre><code>## $genes
 ## [1] &quot;AKT1S1&quot; &quot;CCND1&quot;  &quot;CDK2&quot;   &quot;GRB10&quot;  &quot;GSK3B&quot;  &quot;MAP2K3&quot;
-## 
+##
 ## $V
 ##      [,1]    [,2]
 ## [1,] 1121  280662

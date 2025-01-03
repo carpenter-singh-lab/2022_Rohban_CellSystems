@@ -12,7 +12,7 @@ library(foreach)
 library(doParallel)
 
 doParallel::registerDoParallel(cores = 3)
-  
+
 source("rep.corr.func.R")
 permute.moas <- F
 seed.moa <- -8     ## ignore, if permute.moas is False
@@ -41,14 +41,14 @@ feats <- feats[which(!str_detect(feats, "Metadata"))]
 metadata <- colnames(x)
 metadata <- metadata[which(str_detect(metadata, "Metadata"))]
 
-Pf.repurp <- list(data = x, 
-                        feat_cols = feats, 
+Pf.repurp <- list(data = x,
+                        feat_cols = feats,
                         factor_cols = metadata)
 
 Pf.repurp$data %<>% dplyr::mutate(Metadata_plate_well = paste(Metadata_plate_map_name, Metadata_Well, sep = "_"))
 
 Pf.repurp$factor_cols <- c(Pf.repurp$factor_cols, "Metadata_plate_well")
-trts <- Pf.repurp$data %>% 
+trts <- Pf.repurp$data %>%
   dplyr::mutate(tmp_dose = abs(Metadata_mmoles_per_liter - 10)) %>%
   dplyr::arrange(tmp_dose) %>%
   dplyr::group_by(Metadata_pert_iname) %>%
@@ -60,11 +60,11 @@ trts <- Pf.repurp$data %>%
 
 Pf.repurp$data %<>%
   dplyr::filter(Metadata_Treatment %in% trts)
-  
+
 ############
 
 load("../input/Gustafsdottir/Initial_analysis.RData")
-Pf.full.plate.norm$data %<>% filter(Image_Metadata_BROAD_ID != "" | 
+Pf.full.plate.norm$data %<>% filter(Image_Metadata_BROAD_ID != "" |
                                     (!str_detect(Well, "01") &
                                     !str_detect(Well, "24") &
                                     !str_detect(Well, "A") &
@@ -72,21 +72,21 @@ Pf.full.plate.norm$data %<>% filter(Image_Metadata_BROAD_ID != "" |
 metad <- readr::read_csv("../input/Gustafsdottir/BBBC022_v1_image.csv")
 metad <- metad[,c("Image_Metadata_CPD_PLATE_MAP_NAME", "Image_Metadata_PlateID")] %>% unique
 Pf.full.plate.norm$data %<>% left_join(., metad, by = c("Plate" = "Image_Metadata_PlateID"))
-Pf.full.plate.norm$factor_cols <- c(Pf.full.plate.norm$factor_cols, 
+Pf.full.plate.norm$factor_cols <- c(Pf.full.plate.norm$factor_cols,
                                     "Image_Metadata_CPD_PLATE_MAP_NAME")
 
 Pf.full.plate.norm$data %<>% dplyr::mutate(Metadata_plate_well = paste(Image_Metadata_CPD_PLATE_MAP_NAME, Well, sep = "_"))
-Pf.full.plate.norm$factor_cols <- c(Pf.full.plate.norm$factor_cols, 
+Pf.full.plate.norm$factor_cols <- c(Pf.full.plate.norm$factor_cols,
                                     "Metadata_plate_well")
 
 
 MOAs <- read.csv("../input/Gustafsdottir/MOAs.csv")
-Pf.full.plate.norm$data %<>% 
-  dplyr::left_join(., 
-                   MOAs, 
+Pf.full.plate.norm$data %<>%
+  dplyr::left_join(.,
+                   MOAs,
                    by = c("Image_Metadata_SOURCE_COMPOUND_NAME" = "Name"))
 
-Pf.full.plate.norm$factor_cols <- c(Pf.full.plate.norm$factor_cols, 
+Pf.full.plate.norm$factor_cols <- c(Pf.full.plate.norm$factor_cols,
                                     colnames(MOAs)) %>% unique()
 
 Pf.gust <- Pf.full.plate.norm
@@ -127,7 +127,7 @@ r <- lapply(1:length(v), function(i) (sum(v[1:i])/sum(v))) %>% unlist
 k <- which.min(abs(r - pca.thr))
 
 if (!do.pca) {
-  k <- length(v)  
+  k <- length(v)
 }
 
 d1 <- cbind(pr$x[1:NROW(Pf.repurp$data),1:k] %>% as.data.frame(), Pf.repurp$data[,Pf.repurp$factor_cols] %>% as.data.frame())
@@ -149,17 +149,17 @@ print(NROW(Pf.gust$data))
 ```{r hit selection}
 
 u <- rep.cor(Pf.repurp,
-        grp.var = "Metadata_plate_well", 
-        feat.var = Pf.repurp$feat_cols, 
+        grp.var = "Metadata_plate_well",
+        feat.var = Pf.repurp$feat_cols,
         aux.var = "Metadata_broad_sample")
 u.repurp <- u
 
 if (!dmos.null) {
   thr <- non.rep.cor(Pf.repurp,
-        grp.var = "Metadata_broad_sample", 
-        feat.var = Pf.repurp$feat_cols, 
+        grp.var = "Metadata_broad_sample",
+        feat.var = Pf.repurp$feat_cols,
         quant = hit.sel.quant.repurp)
-  
+
 } else {
   thr <- u %>% dplyr::filter(Metadata_broad_sample == "DMSO") %>% select(cr) %>% as.matrix() %>% as.vector() %>% quantile(., hit.sel.quant.repurp, na.rm = T)
 }
@@ -188,13 +188,13 @@ u.gust <- u
 
 if (!dmos.null) {
   thr <- non.rep.cor(Pf.gust,
-                   "Image_Metadata_BROAD_ID", 
-                   Pf.gust$feat_cols, 
+                   "Image_Metadata_BROAD_ID",
+                   Pf.gust$feat_cols,
                    quant = hit.sel.quant)
 
 } else {
   thr <- u %>% dplyr::filter(Image_Metadata_BROAD_ID == "") %>% select(cr) %>% as.matrix() %>% as.vector() %>% quantile(., hit.sel.quant, na.rm = T)
-  
+
 }
 
 if (manual.hit.sel.thr) {
@@ -211,25 +211,25 @@ sprintf("Hit ratio (compound-concentrations) : %f%%", round(length(strong.trt)/N
 
 Pf.gust$data %<>% dplyr::filter(Image_Metadata_BROAD_ID %in% strong.trt)
 
-Pf.gust$data %<>% 
-  dplyr::select(one_of(c(Pf.gust$feat_cols, 
+Pf.gust$data %<>%
+  dplyr::select(one_of(c(Pf.gust$feat_cols,
                          "Image_Metadata_BROAD_ID",
                          "MOA",
                          "Image_Metadata_SOURCE_COMPOUND_NAME",
                          "Target"))) %>%
-  dplyr::group_by(Image_Metadata_BROAD_ID, 
+  dplyr::group_by(Image_Metadata_BROAD_ID,
                   MOA,
                   Image_Metadata_SOURCE_COMPOUND_NAME,
-                  Target) %>% 
-  dplyr::summarise_each(funs("mean")) %>% 
-  dplyr::ungroup() 
+                  Target) %>%
+  dplyr::summarise_each(funs("mean")) %>%
+  dplyr::ungroup()
 
-Pf.repurp$data %<>% 
+Pf.repurp$data %<>%
   group_by(Metadata_pert_iname) %>%
   slice(1) %>%
   ungroup(.)
 
-Pf.gust$data %<>% 
+Pf.gust$data %<>%
   group_by(Image_Metadata_SOURCE_COMPOUND_NAME) %>%
   slice(1) %>%
   ungroup(.)
@@ -238,14 +238,14 @@ Pf.gust$data %<>%
 
 ```{r restricting to the common compounds, eval=T}
 
-Pf.repurp$data$Metadata_pert_iname <- Pf.repurp$data$Metadata_pert_iname %>% str_to_lower() 
+Pf.repurp$data$Metadata_pert_iname <- Pf.repurp$data$Metadata_pert_iname %>% str_to_lower()
 Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME <- Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME %>% str_to_lower()
 
 cmpd1 <- Pf.repurp$data$Metadata_pert_iname
-cmpd2 <- Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME 
+cmpd2 <- Pf.gust$data$Image_Metadata_SOURCE_COMPOUND_NAME
 
 if (just.common.cmpds) {
-  cmpd <- setdiff(intersect(cmpd1, cmpd2), c("", NA, "NA"))  
+  cmpd <- setdiff(intersect(cmpd1, cmpd2), c("", NA, "NA"))
 } else {
   cmpd <- c(cmpd1, cmpd2) %>% unique
 }
@@ -256,16 +256,16 @@ if (set.moa.to.cmpd.name) {
   Pf.repurp$data %<>%
     dplyr::filter(Metadata_pert_iname %in% cmpd) %>%
     dplyr::mutate(Metadata_moa = Metadata_pert_iname)
-  
+
   Pf.gust$data %<>%
     dplyr::filter(Image_Metadata_SOURCE_COMPOUND_NAME %in% cmpd) %>%
     dplyr::mutate(MOA = Image_Metadata_SOURCE_COMPOUND_NAME)
-  
+
 } else {
     Pf.repurp$data %<>%
     dplyr::filter(Metadata_pert_iname %in% cmpd) %>%
     dplyr::mutate(Metadata_moa = paste(Metadata_pert_iname, Metadata_moa, sep = "|"))
-  
+
   Pf.gust$data %<>%
     dplyr::filter(Image_Metadata_SOURCE_COMPOUND_NAME %in% cmpd) %>%
     dplyr::mutate(MOA = paste(Image_Metadata_SOURCE_COMPOUND_NAME, MOA, sep = ", "))
@@ -275,8 +275,8 @@ if (set.moa.to.cmpd.name) {
 
 ```{r Find the correlation matrix, eval=T}
 
-cr <- cor(Pf.repurp$data[,Pf.repurp$feat_cols] %>% t, 
-          Pf.gust$data[,Pf.gust$feat_cols] %>% t, 
+cr <- cor(Pf.repurp$data[,Pf.repurp$feat_cols] %>% t,
+          Pf.gust$data[,Pf.gust$feat_cols] %>% t,
           method = corr.type)
 
 rownames(cr) <- Pf.repurp$data$Metadata_broad_sample
@@ -287,7 +287,7 @@ cr.melt <- cr %>% melt
 cr.melt <- cr.melt %>% group_by(Var1, Var2) %>% dplyr::summarise(value = mean(value, na.rm = T))
 
 crx <- cr.melt %>% reshape2::dcast(Var1 ~ Var2)
-crx <- crx %>% 
+crx <- crx %>%
   tibble::column_to_rownames(., var = "Var1")
 
 cr <- crx
@@ -296,17 +296,17 @@ cr <- crx
 
 ```{r}
 
-cr.melt.ext <- cr.melt %>% 
+cr.melt.ext <- cr.melt %>%
   dplyr::left_join(., unique(Pf.repurp$data[,c("Metadata_broad_sample",
                                       "Metadata_pert_iname",
-                                      "Metadata_moa")]), 
+                                      "Metadata_moa")]),
                    by = c("Var1" = "Metadata_broad_sample")) %>%
   dplyr::left_join(., unique(Pf.gust$data[,c("Image_Metadata_BROAD_ID",
                                              "Image_Metadata_SOURCE_COMPOUND_NAME",
-                                             "MOA")]), 
+                                             "MOA")]),
                    by = c("Var2" = "Image_Metadata_BROAD_ID"))
-  
-cr.melt.ext %<>% 
+
+cr.melt.ext %<>%
   dplyr::filter(!is.infinite(value))
 
 matching.moas <- function(moa1, moa2) {
@@ -317,53 +317,53 @@ matching.moas <- function(moa1, moa2) {
 
 matching.moas <- Vectorize(matching.moas)
 
-cr.melt.ext2 <- cr.melt.ext %>% 
+cr.melt.ext2 <- cr.melt.ext %>%
   dplyr::mutate(match = matching.moas(MOA, Metadata_moa))
 
 ```
 
 ```{r}
 
-cr.melt.ext2.sor <- cr.melt.ext2 %>% 
+cr.melt.ext2.sor <- cr.melt.ext2 %>%
   dplyr::arrange(-value) %>%
   dplyr::filter(!is.na(match)) %>% dplyr::ungroup()
 
 n <- round(0.01 * NROW(cr.melt.ext2.sor))
 
-v11 <- cr.melt.ext2.sor %>% 
+v11 <- cr.melt.ext2.sor %>%
   dplyr::slice(1:n) %>%
   dplyr::select(match) %>%
-  as.matrix() %>% 
+  as.matrix() %>%
   as.vector() %>%
   sum(., na.rm = T)
-v12 <- cr.melt.ext2.sor %>% 
+v12 <- cr.melt.ext2.sor %>%
   dplyr::slice(1:n) %>%
   dplyr::select(match) %>%
   dplyr::mutate(match = !match) %>%
-  as.matrix() %>% 
+  as.matrix() %>%
   as.vector() %>%
   sum(., na.rm = T)
-v21 <- cr.melt.ext2.sor %>% 
+v21 <- cr.melt.ext2.sor %>%
   dplyr::slice((n+1):NROW(cr.melt.ext2.sor)) %>%
   dplyr::select(match) %>%
-  as.matrix() %>% 
+  as.matrix() %>%
   as.vector() %>%
   sum(., na.rm = T)
-v22 <- cr.melt.ext2.sor %>% 
+v22 <- cr.melt.ext2.sor %>%
   dplyr::slice((n+1):NROW(cr.melt.ext2.sor)) %>%
   dplyr::select(match) %>%
   dplyr::mutate(match = !match) %>%
-  as.matrix() %>% 
+  as.matrix() %>%
   as.vector() %>%
   sum(., na.rm = T)
 
 V <- rbind(c(v11, v12), c(v21, v22))
 fisher.test(V, alternative = "greater") %>% print
 
-d <- cr.melt.ext2.sor %>% 
+d <- cr.melt.ext2.sor %>%
     dplyr::slice(1:n) %>%
     dplyr::filter(match) %>%
-    dplyr::arrange(MOA) 
+    dplyr::arrange(MOA)
 
 d %>%
     htmlTable::htmlTable()
@@ -373,10 +373,10 @@ c <- cr.melt.ext2.sor %>%
   dplyr::group_by(MOA) %>%
   dplyr::tally()
 colnames(c)[2] <- "n.total"
-  
-d %>% 
+
+d %>%
   dplyr::group_by(MOA) %>%
-  dplyr::tally() %>% 
+  dplyr::tally() %>%
   dplyr::left_join(., c, by = "MOA") %>%
   dplyr::mutate(ratio = round(n/n.total, 3)) %>%
   dplyr::arrange(-ratio) %>%
@@ -389,25 +389,25 @@ d %>%
 k <- max(round(perc.top * length(cmpd)), 1)
 N <- 300
 
-d <- cr.melt.ext2.sor %>% 
+d <- cr.melt.ext2.sor %>%
   dplyr::group_by(Var1, Metadata_moa) %>%
   dplyr::slice(1:k) %>%
-  dplyr::summarise(success = any(match)) %>% 
-  dplyr::filter(success) 
-  
+  dplyr::summarise(success = any(match)) %>%
+  dplyr::filter(success)
+
 ns <- c()
 
 for (i in 1:N) {
-  n <- d.null <- cr.melt.ext2.sor %>% 
+  n <- d.null <- cr.melt.ext2.sor %>%
     dplyr::group_by(Var1, Metadata_moa) %>%
     dplyr::sample_n(k) %>%
-    dplyr::summarise(success = any(match)) %>% 
+    dplyr::summarise(success = any(match)) %>%
     dplyr::filter(success) %>%
     NROW
-  
+
   ns <- c(ns, n)
 }
-  
+
 print(NROW(d)/length(unique(cr.melt.ext2.sor$Var1)))
 print(mean(ns)/length(unique(cr.melt.ext2.sor$Var1)))
 print(NROW(d)/mean(ns))
@@ -420,26 +420,26 @@ print(NROW(d)/mean(ns))
 k <- max(round(perc.top * length(cmpd)), 1)
 N <- 300
 
-d <- cr.melt.ext2.sor %>% 
+d <- cr.melt.ext2.sor %>%
   dplyr::group_by(Var2, MOA) %>%
   dplyr::slice(1:min(k, NROW(.))) %>%
-  dplyr::summarise(success = any(match)) %>% 
-  dplyr::filter(success) 
-  
+  dplyr::summarise(success = any(match)) %>%
+  dplyr::filter(success)
+
 ns <- c()
 
 for (i in 1:N) {
-  n <- d.null <- cr.melt.ext2.sor %>% 
+  n <- d.null <- cr.melt.ext2.sor %>%
     dplyr::sample_frac(1) %>%
     dplyr::group_by(Var2, MOA) %>%
     dplyr::slice(1:min(k, NROW(.))) %>%
-    dplyr::summarise(success = any(match)) %>% 
+    dplyr::summarise(success = any(match)) %>%
     dplyr::filter(success) %>%
     NROW
-  
+
   ns <- c(ns, n)
 }
-  
+
 print(NROW(d)/length(unique(cr.melt.ext2.sor$Var2)))
 print(mean(ns)/length(unique(cr.melt.ext2.sor$Var2)))
 print(NROW(d)/mean(ns))
@@ -449,11 +449,11 @@ print(NROW(d)/mean(ns))
 
 ```{r}
 
-thr <- cr.melt.ext2 %>% 
+thr <- cr.melt.ext2 %>%
   dplyr::ungroup() %>%
   dplyr::filter(!match) %>%
   dplyr::select(value) %>%
-  as.matrix() %>% 
+  as.matrix() %>%
   as.vector() %>%
   quantile(., 0.95)
 
@@ -470,49 +470,49 @@ print(d/sum(cr.melt.ext2$match))
 u.gust <- u.gust %>% filter(cr >= thr.gust)
 u.repurp <- u.repurp %>% filter(cr >= thr.repurp)
 
-dx <- cr.melt.ext2.sor %>% left_join(., u.gust, by = c("Var2" = "Image_Metadata_BROAD_ID")) 
+dx <- cr.melt.ext2.sor %>% left_join(., u.gust, by = c("Var2" = "Image_Metadata_BROAD_ID"))
 dx2 <- dx %>% left_join(., u.repurp, by = c("Var1" = "Metadata_broad_sample"))
 
 n <- dx$match %>% sum
-D.tst <- dx2 %>% 
+D.tst <- dx2 %>%
   dplyr::select(match, value, cr.x, cr.y) %>%
   dplyr::rename(rep.cor.bbbc = cr.x,
                 rep.cor.repurp = cr.y,
                 signature.cor = value) %>%
   dplyr::mutate(min.rep.cor = ifelse(rep.cor.bbbc < rep.cor.repurp, rep.cor.bbbc, rep.cor.repurp))
 
-D <- D.tst %>% 
+D <- D.tst %>%
   dplyr::group_by(match) %>%
-  dplyr::sample_n(n) 
+  dplyr::sample_n(n)
 
-g <- ggplot(D, aes(x = min.rep.cor, y = signature.cor, color = match)) + 
-  geom_point(stat = "identity") + 
+g <- ggplot(D, aes(x = min.rep.cor, y = signature.cor, color = match)) +
+  geom_point(stat = "identity") +
   ylab("Signatures correlation for a compound pair") +
   xlab("Minimum of replicate correlation for a compound pair")
 
 ggsave("charac_plot.pdf", g)
 
-fn <- function(rep.cor.bbbc, 
-               rep.cor.repurp, 
-               signature.cor, 
-               sig.cor.thr, 
-               rep.cor.thr.bbbc, 
+fn <- function(rep.cor.bbbc,
+               rep.cor.repurp,
+               signature.cor,
+               sig.cor.thr,
+               rep.cor.thr.bbbc,
                rep.cor.thr.repurp) {
-  
+
   return(rep.cor.bbbc > rep.cor.thr.bbbc &
          rep.cor.repurp > rep.cor.thr.repurp &
          signature.cor > sig.cor.thr)
 }
 
-evaluate.thrs <- function(rep.cor.thr.bbbc, 
-                          rep.cor.thr.repurp, 
+evaluate.thrs <- function(rep.cor.thr.bbbc,
+                          rep.cor.thr.repurp,
                           sig.cor.thr) {
   t <- D.tst %>%
     filter(fn(rep.cor.bbbc, rep.cor.repurp, signature.cor, sig.cor.thr, rep.cor.thr.bbbc, rep.cor.thr.repurp))
-  
+
   n <- D.tst %>%
     filter(!fn(rep.cor.bbbc, rep.cor.repurp, signature.cor, sig.cor.thr, rep.cor.thr.bbbc, rep.cor.thr.repurp))
-  
+
   tp <-  t %>%
     select(match) %>%
     as.matrix() %>%
@@ -525,7 +525,7 @@ evaluate.thrs <- function(rep.cor.thr.bbbc,
     as.matrix() %>%
     as.vector() %>%
     sum
-  
+
   fp <- t %>%
     select(match) %>%
     mutate(match = !match) %>%
@@ -538,7 +538,7 @@ evaluate.thrs <- function(rep.cor.thr.bbbc,
     as.matrix() %>%
     as.vector() %>%
     sum
-  
+
   tpr <- tp/(tp + fn)
   fpr <- fp/(fp + tn)
   precision <- tp/(tp + fp)
@@ -546,12 +546,12 @@ evaluate.thrs <- function(rep.cor.thr.bbbc,
   specificity <- tn/(tn + fp)
   f.score <- 2*tp/(2*tp + fp + fn)
 
-  return(f.score)  
+  return(f.score)
 #   return(list(tpr = tpr,
-#               fpr = fpr, 
+#               fpr = fpr,
 #               precision = precision,
 #               sensitivity = sensitivity,
-#               specificity = specificity, 
+#               specificity = specificity,
 #               f.score = f.score))
 }
 
@@ -561,22 +561,22 @@ sq <- seq(from = 0.2, to = 0.7, by = 0.02)
 
 final.opt <- function(sig.cor.thr) {
   d.eval <- outer(sq, sq, function(x, y) evaluate.thrs(x, y, sig.cor.thr))
-  
+
   rownames(d.eval) <- sq
   colnames(d.eval) <- sq
   d.eval.melt <- d.eval %>% reshape2::melt()
-  
+
   opt <- d.eval.melt %>%
     arrange(-value) %>%
     slice(1) %>%
-    select(Var1, Var2, value) 
+    select(Var1, Var2, value)
   return(opt)
 }
 
 l <- foreach (x = sq) %dopar% {
   final.opt(x)[3]
 }
-  
+
 l <- unlist(l)
 
 s.max <- max(l)

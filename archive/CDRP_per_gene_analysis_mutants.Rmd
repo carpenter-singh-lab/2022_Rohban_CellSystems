@@ -52,7 +52,7 @@ if (LUAD) {
   s <- Pf.ta$data$Metadata_x_mutation_status %>% unique
   s <- s[which(str_detect(s, "_WT"))]
   GOF <- c(as.character(GOF), as.character(s))
-  
+
   Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Metadata_x_mutation_status %in% GOF) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
   Pf.ta$factor_cols <- c(Pf.ta$factor_cols, "Treatment")
   Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(str_detect(Metadata_x_mutation_status, "WT")) %>% dplyr::mutate(Treatment = Metadata_x_mutation_status)
@@ -70,24 +70,24 @@ if (LUAD) {
   Pf.ta.all <- Pf_org.org
   strong.trt <- Pf.trt.strong.collapsed$data$Treatment
   r.cor <- rep.cor(Pf = Pf.trt, grp.var = "Treatment", feat.var = Pf.trt$feat_cols)
-  
-  data.annot <- Pf.strong %>% 
-    dplyr::filter(Treatment %in% strong.trt) %>% 
+
+  data.annot <- Pf.strong %>%
+    dplyr::filter(Treatment %in% strong.trt) %>%
     dplyr::left_join(., r.cor, by = "Treatment") %>%
-    dplyr::select(one_of(c("Treatment", "Pathway", "Gene", "AlleleDesc", "cr"))) %>% 
-    dplyr::mutate(Pathway = str_replace(Pathway, "Canonical ", "")) %>% 
+    dplyr::select(one_of(c("Treatment", "Pathway", "Gene", "AlleleDesc", "cr"))) %>%
+    dplyr::mutate(Pathway = str_replace(Pathway, "Canonical ", "")) %>%
     dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2)) %>%
     dplyr::arrange(-cr) %>%
-    dplyr::group_by(Gene) %>% 
-    dplyr::ungroup() 
-  
+    dplyr::group_by(Gene) %>%
+    dplyr::ungroup()
+
   data.annot %>% htmlTable::htmlTable()
-  
+
   desired.ta <- data.annot$Treatment
-  Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(Treatment %in% c(as.character(desired.ta), "EMPTY_")) 
-  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta) 
-  
-  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta) 
+  Pf.ta.all$data <- Pf.ta.all$data %>% dplyr::filter(Treatment %in% c(as.character(desired.ta), "EMPTY_"))
+  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta)
+
+  Pf.ta$data <- Pf.ta$data %>% dplyr::filter(Treatment %in% desired.ta)
 }
 
 Pf.gene <- Pf.ta
@@ -106,23 +106,23 @@ if (!just.bioactives) {
   Pf.2 <- readRDS("../results/master/2017-04-20_425d653/Pf_DOS_new.rds")
   Pf <- rbind(Pf.1, Pf.2)
 } else {
-  Pf <- Pf.1 
+  Pf <- Pf.1
 }
 
 u <- rep.cor(list(data = Pf, feat_cols = Pf.cmpd$feat_cols, factor_cols = Pf.cmpd$factor_cols), grp.var = "Metadata_broad_sample", feat.var = Pf.cmpd$feat_cols)
 up <- readr::read_csv("../results/master/2017-04-21_425d6537/Cell_counts.csv")
 
-x <- Pf %>% 
+x <- Pf %>%
   left_join(., u, by = "Metadata_broad_sample") %>%
   left_join(., up, by = c("Metadata_Plate" = "Image_Metadata_Plate", "Metadata_Well" = "Image_Metadata_Well")) %>%
   dplyr::select(Metadata_broad_sample, cr, Image_Count_Cells) %>%
   dplyr::group_by(Metadata_broad_sample) %>%
   summarise_each(funs(mean))
-  
-Pf.cmpd$data %<>% 
+
+Pf.cmpd$data %<>%
   right_join(., x, by = "Metadata_broad_sample") %>%
   mutate(rep.corr = round(cr, 2), Mean_Cells_Count = round(Image_Count_Cells, 2)) %>%
-  select(-cr, -Image_Count_Cells) 
+  select(-cr, -Image_Count_Cells)
 
 Pf.cmpd$factor_cols <- c(Pf.cmpd$factor_cols, "rep.corr", "Mean_Cells_Count")
 Pf.cmpd$data$Mean_Cells_Count <- round(scale(Pf.cmpd$data$Mean_Cells_Count), 2)
@@ -169,9 +169,9 @@ get.interacting.proteins <- function(protein.name) {
   if (file.exists(f.name)) {
     return(readRDS(f.name))
   }
-  
+
   tbl <- read.table(sprintf("http://webservice.thebiogrid.org/interactions/?searchNames=true&geneList=%s&taxId=9606&includeHeader=true&accesskey=ca950b072394ce1897811022f7757222", protein.name), sep="\t", header = FALSE, fill = T)
-  tbl <- tbl[, c(8, 9, 12, 13, 14)] 
+  tbl <- tbl[, c(8, 9, 12, 13, 14)]
   colnames(tbl) <- c("Protein.1", "Protein.2", "Method", "Type", "Evidence")
   saveRDS(tbl, f.name)
   return(tbl)
@@ -187,7 +187,7 @@ get.all.interacting.proteins <- function(protein.name) {
 }
 
 connectivity <- function(pathway, MOA.q) {
-  pathway.genes <- Pf.gene$data %>% 
+  pathway.genes <- Pf.gene$data %>%
     dplyr::filter(str_detect(Pathway, pathway)) %>%
     dplyr::select(Treatment) %>%
     dplyr::group_by(Treatment) %>%
@@ -196,7 +196,7 @@ connectivity <- function(pathway, MOA.q) {
     as.matrix() %>%
     as.vector() %>%
     unique
-  
+
   MOA.genes <- Pf.cmpd$data %>%
     dplyr::ungroup() %>%
     dplyr::filter(str_detect(MOA, MOA.q)) %>%
@@ -208,7 +208,7 @@ connectivity <- function(pathway, MOA.q) {
     unlist %>%
     setdiff(., "") %>%
     unique()
-  
+
   ppi <- get.all.interacting.proteins(pathway.genes)
   intr <- c(ppi$Protein.1 %>% as.character(),
     ppi$Protein.2 %>% as.character()) %>%
@@ -252,18 +252,18 @@ if (random.shuffle) {
   annot <- rbind(Pf.gene$data[,c("Treatment", "Pathway")] %>% as.matrix(),
                Pf.cmpd.res$data[,c("CPD_NAME", "MOA")] %>% as.matrix())
 }
-annot %<>% as.data.frame 
+annot %<>% as.data.frame
 colnames(annot) <- c("Treatment", "Pathway")
 annot <- cbind(annot, data.frame(Type = c(rep("gene", NROW(Pf.gene$data)),
                                           rep("compound", NROW(Pf.cmpd.res$data)))))
 data.all <- cbind(annot, data)
-data.all %<>% 
+data.all %<>%
   dplyr::group_by(Treatment) %>%
   dplyr::slice(1) %>%
   dplyr::ungroup(.)
-write.table(data.all, 
+write.table(data.all,
             file = "gene_compound.txt",
-            sep = "\t", 
+            sep = "\t",
             row.names = F)
 
 cr <- data.all[,4:NCOL(data.all)] %>%
@@ -271,9 +271,9 @@ cr <- data.all[,4:NCOL(data.all)] %>%
   cor %>%
   abs
 
-write.table(cr, 
+write.table(cr,
             file = "cr.txt",
-            sep = "\t", 
+            sep = "\t",
             row.names = T)
 
 rownames(cr) <- data.all$Treatment
@@ -286,30 +286,30 @@ genes <- Pf.gene$data$Treatment
 cmpds <- Pf.cmpd$data$CPD_NAME
 sm <- 0
 for (i in 1:max(ct)) {
-  cl <- which(ct == i) %>% names  
+  cl <- which(ct == i) %>% names
   w <- which(genes %in% cl)
   y <- which(cmpds %in% cl)
   if (length(w) > 0 && length(y) > 0) {
-    annot.cls <- annot %>% 
+    annot.cls <- annot %>%
 	    dplyr::filter(Treatment %in% cl) %>%
-	    dplyr::select(Treatment, Pathway)  
-    
+	    dplyr::select(Treatment, Pathway)
+
     if (!random.shuffle) {
     	annot.cls %>%
 	    htmlTable::htmlTable(.) %>%
 	    print
     }
-    
+
     cr.d <- cr[annot.cls$Treatment, ]
     rownames(cr.d) <- NULL
     colnames(cr.d) <- NULL
     corrplot::corrplot(cr.d)
-#     
+#
 #     pathways <- Pf.gene$data$Pathway[Pf.gene$data$Treatment %in% genes[w]] %>% unique
 #     pathways <- lapply(pathways, function(x) str_replace_all(x, "Canonical ", "")) %>% unlist
 #     MOAs <- annot.cls$Pathway[which(!annot.cls$Treatment %in% genes[w])] %>% unique
 #     MOAs <- setdiff(MOAs, "")
-#     
+#
 #     mn <- mean(outer(pathways, MOAs, connectivity), na.rm = T)
 #     if (!is.na(mn) && mn > 0.03) {
 #       sm <- sm + 1
@@ -362,10 +362,10 @@ meta.ta.cmap <- meta.ta.cmap %>% as.data.frame()
 genes.ta.cmap <- meta.ta.cmap$x_genesymbol_mutation
 ids.ta.cmap <- meta.ta.cmap$pert_id
 meta.ta.cmap[, "det_well"] <- tolower(meta.ta.cmap$det_well)
-treatment.meta <- Pf_org$data %>% 
+treatment.meta <- Pf_org$data %>%
   dplyr::filter(Type == "Treated") %>%
   dplyr::select(Well, Treatment) %>%
-  unique %>% 
+  unique %>%
   dplyr::left_join(., meta.ta.cmap, by = c("Well" = "det_well"))
 
 treatment.meta <- treatment.meta %>% dplyr::filter(!Treatment %in% c("CYLD_WT", "ERG_truncated"))
@@ -413,11 +413,11 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
   } else {
     names(gn.map) <- gn.map
   }
-  
+
   if (random.shuffle.cmpds) {
     Pf.cmpd$data[,"CPD_NAME"] <- Pf.cmpd$data[permute::shuffle(NROW(Pf.cmpd$data)), "CPD_NAME"]
   }
-  
+
   all.targ <- lapply(Pf.cmpd$data$Target %>% unique, function(x) str_split(x, ", ")[[1]]) %>% do.call(c, .) %>% unique
   path <- sprintf("../results/manual/ppis")
   if (!dir.exists(path)) {
@@ -429,62 +429,62 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
     ppi.all <- tryCatch(get.all.interacting.proteins(all.targ), error = function(e) {})
     saveRDS(ppi.all, sprintf("%s/all.rds", path))
   }
-  
+
   pb <- progress::progress_bar$new(total = length(Pf.gene$data$Treatment))
   res.all <- data.frame()
-  
+
   for (gene in Pf.gene$data$Treatment) {
     if (verbose) {
-      pb$tick()  
+      pb$tick()
     }
     gn <- gn.map[gene] %>% as.matrix() %>% as.vector()
     if (!random.shuffle) {
-      u.res <- cr.melt %>% 
+      u.res <- cr.melt %>%
         dplyr::filter(Var2 == gn) %>%
         dplyr::arrange(-value) %>%
         #dplyr::mutate(value = round(value, 2)) %>%
-        dplyr::filter(abs(value) > cor.thr) 
-        
-        up.reg <- u.res %>% left_join(., specificity.data, by = c("Var1", "Var2")) %>% 
+        dplyr::filter(abs(value) > cor.thr)
+
+        up.reg <- u.res %>% left_join(., specificity.data, by = c("Var1", "Var2")) %>%
           dplyr::filter(!is.na(spec.)) %>%
           head(., how.many) %>% dplyr::filter(value > 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
-        down.reg <- u.res %>% left_join(., specificity.data, by = c("Var1", "Var2")) %>% 
+        down.reg <- u.res %>% left_join(., specificity.data, by = c("Var1", "Var2")) %>%
           dplyr::filter(!is.na(spec.)) %>% tail(., how.many) %>% dplyr::filter(value < 0) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
 
     } else {
-      u.res <- cr.melt %>% 
+      u.res <- cr.melt %>%
         dplyr::filter(Var2 == gn) %>%
         sample_n(NROW(.)) %>%
         #dplyr::mutate(value = round(value, 2))
-      up.reg <- u.res %>% left_join(., specificity.data, by = c("Var1", "Var2")) %>% 
+      up.reg <- u.res %>% left_join(., specificity.data, by = c("Var1", "Var2")) %>%
           dplyr::filter(!is.na(spec.)) %>% head(., how.many) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
-      down.reg <- u.res %>% left_join(., specificity.data, by = c("Var1", "Var2")) %>% 
+      down.reg <- u.res %>% left_join(., specificity.data, by = c("Var1", "Var2")) %>%
           dplyr::filter(!is.na(spec.)) %>% tail(., how.many) %>% dplyr::select(Var1) %>% as.matrix() %>% as.vector()
     }
-    
+
     reg <- c(up.reg, down.reg) %>% unique
     reg <- setdiff(reg, "")
-    
+
     u.res.lim <- u.res %>% dplyr::filter(Var1 %in% reg) %>% dplyr::mutate(CPD_NAME = Var1) %>% dplyr::mutate(Corr. = value) %>% dplyr::select(one_of(c("CPD_NAME", "Corr.")))
-    
+
     rest <- setdiff(Pf.cmpd$data$CPD_NAME %>% unique, reg)
-    v <- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% reg], function(x) str_split(x, ", ")[[1]]) %>% do.call(c, .) 
+    v <- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% reg], function(x) str_split(x, ", ")[[1]]) %>% do.call(c, .)
     if (length(v) == 0) {
       next
     }
-    u <- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% rest], function(x) str_split(x, ", ")[[1]]) %>% do.call(c, .) 
-    
+    u <- lapply(Pf.cmpd$data$Target[Pf.cmpd$data$CPD_NAME %in% rest], function(x) str_split(x, ", ")[[1]]) %>% do.call(c, .)
+
     main.targ <- data.frame(gene = v) %>% dplyr::group_by(gene) %>% tally() %>% dplyr::filter(gene != "") %>% dplyr::arrange(-n) %>% dplyr::select(gene) %>% as.matrix() %>% as.vector()
     rest.targ <- data.frame(gene = u) %>% dplyr::group_by(gene) %>% tally() %>% dplyr::filter(gene != "") %>% dplyr::arrange(-n) %>% dplyr::select(gene) %>% as.matrix() %>% as.vector()
-    
+
     ppi <- ppi.all %>% dplyr::filter(Protein.1 %in% main.targ | Protein.2 %in% main.targ)
     ppi2 <- ppi.all %>% dplyr::filter(Protein.1 %in% rest.targ | Protein.2 %in% rest.targ)
-    
+
     id <- ppi %>% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %>% unique %>% NROW
     id0 <- ppi2 %>% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %>% unique %>% NROW
     Vi <- rbind(c(id, NROW(ppi %>% unique) - id), c(id0, NROW(ppi2 %>% unique) - id0))
     V <- V + Vi
-    
+
     fsh <- fisher.test(Vi, alternative = "greater")
     if (fsh$p.value < p.val.thr/length(Pf.gene$data$Treatment)) {
       gn.list <- c(gn.list, gene)
@@ -505,36 +505,36 @@ sample.tot <- function(Pf.cmpd, Pf.gene, random.shuffle = F, random.shuffle.gene
         (ppi %>% dplyr::filter(Protein.1 == gene | Protein.2 == gene) %>% unique %>% head(., 20)) %>% htmlTable::htmlTable() %>% cat
         cat("<br> <hr>")
       }
-    } 
-    
+    }
+
     if (verbose) {
       cr.l1000.melt <- cr.l1000 %>% reshape2::melt(.) %>% dplyr::filter(Var2 == gene)
       cat(gene, file = "predictions.html", append = T)
       cat("<br>", file = "predictions.html", append = T)
-      
-      res.out <- Pf.cmpd$data %>% 
-        dplyr::filter(CPD_NAME %in% reg) %>% 
-        dplyr::select(one_of(c("CPD_NAME", "MOA", "Target", 
-                               "rep.corr", "Mean_Cells_Count"))) %>% 
-        dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>% 
+
+      res.out <- Pf.cmpd$data %>%
+        dplyr::filter(CPD_NAME %in% reg) %>%
+        dplyr::select(one_of(c("CPD_NAME", "MOA", "Target",
+                               "rep.corr", "Mean_Cells_Count"))) %>%
+        dplyr::inner_join(., u.res.lim, by = "CPD_NAME") %>%
         dplyr::mutate(Var2 = gene) %>%
-        dplyr::left_join(., specificity.data, by = c("CPD_NAME" = "Var1", 
+        dplyr::left_join(., specificity.data, by = c("CPD_NAME" = "Var1",
                                                      "Var2" = "Var2")) %>%
         dplyr::left_join(., cr.l1000.melt, by = c("Metadata_broad_sample" = "Var1")) %>%
-        arrange(Corr.) %>% 
-        dplyr::mutate(value = round(value, 3)) %>% 
-        dplyr::rename(l1000.score = value) %>% 
-        dplyr::rename(specificity = spec.) %>% 
+        arrange(Corr.) %>%
+        dplyr::mutate(value = round(value, 3)) %>%
+        dplyr::rename(l1000.score = value) %>%
+        dplyr::rename(specificity = spec.) %>%
         dplyr::select(-Var2.x, -Var2.y) %>%
         unique
-      
+
       res.all <- res.out %>% mutate(gene = gene) %>% as.data.frame() %>% rbind(res.all, .)
-      
+
       res.out %>% htmlTable::htmlTable() %>% cat(., file = "predictions.html", append = T)
       cat("<br> <hr>", file = "predictions.html", append = T)
     }
   }
-  
+
   return(list(genes = gn.list, V = V, res.all = res.all))
 }
 
@@ -546,66 +546,66 @@ gene.to.cluster <- matrix(0, NROW(Pf.gene$data), 1)
 rownames(gene.to.cluster) <- Pf.gene$data$Treatment
 for (i in 1:length(cls)) {
   cl <- intersect(Pf.gene$data$Treatment, cls[[i]])
-  gene.to.cluster[cl, 1] <- i 
+  gene.to.cluster[cl, 1] <- i
 }
 
 singletons <- gene.to.cluster[,1] == 0
 mx <- max(gene.to.cluster[,1] + 1)
 gene.to.cluster[which(singletons), 1] <- mx:(mx + sum(singletons) - 1)
 cr.melt.ext <- cr.melt %>%
-  mutate(cluster.id = gene.to.cluster[Var2,1]) 
+  mutate(cluster.id = gene.to.cluster[Var2,1])
 
 specificity <- function(vals, pos.matches) {
-  vals.sorted <- vals %>% 
+  vals.sorted <- vals %>%
     arrange(ifelse(pos.matches, -1, 1) * value)
-  
+
   best.clst <- vals.sorted %>%
     slice(1) %>%
     select(cluster.id, value, Var2)
-  
-  sec.best.clst <- vals.sorted %>% 
+
+  sec.best.clst <- vals.sorted %>%
     filter(cluster.id != best.clst$cluster.id) %>%
     slice(1) %>%
-    select(cluster.id, value) 
-  
+    select(cluster.id, value)
+
   df <- data.frame(spec. = (best.clst$value - sec.best.clst$value)/(best.clst$value),
              Var2 = best.clst$Var2)
   return(df)
 }
 
 make.match.pos <- function(x) {
-  y <- x %>% 
+  y <- x %>%
     arrange(-value) %>%
     slice(1) %>%
-    select(Var2, cluster.id, value) 
+    select(Var2, cluster.id, value)
   return(y)
 }
 
 make.match.neg <- function(x) {
-  y <- x %>% 
+  y <- x %>%
     arrange(value) %>%
     slice(1) %>%
-    select(Var2, cluster.id, value) 
+    select(Var2, cluster.id, value)
   return(y)
 }
 
-matches.pos <- cr.melt.ext %>% 
-  group_by(Var1) %>% 
+matches.pos <- cr.melt.ext %>%
+  group_by(Var1) %>%
   do(data.frame(make.match.pos(.)))
 
-matches.neg <- cr.melt.ext %>% 
-  group_by(Var1) %>% 
-  do(data.frame(make.match.neg(.))) 
+matches.neg <- cr.melt.ext %>%
+  group_by(Var1) %>%
+  do(data.frame(make.match.neg(.)))
 
 pos.t <- cr.melt.ext %>%
   group_by(Var1) %>%
   do(data.frame(specificity(.[,c("value", "cluster.id", "Var2")], pos.matches = T))) %>%
   arrange(-spec.) %>%
-  dplyr::left_join(., Pf.cmpd$data[, c("CPD_NAME", "MOA")], by = c("Var1" = "CPD_NAME")) %>% 
-  dplyr::left_join(., matches.pos, by = "Var1") %>% 
+  dplyr::left_join(., Pf.cmpd$data[, c("CPD_NAME", "MOA")], by = c("Var1" = "CPD_NAME")) %>%
+  dplyr::left_join(., matches.pos, by = "Var1") %>%
   dplyr::rename(corr = value) %>%
-  filter(abs(corr) > 0.4) %>% 
-  #dplyr::mutate(spec. = round(spec., 2), 
+  filter(abs(corr) > 0.4) %>%
+  #dplyr::mutate(spec. = round(spec., 2),
   #              corr = round(corr, 2)) %>%
   dplyr::rename(Var2 = Var2.x) %>%
   dplyr::select(Var1, Var2, spec.)
@@ -614,11 +614,11 @@ neg.t <- cr.melt.ext %>%
   group_by(Var1) %>%
   do(data.frame(specificity(.[,c("value", "cluster.id", "Var2")], pos.matches = F))) %>%
   arrange(-spec.) %>%
-  dplyr::left_join(., Pf.cmpd$data[, c("CPD_NAME", "MOA")], by = c("Var1" = "CPD_NAME")) %>% 
-  dplyr::left_join(., matches.neg, by = "Var1") %>% 
+  dplyr::left_join(., Pf.cmpd$data[, c("CPD_NAME", "MOA")], by = c("Var1" = "CPD_NAME")) %>%
+  dplyr::left_join(., matches.neg, by = "Var1") %>%
   dplyr::rename(corr = value) %>%
-  filter(abs(corr) > 0.4) %>% 
-  #dplyr::mutate(spec. = round(spec., 2), 
+  filter(abs(corr) > 0.4) %>%
+  #dplyr::mutate(spec. = round(spec., 2),
   #              corr = round(corr, 2)) %>%
   dplyr::rename(Var2 = Var2.x) %>%
   dplyr::select(Var1, Var2, spec.)
@@ -656,28 +656,28 @@ cr.melt.n <- melt(cr.n)
 df <- cr.melt.n %>%
   filter(Var2 %in% c("KRAS_WT.1", "KRAS_G12V", "HRAS_G12V")) %>%
   group_by(Var1) %>%
-  do(data.frame(WT_score = as.vector(.[which(.[,"Var2"] == "KRAS_WT.1"), "value"]), 
-                MUT1_score = as.vector(.[which(.[,"Var2"] == "KRAS_G12V"), "value"]), 
+  do(data.frame(WT_score = as.vector(.[which(.[,"Var2"] == "KRAS_WT.1"), "value"]),
+                MUT1_score = as.vector(.[which(.[,"Var2"] == "KRAS_G12V"), "value"]),
                 MUT2_score = as.vector(.[which(.[,"Var2"] == "HRAS_G12V"), "value"]))) %>%
-  dplyr::rename(WT_score = value, 
+  dplyr::rename(WT_score = value,
                 MUT_KRAS_score = value.1,
-                MUT_HRAS_score = value.2) %>% 
+                MUT_HRAS_score = value.2) %>%
   dplyr::arrange(-WT_score+(MUT_KRAS_score+MUT_HRAS_score)/2) %>%
-  dplyr::mutate(WT_score = round(WT_score, 2), 
-                MUT_KRAS_score = round(MUT_KRAS_score, 2), 
+  dplyr::mutate(WT_score = round(WT_score, 2),
+                MUT_KRAS_score = round(MUT_KRAS_score, 2),
                 MUT_HRAS_score = round(MUT_HRAS_score, 2)) %>%
   dplyr::left_join(., Pf.cmpd$data[, c("Metadata_broad_sample", "MOA", "CPD_NAME")], by = c("Var1" = "Metadata_broad_sample")) %>%
   dplyr::mutate(MUT_Score = (MUT_KRAS_score + MUT_HRAS_score)/2)
-  
 
-df %>% 
-  filter(MUT_Score  > 0.35 & WT_score < 0.25 | 
-           MUT_Score < -0.35 & WT_score > -0.25) %>% 
+
+df %>%
+  filter(MUT_Score  > 0.35 & WT_score < 0.25 |
+           MUT_Score < -0.35 & WT_score > -0.25) %>%
   print
 
-df %>% 
-  filter(MUT_Score  < 0.25 & WT_score > 0.35 | 
-           MUT_Score > -0.25 & WT_score < -0.35) %>% 
+df %>%
+  filter(MUT_Score  < 0.25 & WT_score > 0.35 |
+           MUT_Score > -0.25 & WT_score < -0.35) %>%
   print
 
 g <- ggplot(df, aes(y = MUT_Score, x = WT_score)) + geom_point()
@@ -695,28 +695,28 @@ cos.d <- function(x, y) {
   return(d)
 }
 
-kras.wt <- Pf.gene$data %>% 
+kras.wt <- Pf.gene$data %>%
   filter(Treatment == "KRAS_WT.1") %>% select(one_of(Pf.gene$feat_cols)) %>%
   t %>%
   as.data.frame() %>%
   tibble::rownames_to_column("feature") %>%
   dplyr::rename(value_kras_wt = V1)
 
-kras.g12v <- Pf.gene$data %>% 
+kras.g12v <- Pf.gene$data %>%
   filter(Treatment == "KRAS_G12V") %>% select(one_of(Pf.gene$feat_cols)) %>%
   t %>%
   as.data.frame() %>%
   tibble::rownames_to_column("feature") %>%
   dplyr::rename(value_kras_mt = V1)
 
-hras.g12v <- Pf.gene$data %>% 
+hras.g12v <- Pf.gene$data %>%
   filter(Treatment == "HRAS_G12V") %>% select(one_of(Pf.gene$feat_cols)) %>%
   t %>%
   as.data.frame() %>%
   tibble::rownames_to_column("feature") %>%
   dplyr::rename(value_hras_mt = V1)
 
-u <- kras.wt %>% 
+u <- kras.wt %>%
   left_join(., kras.g12v, by = "feature") %>%
   left_join(., hras.g12v, by = "feature")
 
@@ -724,36 +724,36 @@ for (i in 2:4) {
   u[,i] <- u[,i]/(sum(abs(u[,i]))) * NROW(u)
 }
 
-ft.mt <- u %>% 
+ft.mt <- u %>%
   arrange(-abs(value_kras_wt)) %>%
   filter(abs(value_kras_mt) > 1 & value_kras_wt/value_kras_mt < 0.1) %>%
   select(feature) %>%
   as.matrix() %>%
   as.vector()
 #ft.rest <- setdiff(u$feature, ft.mt)
-ft.rest <- u %>% 
+ft.rest <- u %>%
   arrange(-abs(value_kras_wt)) %>%
   filter(abs(value_kras_mt) > 1 & value_kras_wt/value_kras_mt > 0.8) %>%
   select(feature) %>%
   as.matrix() %>%
   as.vector()
 
-u %>% 
-  filter(feature %in% ft.mt) %>% 
-  arrange(-abs(value_kras_mt)) %>% 
-  select(-value_hras_mt) %>% 
+u %>%
+  filter(feature %in% ft.mt) %>%
+  arrange(-abs(value_kras_mt)) %>%
+  select(-value_hras_mt) %>%
   mutate(value_kras_mt = round(value_kras_mt, 2),
-         value_kras_wt = round(value_kras_wt, 2)) %>% 
-  as.data.frame() %>% 
+         value_kras_wt = round(value_kras_wt, 2)) %>%
+  as.data.frame() %>%
   htmlTable::htmlTable()
 
-u %>% 
-  filter(feature %in% ft.rest) %>% 
-  arrange(-abs(value_kras_mt)) %>% 
-  select(-value_hras_mt) %>% 
+u %>%
+  filter(feature %in% ft.rest) %>%
+  arrange(-abs(value_kras_mt)) %>%
+  select(-value_hras_mt) %>%
   mutate(value_kras_mt = round(value_kras_mt, 2),
-         value_kras_wt = round(value_kras_wt, 2)) %>% 
-  as.data.frame() %>% 
+         value_kras_wt = round(value_kras_wt, 2)) %>%
+  as.data.frame() %>%
   htmlTable::htmlTable()
 
 cr.n <- (cos.d(Pf.cmpd$data[,ft.mt] %>% t, Pf.gene$data[which(Pf.gene$data$Treatment == "KRAS_G12V"),ft.mt] %>% t))
@@ -768,12 +768,12 @@ colnames(cr.p) <- "score.comm"
 cr.n <- cr.n %>% as.data.frame() %>% tibble::rownames_to_column("compound ID")
 cr.p <- cr.p %>% as.data.frame() %>% tibble::rownames_to_column("compound ID")
 
-cr.all <- cr.n %>% 
-  left_join(cr.p, by = "compound ID") %>% 
+cr.all <- cr.n %>%
+  left_join(cr.p, by = "compound ID") %>%
   mutate(score = score.spec.mt - sign(score.spec.mt) * score.comm) %>%
   left_join(., Pf.cmpd$data[,c("Metadata_broad_sample", "CPD_NAME", "MOA")], by = c("compound ID" = "Metadata_broad_sample"))
 
-cr.all <- cr.all %>% 
+cr.all <- cr.all %>%
   filter(abs(score.comm) < 0.1)
 
 cr.all %>% filter(abs(score) > 0.5) %>% htmlTable::htmlTable()

@@ -7,9 +7,9 @@ get.interacting.proteins <- function(protein.name) {
   if (file.exists(f.name)) {
     return(readRDS(f.name))
   }
-  
+
   tbl <- read.table(sprintf("http://webservice.thebiogrid.org/interactions/?searchNames=true&geneList=%s&taxId=9606&includeHeader=true&accesskey=ca950b072394ce1897811022f7757222", protein.name), sep="\t", header = FALSE, fill = T)
-  tbl <- tbl[, c(8, 9, 12, 13, 14)] 
+  tbl <- tbl[, c(8, 9, 12, 13, 14)]
   colnames(tbl) <- c("Protein.1", "Protein.2", "Method", "Type", "Evidence")
   saveRDS(tbl, f.name)
   return(tbl)

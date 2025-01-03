@@ -22,7 +22,7 @@ connections <- readRDS("../archive/rds_files/cr_melt_cp.rds")
 
 ```{r}
 set.seed(42)
-connections %>% 
+connections %>%
   sample_n(10)
 ```
 
@@ -47,18 +47,18 @@ We need `PUBCHEM_CID` from the `Var1` column
 
 https://github.com/broadinstitute/2016_08_22_Gene_Compound/blob/f08ccc2b4763376dd00010bed559f3d531b61dd2/archive/CDRP_per_gene_analysis_mutants.Rmd#L101
 
-Let's load the CDRP metadata 
+Let's load the CDRP metadata
 
 ```{r}
-cdrp_cpd_metadata <- 
+cdrp_cpd_metadata <-
   read_csv("input/CDP2/cdrp.cpd.meta.csv") %>%
-  mutate(CPD_NAME = tolower(CPD_NAME)) 
+  mutate(CPD_NAME = tolower(CPD_NAME))
 ```
 
 
 ```{r}
 set.seed(42)
-cdrp_cpd_metadata %>% 
+cdrp_cpd_metadata %>%
   sample_n(10)
 ```
 
@@ -88,7 +88,7 @@ We now have `BROAD_CPD_ID` for all compounds
 
 ```{r}
 set.seed(42)
-connections %>% 
+connections %>%
   sample_n(10)
 ```
 

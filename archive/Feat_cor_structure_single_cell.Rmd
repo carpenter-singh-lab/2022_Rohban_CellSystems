@@ -23,12 +23,12 @@ Pf.1 <- read.dataset.single.cell.dmso(data.set.name = data.set.name.1)
 Pf.2 <- read.dataset.single.cell.dmso(data.set.name = data.set.name.2)
 
 if (NROW(Pf.1$data) > n.lim) {
-  Pf.1$data %<>% 
+  Pf.1$data %<>%
     dplyr::sample_n(n.lim)
 }
 
 if (NROW(Pf.2$data) > n.lim) {
-  Pf.2$data %<>% 
+  Pf.2$data %<>%
     dplyr::sample_n(n.lim)
 }
 
@@ -37,7 +37,7 @@ Pf.2.pr <- read.dataset(data.set.name = data.set.name.2)
 
 ft <- intersect(Pf.1.pr$feat_cols, Pf.2.pr$feat_cols)
 
-f1 <- Pf.1$data %>% 
+f1 <- Pf.1$data %>%
     dplyr::select(one_of(ft)) %>%
     purrr::map(function(x) any(!is.numeric(x))) %>%
     as.data.frame %>% tidyr::gather(feature, bad) %>%
@@ -45,7 +45,7 @@ f1 <- Pf.1$data %>%
     dplyr::select(feature) %>%
     as.matrix() %>% as.vector()
 
-f2 <- Pf.2$data %>% 
+f2 <- Pf.2$data %>%
     dplyr::select(one_of(ft)) %>%
     purrr::map(function(x) any(!is.numeric(x))) %>%
     as.data.frame %>% tidyr::gather(feature, bad) %>%
@@ -61,13 +61,13 @@ cr.1 <- Pf.1$data %>%
   dplyr::select(one_of(ft)) %>%
   cor %>%
   reshape2::melt() %>%
-  dplyr::filter(as.character(Var1) != as.character(Var2)) 
+  dplyr::filter(as.character(Var1) != as.character(Var2))
 
 cr.2 <- Pf.2$data %>%
   dplyr::select(one_of(ft)) %>%
   cor %>%
   reshape2::melt() %>%
-  dplyr::filter(as.character(Var1) != as.character(Var2)) 
+  dplyr::filter(as.character(Var1) != as.character(Var2))
 
 cr <- cr.1 %>%
   dplyr::left_join(., cr.2, by = c("Var1", "Var2"))
@@ -78,7 +78,7 @@ crx <- cr %>%
   group_by(Var1) %>%
   do(data.frame(crx = (abs(sum(.[,"value.x"] * .[,"value.y"], na.rm = T))/(sum(.[,"value.x"]^2, na.rm = T)^0.5 * sum(.[,"value.y"]^2, na.rm = T)^0.5))))
 
-fts <- crx %>% 
+fts <- crx %>%
   dplyr::filter(crx > 0.7) %>%
   dplyr::select(Var1) %>%
   as.matrix() %>%

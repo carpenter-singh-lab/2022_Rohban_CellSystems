@@ -17,11 +17,11 @@ fn2 <- function(v) {
   return(res)
 }
 
-u.diff.well <- x %>% 
+u.diff.well <- x %>%
   dplyr::group_by_(grp.var) %>%
   do(data.frame(cr = fn2(.)))
 
-u.same.well <- x %>% 
+u.same.well <- x %>%
   dplyr::group_by_(grp.var) %>%
   do(data.frame(cr = fn(.)))
 

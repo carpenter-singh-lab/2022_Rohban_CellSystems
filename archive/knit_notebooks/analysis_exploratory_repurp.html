@@ -51,9 +51,9 @@ code {
   color: inherit;
   background-color: rgba(0, 0, 0, 0.04);
 }
-img { 
-  max-width:100%; 
-  height: auto; 
+img {
+  max-width:100%;
+  height: auto;
 }
 </style>
 <div class="container-fluid main-container">
@@ -63,13 +63,13 @@ img {
 
 <pre class="r"><code>rm(list = ls())
 library(dplyr)</code></pre>
-<pre><code>## 
+<pre><code>##
 ## Attaching package: 'dplyr'</code></pre>
 <pre><code>## The following objects are masked from 'package:stats':
-## 
+##
 ##     filter, lag</code></pre>
 <pre><code>## The following objects are masked from 'package:base':
-## 
+##
 ##     intersect, setdiff, setequal, union</code></pre>
 <pre class="r"><code>library(stringr)
 library(plyr)</code></pre>
@@ -78,10 +78,10 @@ library(plyr)</code></pre>
 ## If you need functions from both plyr and dplyr, please load plyr first, then dplyr:
 ## library(plyr); library(dplyr)</code></pre>
 <pre><code>## -------------------------------------------------------------------------</code></pre>
-<pre><code>## 
+<pre><code>##
 ## Attaching package: 'plyr'</code></pre>
 <pre><code>## The following objects are masked from 'package:dplyr':
-## 
+##
 ##     arrange, count, desc, failwith, id, mutate, rename, summarise,
 ##     summarize</code></pre>
 <pre class="r"><code>library(reshape2)
@@ -100,12 +100,12 @@ load(&quot;../input/TA/Initial_analysis_workspace.RData&quot;)
 Pf.ta &lt;- Pf_org.org.collapsed
 Pf.ta.all &lt;- Pf_org.org
 strong.trt &lt;- Pf.trt.strong.collapsed$data$Treatment
-data.annot &lt;- Pf.strong %&gt;% dplyr::filter(Treatment %in% strong.trt) %&gt;% dplyr::select(one_of(c(&quot;Treatment&quot;, &quot;Pathway&quot;, &quot;Gene&quot;, &quot;AlleleDesc&quot;))) %&gt;% 
-  dplyr::mutate(Pathway = str_replace(Pathway, &quot;Canonical &quot;, &quot;&quot;)) %&gt;% 
-  dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2)) 
+data.annot &lt;- Pf.strong %&gt;% dplyr::filter(Treatment %in% strong.trt) %&gt;% dplyr::select(one_of(c(&quot;Treatment&quot;, &quot;Pathway&quot;, &quot;Gene&quot;, &quot;AlleleDesc&quot;))) %&gt;%
+  dplyr::mutate(Pathway = str_replace(Pathway, &quot;Canonical &quot;, &quot;&quot;)) %&gt;%
+  dplyr::mutate(AlleleDesc = str_sub(AlleleDesc, 1, 2))
 desired.ta &lt;- data.annot$Treatment
-Pf.ta.all$data &lt;- Pf.ta.all$data %&gt;% dplyr::filter(Treatment %in% c(as.character(desired.ta), &quot;EMPTY_&quot;)) 
-Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta) 
+Pf.ta.all$data &lt;- Pf.ta.all$data %&gt;% dplyr::filter(Treatment %in% c(as.character(desired.ta), &quot;EMPTY_&quot;))
+Pf.ta$data &lt;- Pf.ta$data %&gt;% dplyr::filter(Treatment %in% desired.ta)
 
 Pf.gene &lt;- Pf.ta
 Pf.gene.all &lt;- Pf.ta.all
@@ -124,7 +124,7 @@ m.list &lt;- data.frame(moa = m.list)
 rownames(m.list) &lt;- m.list$moa[pr]
 m.list.p &lt;- lapply(x$Metadata_moa, function(x) m.list[(x %&gt;% as.character()), &quot;moa&quot;]) %&gt;% unlist
 if (permute.moas) {
-  x$Metadata_moa &lt;- m.list.p  
+  x$Metadata_moa &lt;- m.list.p
 }
 
 x &lt;- cbind(x, data.frame(Metadata_Treatment = paste(x$Metadata_pert_id, x$Metadata_mg_per_ml, sep = &quot;@&quot;)))
@@ -143,7 +143,7 @@ sprintf(&quot;Hit ratio (compounds) : %f%%&quot;, round(length(strong.cmpd)/leng
 <pre><code>## [1] &quot;Hit ratio (compounds) : 98.000000%&quot;</code></pre>
 <pre class="r"><code>x.all &lt;- x
 x &lt;- x %&gt;% dplyr::filter(Metadata_Treatment %in% strong.trt)
-x.collapsed &lt;- x %&gt;% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa, Metadata_pert_id) %&gt;% 
+x.collapsed &lt;- x %&gt;% dplyr::group_by(Metadata_pert_iname, Metadata_pert_idose, Metadata_moa, Metadata_pert_id) %&gt;%
   dplyr::select(one_of(c(feats, &quot;Metadata_pert_iname&quot;, &quot;Metadata_pert_idose&quot;, &quot;Metadata_moa&quot;, &quot;Metadata_pert_id&quot;))) %&gt;% dplyr::summarise_each(funs(&quot;mean&quot;)) %&gt;% dplyr::ungroup() %&gt;% dplyr::filter(!is.na(Metadata_pert_iname))
 
 Pf.cmpd &lt;- list(data = x.collapsed, feat_cols = feats, factor_cols = c(&quot;Metadata_pert_iname&quot;, &quot;Metadata_pert_idose&quot;, &quot;Metadata_moa&quot;, &quot;Metadata_pert_id&quot;))
@@ -211,17 +211,17 @@ colnames(cr) &lt;- Pf.gene$data$Treatment
 
 for (i in 1:6) {
   d &lt;- Pf.cmpd$data %&gt;% dplyr::group_by(Metadata_pert_iname) %&gt;% dplyr::slice(i) %&gt;% dplyr::ungroup()
-  
+
   x &lt;- d[,Pf.cmpd$feat_cols]
   y &lt;- Pf.gene$data[,Pf.gene$feat_cols]
-  
-  cri &lt;- cor(x %&gt;% t, y %&gt;% t, method = corr.type) 
+
+  cri &lt;- cor(x %&gt;% t, y %&gt;% t, method = corr.type)
   rownames(cri) &lt;- d$Metadata_pert_iname
   colnames(cri) &lt;- Pf.gene$data$Treatment
-  
+
   crj &lt;- cr * NA
-  crj[rownames(cri), colnames(cri)] &lt;- cri 
-  
+  crj[rownames(cri), colnames(cri)] &lt;- cri
+
   if (is.null(cr.melt.all)) {
     cr.melt.all &lt;- crj %&gt;% melt
   } else {
@@ -246,33 +246,33 @@ for (gn in genes) {
   print (sprintf(&quot;Gene : %s&quot;, gn))
 for (conn.type in c(&quot;pos&quot;, &quot;neg&quot;)) {
   sgn.conn &lt;- ifelse(conn.type == &quot;pos&quot;, -1, 1)
-  
+
   entr &lt;- function(x) {
     x &lt;- abs(x)
     x[which(x &lt; 0.2)] &lt;- 0
     x &lt;- x/sum(x)
     return(sum(-x[which(x != 0)] * log(x[which(x != 0)])))
   }
-  
+
   ent &lt;- apply(cr1, 1, function(x) entr(x))
   ent &lt;- data.frame(Compound = names(ent), Specificity = ent)
   ent$Specificity &lt;- lapply(ent$Specificity, function(x) (1 - ecdf(ent$Specificity)(x))) %&gt;% unlist
   rownames(ent) &lt;- NULL
-  
+
   # %in% cls[[1]]
   #cr[rownames(cr), colnames(cr)] &lt;- cr1[rownames(cr), colnames(cr)]
-  u &lt;- cr1.melt %&gt;% dplyr::filter(Var2 == gn) %&gt;% dplyr::group_by(Var1) %&gt;% dplyr::summarise(value = mean(value)) %&gt;% dplyr::arrange(sgn.conn * value) %&gt;% head(., 50) %&gt;%  dplyr::mutate(Compound = Var1, Corr = value) %&gt;% dplyr::select(one_of(&quot;Compound&quot;, &quot;Corr&quot;)) %&gt;% dplyr::mutate(Corr = round(Corr, 2)) 
+  u &lt;- cr1.melt %&gt;% dplyr::filter(Var2 == gn) %&gt;% dplyr::group_by(Var1) %&gt;% dplyr::summarise(value = mean(value)) %&gt;% dplyr::arrange(sgn.conn * value) %&gt;% head(., 50) %&gt;%  dplyr::mutate(Compound = Var1, Corr = value) %&gt;% dplyr::select(one_of(&quot;Compound&quot;, &quot;Corr&quot;)) %&gt;% dplyr::mutate(Corr = round(Corr, 2))
   u &lt;- plyr::join(u, ent, &quot;Compound&quot;) %&gt;% dplyr::mutate(Specificity = round(Specificity, 2)) %&gt;% dplyr::filter(Specificity &gt;= 0.4)
-  
+
   name.to.brd &lt;- Pf.cmpd$data[,c(&quot;Metadata_pert_id&quot;, &quot;Metadata_pert_iname&quot;, &quot;Metadata_moa&quot;)] %&gt;% unique()
   colnames(name.to.brd) &lt;- c(&quot;Broad.ID&quot;, &quot;Compound&quot;, &quot;MOA&quot;)
   u &lt;- plyr::join(u, name.to.brd, by = &quot;Compound&quot;)
   if (NROW(u) &gt; 0) {
-    v &lt;- c(v, list(u %&gt;% htmlTable::htmlTable()))  
+    v &lt;- c(v, list(u %&gt;% htmlTable::htmlTable()))
   } else {
-    v &lt;- c(v, list(NULL))  
+    v &lt;- c(v, list(NULL))
   }
-  
+
   u$Compound %&gt;% as.character() %&gt;% cat(., sep = &quot;\n&quot;)
 }
 }</code></pre>
